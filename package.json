@@ -12,9 +12,12 @@
     "db:studio": "drizzle-kit studio"
   },
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.71.2",
+    "@langchain/core": "^1.1.7",
+    "@langchain/openai": "^1.2.0",
+    "@tailwindcss/postcss": "^4.1.18",
     "better-sqlite3": "^12.5.0",
     "drizzle-orm": "^0.45.1",
+    "langchain": "^1.2.2",
     "next": "^16.1.0",
     "react": "^19.2.3",
     "react-dom": "^19.2.3",

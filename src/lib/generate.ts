@@ -1,4 +1,4 @@
-import { generateJSON } from "./anthropic";
+import { generateStructured, z } from "./llm";
 import {
   CHUNK_TRANSCRIPT_PROMPT,
   EXTRACT_INSIGHTS_PROMPT,
@@ -6,42 +6,53 @@ import {
   GENERATE_IMAGE_INTENT_PROMPT,
 } from "./prompts";
 
-// Types
-export interface TranscriptChunk {
-  index: number;
-  text: string;
-  topic_hint: string;
-}
+// Zod Schemas for structured output
+const TranscriptChunkSchema = z.object({
+  index: z.number(),
+  text: z.string(),
+  topic_hint: z.string(),
+});
 
-export interface ExtractedInsight {
-  topic: string;
-  claim: string;
-  why_it_matters: string;
-  misconception: string | null;
-  professional_implication: string;
-}
+const TranscriptChunksSchema = z.array(TranscriptChunkSchema);
 
-export interface GeneratedPost {
-  hook: string;
-  body_beats: string[];
-  open_question: string;
-  post_type: "contrarian" | "field_note" | "demystification" | "identity_validation";
-  full_text: string;
-}
+const ExtractedInsightSchema = z.object({
+  topic: z.string(),
+  claim: z.string(),
+  why_it_matters: z.string(),
+  misconception: z.string().nullable(),
+  professional_implication: z.string(),
+});
 
-export interface GeneratedImageIntent {
-  headline_text: string;
-  visual_style: string;
-  background: string;
-  mood: string;
-  layout_hint: string;
-}
+const ExtractedInsightsSchema = z.array(ExtractedInsightSchema);
+
+const GeneratedPostSchema = z.object({
+  hook: z.string(),
+  body_beats: z.array(z.string()),
+  open_question: z.string(),
+  post_type: z.enum(["contrarian", "field_note", "demystification", "identity_validation"]),
+  full_text: z.string(),
+});
+
+const GeneratedImageIntentSchema = z.object({
+  headline_text: z.string(),
+  visual_style: z.string(),
+  background: z.string(),
+  mood: z.string(),
+  layout_hint: z.string(),
+});
+
+// Inferred types from schemas
+export type TranscriptChunk = z.infer<typeof TranscriptChunkSchema>;
+export type ExtractedInsight = z.infer<typeof ExtractedInsightSchema>;
+export type GeneratedPost = z.infer<typeof GeneratedPostSchema>;
+export type GeneratedImageIntent = z.infer<typeof GeneratedImageIntentSchema>;
 
 // Step 1: Chunk transcript
 export async function chunkTranscript(transcript: string): Promise<TranscriptChunk[]> {
-  const result = await generateJSON<TranscriptChunk[]>(
+  const result = await generateStructured(
     CHUNK_TRANSCRIPT_PROMPT,
     transcript,
+    TranscriptChunksSchema,
     0.3 // Lower temperature for deterministic chunking
   );
   return result.data;
@@ -49,9 +60,10 @@ export async function chunkTranscript(transcript: string): Promise<TranscriptChu
 
 // Step 2: Extract insights from chunks
 export async function extractInsights(chunk: TranscriptChunk): Promise<ExtractedInsight[]> {
-  const result = await generateJSON<ExtractedInsight[]>(
+  const result = await generateStructured(
     EXTRACT_INSIGHTS_PROMPT,
     `Topic hint: ${chunk.topic_hint}\n\nContent:\n${chunk.text}`,
+    ExtractedInsightsSchema,
     0.5
   );
   return result.data;
@@ -59,9 +71,10 @@ export async function extractInsights(chunk: TranscriptChunk): Promise<Extracted
 
 // Step 3: Generate post from insight
 export async function generatePost(insight: ExtractedInsight): Promise<GeneratedPost> {
-  const result = await generateJSON<GeneratedPost>(
+  const result = await generateStructured(
     GENERATE_POST_PROMPT,
     JSON.stringify(insight, null, 2),
+    GeneratedPostSchema,
     0.7 // Higher temperature for creative writing
   );
   return result.data;
@@ -69,9 +82,10 @@ export async function generatePost(insight: ExtractedInsight): Promise<Generated
 
 // Step 4: Generate image intent from post
 export async function generateImageIntent(post: GeneratedPost): Promise<GeneratedImageIntent> {
-  const result = await generateJSON<GeneratedImageIntent>(
+  const result = await generateStructured(
     GENERATE_IMAGE_INTENT_PROMPT,
     JSON.stringify(post, null, 2),
+    GeneratedImageIntentSchema,
     0.6
   );
   return result.data;
