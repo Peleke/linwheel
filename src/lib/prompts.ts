@@ -13,14 +13,16 @@ TASK:
 6. Preserve context at chunk boundaries (slight overlap is OK)
 
 OUTPUT FORMAT:
-Return a JSON array of chunks:
-[
-  {
-    "index": 0,
-    "text": "cleaned chunk text here",
-    "topic_hint": "brief topic description"
-  }
-]
+Return a JSON object with a chunks array:
+{
+  "chunks": [
+    {
+      "index": 0,
+      "text": "cleaned chunk text here",
+      "topic_hint": "brief topic description"
+    }
+  ]
+}
 
 RULES:
 - Never add content that wasn't in the original
@@ -47,16 +49,18 @@ For each insight, provide:
 5. professional_implication: What this means for someone's work (one sentence)
 
 OUTPUT FORMAT:
-Return a JSON array:
-[
-  {
-    "topic": "string",
-    "claim": "string",
-    "why_it_matters": "string",
-    "misconception": "string or null",
-    "professional_implication": "string"
-  }
-]
+Return a JSON object with an insights array:
+{
+  "insights": [
+    {
+      "topic": "string",
+      "claim": "string",
+      "why_it_matters": "string",
+      "misconception": "string or null",
+      "professional_implication": "string"
+    }
+  ]
+}
 
 QUALITY FILTERS:
 - Skip generic observations ("AI is changing fast")
@@ -65,7 +69,7 @@ QUALITY FILTERS:
 - Prefer insights that challenge conventional wisdom
 - Prefer insights with clear professional stakes
 
-If no quality insights exist in this chunk, return an empty array.`;
+If no quality insights exist in this chunk, return {"insights": []}.`;
 
 export const GENERATE_POST_PROMPT = `You are a LinkedIn post writer for tech professionals. Your job is to transform insights into scroll-stopping, engagement-driving posts that are ready to publish.
 

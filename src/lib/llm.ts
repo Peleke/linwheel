@@ -1,5 +1,5 @@
+import { createAgent, providerStrategy } from "langchain";
 import { ChatOpenAI } from "@langchain/openai";
-import { ChatPromptTemplate } from "@langchain/core/prompts";
 import { z } from "zod";
 import type { ZodType } from "zod";
 
@@ -8,8 +8,8 @@ export interface LLMResponse<T> {
 }
 
 /**
- * Generate structured JSON output using LangChain with OpenAI
- * Uses withStructuredOutput for type-safe responses
+ * Generate structured JSON output using LangChain createAgent
+ * Uses providerStrategy with Zod schema for type-safe responses
  */
 export async function generateStructured<T>(
   systemPrompt: string,
@@ -17,31 +17,24 @@ export async function generateStructured<T>(
   schema: ZodType<T>,
   temperature: number = 0.5
 ): Promise<LLMResponse<T>> {
-  const model = new ChatOpenAI({
-    model: "gpt-4o-mini",
-    temperature,
+  const agent = createAgent({
+    model: new ChatOpenAI({
+      model: "gpt-4o-mini",
+      temperature,
+    }),
+    tools: [],
+    responseFormat: providerStrategy(schema),
   });
 
-  // Use withStructuredOutput for structured responses
-  // Note: Using method: "jsonSchema" for better compatibility with Zod v4
-  const structuredModel = model.withStructuredOutput(schema, {
-    method: "jsonSchema",
-    strict: true,
-  });
-
-  const prompt = ChatPromptTemplate.fromMessages([
-    ["system", systemPrompt],
-    ["human", "{input}"],
-  ]);
-
-  const chain = prompt.pipe(structuredModel);
-
-  const result = await chain.invoke({
-    input: userContent,
+  const result = await agent.invoke({
+    messages: [
+      { role: "system", content: systemPrompt },
+      { role: "user", content: userContent },
+    ],
   });
 
   return {
-    data: result as T,
+    data: result.structuredResponse as T,
   };
 }
 

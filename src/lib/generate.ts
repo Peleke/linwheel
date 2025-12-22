@@ -7,13 +7,16 @@ import {
 } from "./prompts";
 
 // Zod Schemas for structured output
+// Note: OpenAI structured output requires top-level to be an object, not array
 const TranscriptChunkSchema = z.object({
   index: z.number(),
   text: z.string(),
   topic_hint: z.string(),
 });
 
-const TranscriptChunksSchema = z.array(TranscriptChunkSchema);
+const TranscriptChunksResponseSchema = z.object({
+  chunks: z.array(TranscriptChunkSchema),
+});
 
 const ExtractedInsightSchema = z.object({
   topic: z.string(),
@@ -23,7 +26,9 @@ const ExtractedInsightSchema = z.object({
   professional_implication: z.string(),
 });
 
-const ExtractedInsightsSchema = z.array(ExtractedInsightSchema);
+const ExtractedInsightsResponseSchema = z.object({
+  insights: z.array(ExtractedInsightSchema),
+});
 
 const GeneratedPostSchema = z.object({
   hook: z.string(),
@@ -52,10 +57,10 @@ export async function chunkTranscript(transcript: string): Promise<TranscriptChu
   const result = await generateStructured(
     CHUNK_TRANSCRIPT_PROMPT,
     transcript,
-    TranscriptChunksSchema,
+    TranscriptChunksResponseSchema,
     0.3 // Lower temperature for deterministic chunking
   );
-  return result.data;
+  return result.data.chunks;
 }
 
 // Step 2: Extract insights from chunks
@@ -63,10 +68,10 @@ export async function extractInsights(chunk: TranscriptChunk): Promise<Extracted
   const result = await generateStructured(
     EXTRACT_INSIGHTS_PROMPT,
     `Topic hint: ${chunk.topic_hint}\n\nContent:\n${chunk.text}`,
-    ExtractedInsightsSchema,
+    ExtractedInsightsResponseSchema,
     0.5
   );
-  return result.data;
+  return result.data.insights;
 }
 
 // Step 3: Generate post from insight
