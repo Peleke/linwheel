@@ -49,3 +49,5 @@ next-env.d.ts
 
 # Turbo
 .turbo
+test-results/
+playwright-report/
