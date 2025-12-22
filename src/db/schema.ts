@@ -58,17 +58,12 @@ export const imageIntents = sqliteTable("image_intents", {
   id: text("id").primaryKey(),
   postId: text("post_id").notNull().references(() => linkedinPosts.id),
   // ComfyUI prompt fields
-  prompt: text("prompt").notNull(), // Main image generation prompt
-  negativePrompt: text("negative_prompt").notNull(), // Elements to avoid
-  headlineText: text("headline_text").notNull(), // Display headline
+  prompt: text("prompt").notNull(),
+  negativePrompt: text("negative_prompt").notNull(),
+  headlineText: text("headline_text").notNull(),
   stylePreset: text("style_preset", {
     enum: ["typographic_minimal", "gradient_text", "dark_mode", "accent_bar", "abstract_shapes"],
   }).notNull(),
-  // Legacy fields (kept for backward compatibility, nullable)
-  visualStyle: text("visual_style"),
-  background: text("background"),
-  mood: text("mood"),
-  layoutHint: text("layout_hint"),
 });
 
 // Types

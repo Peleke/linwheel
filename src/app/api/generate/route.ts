@@ -83,11 +83,6 @@ export async function POST(request: NextRequest) {
           negativePrompt: post.imageIntent.negative_prompt,
           headlineText: post.imageIntent.headline_text,
           stylePreset: post.imageIntent.style_preset,
-          // Legacy fields (still NOT NULL in DB, will remove in future migration)
-          visualStyle: "",
-          background: "",
-          mood: "",
-          layoutHint: "",
         });
       }
 
