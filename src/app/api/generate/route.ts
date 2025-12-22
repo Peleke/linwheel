@@ -24,8 +24,18 @@ async function processGeneration(
     const result = await runPipeline(transcript, {
       maxInsights: 3,
       selectedAngles,
-      versionsPerAngle: 5,
+      versionsPerAngle: 2, // Reduced from 5 to avoid rate limits
     });
+
+    // Check if run still exists (could be deleted by "Clear all")
+    const runStillExists = await db.query.generationRuns.findFirst({
+      where: eq(generationRuns.id, runId),
+      columns: { id: true },
+    });
+    if (!runStillExists) {
+      console.log(`Run ${runId} was deleted during generation, aborting save`);
+      return;
+    }
 
     // Save insights
     const insightRecords: { id: string; claim: string }[] = [];
@@ -50,11 +60,14 @@ async function processGeneration(
         (i) => i.claim === post.insight.claim
       );
 
+      // Extract hook from full_text if missing (LLM sometimes omits it)
+      const hook = post.hook || post.full_text.split("\n")[0] || "Untitled post";
+
       await db.insert(linkedinPosts).values({
         id: postId,
         insightId: insightRecord?.id || randomUUID(),
         runId,
-        hook: post.hook,
+        hook,
         bodyBeats: post.body_beats,
         openQuestion: post.open_question,
         postType: post.angle,

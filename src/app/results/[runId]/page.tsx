@@ -5,6 +5,7 @@ import { eq } from "drizzle-orm";
 import { CopyButton } from "@/components/copy-button";
 import { ApprovalButtons } from "@/components/approval-buttons";
 import { StatusPoller } from "@/components/status-poller";
+import { DeleteRunButton } from "@/components/delete-run-button";
 import { ANGLE_DESCRIPTIONS } from "@/lib/prompts/angles";
 
 interface Props {
@@ -121,7 +122,10 @@ export default async function ResultsDashboardPage({ params }: Props) {
                   {posts.length} posts • {approvedCount} approved • {formatDate(run.createdAt)}
                 </p>
               </div>
-              <StatusBadge status={run.status} />
+              <div className="flex items-center gap-3">
+                <StatusBadge status={run.status} />
+                <DeleteRunButton runId={runId} redirectAfter />
+              </div>
             </div>
 
             {/* Status poller for pending/processing runs */}

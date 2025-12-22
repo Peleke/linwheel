@@ -3,6 +3,7 @@ import { db } from "@/db";
 import { generationRuns } from "@/db/schema";
 import { desc } from "drizzle-orm";
 import { ClearRunsButton } from "@/components/clear-runs-button";
+import { DeleteRunButton } from "@/components/delete-run-button";
 
 export default async function ResultsListPage() {
   // Fetch all runs, most recent first
@@ -50,38 +51,42 @@ export default async function ResultsListPage() {
           ) : (
             <div className="grid gap-4 md:grid-cols-2">
               {runs.map((run) => (
-                <Link
+                <div
                   key={run.id}
-                  href={`/results/${run.id}`}
-                  className="block p-6 border border-neutral-200 dark:border-neutral-800 rounded-xl hover:border-neutral-400 dark:hover:border-neutral-600 transition-colors"
+                  className="p-6 border border-neutral-200 dark:border-neutral-800 rounded-xl hover:border-neutral-400 dark:hover:border-neutral-600 transition-colors"
                 >
                   <div className="flex justify-between items-start mb-3">
-                    <h2 className="font-semibold text-lg line-clamp-1">
+                    <Link href={`/results/${run.id}`} className="font-semibold text-lg line-clamp-1 hover:underline">
                       {run.sourceLabel}
-                    </h2>
-                    <StatusBadge status={run.status} />
+                    </Link>
+                    <div className="flex items-center gap-2">
+                      <StatusBadge status={run.status} />
+                      <DeleteRunButton runId={run.id} />
+                    </div>
                   </div>
 
-                  <div className="text-sm text-neutral-600 dark:text-neutral-400 space-y-1">
-                    <p>
-                      {run.postCount ?? 0} posts generated
-                    </p>
-                    <p>
-                      {formatDate(run.createdAt)}
-                    </p>
-                    {run.selectedAngles && run.selectedAngles.length > 0 && (
-                      <p className="text-xs">
-                        Angles: {run.selectedAngles.join(", ")}
+                  <Link href={`/results/${run.id}`} className="block">
+                    <div className="text-sm text-neutral-600 dark:text-neutral-400 space-y-1">
+                      <p>
+                        {run.postCount ?? 0} posts generated
+                      </p>
+                      <p>
+                        {formatDate(run.createdAt)}
+                      </p>
+                      {run.selectedAngles && run.selectedAngles.length > 0 && (
+                        <p className="text-xs">
+                          Angles: {run.selectedAngles.join(", ")}
+                        </p>
+                      )}
+                    </div>
+
+                    {run.error && (
+                      <p className="mt-3 text-sm text-red-600 dark:text-red-400 line-clamp-2">
+                        {run.error}
                       </p>
                     )}
-                  </div>
-
-                  {run.error && (
-                    <p className="mt-3 text-sm text-red-600 dark:text-red-400 line-clamp-2">
-                      {run.error}
-                    </p>
-                  )}
-                </Link>
+                  </Link>
+                </div>
               ))}
             </div>
           )}
