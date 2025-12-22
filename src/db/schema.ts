@@ -1,6 +1,6 @@
 import { sqliteTable, text, integer } from "drizzle-orm/sqlite-core";
 
-// Post angle types - 6 distinct content angles
+// Post angle types - 7 distinct content angles
 export const POST_ANGLES = [
   "contrarian",
   "field_note",
@@ -8,6 +8,7 @@ export const POST_ANGLES = [
   "identity_validation",
   "provocateur",
   "synthesizer",
+  "curious_cat",
 ] as const;
 
 export type PostAngle = typeof POST_ANGLES[number];
@@ -17,6 +18,8 @@ export const generationRuns = sqliteTable("generation_runs", {
   id: text("id").primaryKey(),
   createdAt: integer("created_at", { mode: "timestamp" }).notNull(),
   sourceLabel: text("source_label").notNull(),
+  // Store the original transcript for display/regeneration
+  transcript: text("transcript"),
   status: text("status", { enum: ["pending", "processing", "complete", "failed"] }).notNull().default("pending"),
   postCount: integer("post_count").default(0),
   error: text("error"),

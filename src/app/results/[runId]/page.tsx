@@ -6,6 +6,8 @@ import { CopyButton } from "@/components/copy-button";
 import { ApprovalButtons } from "@/components/approval-buttons";
 import { StatusPoller } from "@/components/status-poller";
 import { DeleteRunButton } from "@/components/delete-run-button";
+import { GenerateMoreButton } from "@/components/generate-more-button";
+import { RetryButton } from "@/components/retry-button";
 import { ANGLE_DESCRIPTIONS } from "@/lib/prompts/angles";
 
 interface Props {
@@ -145,9 +147,32 @@ export default async function ResultsDashboardPage({ params }: Props) {
             )}
 
             {run.status === "failed" && (
-              <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-red-700 dark:text-red-400">
-                Generation failed: {run.error || "Unknown error"}
+              <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+                <div className="flex justify-between items-start">
+                  <div className="text-red-700 dark:text-red-400">
+                    <p className="font-medium">Generation failed</p>
+                    <p className="text-sm mt-1">{run.error || "Unknown error"}</p>
+                  </div>
+                  <RetryButton runId={runId} />
+                </div>
               </div>
+            )}
+
+            {/* Collapsible original transcript */}
+            {run.transcript && (
+              <details className="border border-neutral-200 dark:border-neutral-800 rounded-lg overflow-hidden">
+                <summary className="px-4 py-3 bg-neutral-50 dark:bg-neutral-900 cursor-pointer hover:bg-neutral-100 dark:hover:bg-neutral-800 list-none flex justify-between items-center">
+                  <span className="font-medium">Original Input</span>
+                  <span className="text-sm text-neutral-500">
+                    {run.transcript.length.toLocaleString()} characters
+                  </span>
+                </summary>
+                <div className="p-4 max-h-64 overflow-y-auto">
+                  <pre className="whitespace-pre-wrap text-sm text-neutral-600 dark:text-neutral-400 font-sans">
+                    {run.transcript}
+                  </pre>
+                </div>
+              </details>
             )}
           </div>
 
@@ -192,6 +217,7 @@ function AngleBucket({
             </span>
           </div>
           <div className="flex items-center gap-4">
+            <GenerateMoreButton runId={runId} angle={angle} />
             <span className="text-sm text-neutral-600 dark:text-neutral-400">
               {posts.length} versions • {approvedCount} approved
             </span>

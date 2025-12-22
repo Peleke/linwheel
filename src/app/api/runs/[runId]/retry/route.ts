@@ -1,33 +1,35 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
-import { generationRuns, insights, linkedinPosts, imageIntents, POST_ANGLES, type PostAngle } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import { generationRuns, insights, linkedinPosts, imageIntents, type PostAngle } from "@/db/schema";
+import { eq, inArray } from "drizzle-orm";
 import { runPipeline } from "@/lib/generate";
 import { randomUUID } from "crypto";
 
+interface RouteParams {
+  params: Promise<{ runId: string }>;
+}
+
 /**
- * Process generation in background (fire-and-forget)
- * Updates database status as it progresses
+ * Process generation with retry logic
  */
-async function processGeneration(
+async function processWithRetry(
   runId: string,
   transcript: string,
   selectedAngles: PostAngle[]
 ) {
   try {
-    // Update status to processing
     await db
       .update(generationRuns)
-      .set({ status: "processing" })
+      .set({ status: "processing", error: null })
       .where(eq(generationRuns.id, runId));
 
     const result = await runPipeline(transcript, {
       maxInsights: 3,
       selectedAngles,
-      versionsPerAngle: 2, // Reduced from 5 to avoid rate limits
+      versionsPerAngle: 2,
     });
 
-    // Check if run still exists (could be deleted by "Clear all")
+    // Check if run still exists
     const runStillExists = await db.query.generationRuns.findFirst({
       where: eq(generationRuns.id, runId),
       columns: { id: true },
@@ -55,7 +57,6 @@ async function processGeneration(
 
     // Save posts and image intents
     for (const post of result.posts) {
-      // Skip posts with missing required data
       if (!post.full_text && !post.hook) {
         console.warn(`Skipping post for ${post.angle} - missing full_text and hook`);
         continue;
@@ -66,14 +67,11 @@ async function processGeneration(
         (i) => i.claim === post.insight.claim
       );
 
-      // Robust hook extraction with multiple fallbacks
       const hook = (
         post.hook?.trim() ||
         post.full_text?.split("\n").find(line => line.trim())?.trim() ||
         `${post.angle} post`
       );
-
-      // Ensure we have valid full_text
       const fullText = post.full_text?.trim() || hook;
 
       await db.insert(linkedinPosts).values({
@@ -89,7 +87,6 @@ async function processGeneration(
         approved: false,
       });
 
-      // Only save image intent if we have the required data
       if (post.imageIntent?.prompt && post.imageIntent?.headline_text) {
         await db.insert(imageIntents).values({
           id: randomUUID(),
@@ -102,64 +99,80 @@ async function processGeneration(
       }
     }
 
-    // Update run status to complete
     await db
       .update(generationRuns)
       .set({ status: "complete", postCount: result.posts.length })
       .where(eq(generationRuns.id, runId));
 
-  } catch (pipelineError) {
-    console.error("Pipeline error:", pipelineError);
+  } catch (error) {
+    console.error("Pipeline error:", error);
     await db
       .update(generationRuns)
       .set({
         status: "failed",
-        error: pipelineError instanceof Error ? pipelineError.message : "Unknown error",
+        error: error instanceof Error ? error.message : "Unknown error",
       })
       .where(eq(generationRuns.id, runId));
   }
 }
 
-export async function POST(request: NextRequest) {
+/**
+ * POST /api/runs/[runId]/retry - Retry a failed generation
+ */
+export async function POST(request: NextRequest, { params }: RouteParams) {
   try {
-    const body = await request.json();
-    const { transcript, sourceLabel, selectedAngles: rawSelectedAngles } = body;
+    const { runId } = await params;
 
-    if (!transcript || typeof transcript !== "string") {
+    // Get the run
+    const run = await db.query.generationRuns.findFirst({
+      where: eq(generationRuns.id, runId),
+    });
+
+    if (!run) {
+      return NextResponse.json({ error: "Run not found" }, { status: 404 });
+    }
+
+    if (run.status !== "failed") {
       return NextResponse.json(
-        { error: "Transcript is required" },
+        { error: "Can only retry failed runs" },
         { status: 400 }
       );
     }
 
-    // Validate and filter selected angles (default to all)
-    const selectedAngles: PostAngle[] = Array.isArray(rawSelectedAngles)
-      ? rawSelectedAngles.filter((a): a is PostAngle => POST_ANGLES.includes(a))
-      : [...POST_ANGLES];
+    if (!run.transcript) {
+      return NextResponse.json(
+        { error: "No transcript available for retry" },
+        { status: 400 }
+      );
+    }
 
-    // Create run record with pending status
-    const runId = randomUUID();
-    await db.insert(generationRuns).values({
-      id: runId,
-      createdAt: new Date(),
-      sourceLabel: sourceLabel || "Untitled",
-      transcript, // Store for display and regeneration
-      status: "pending",
-      selectedAngles,
+    // Clear any existing data from the failed run
+    const existingPosts = await db.query.linkedinPosts.findMany({
+      where: eq(linkedinPosts.runId, runId),
+      columns: { id: true },
+    });
+    const postIds = existingPosts.map((p) => p.id);
+
+    if (postIds.length > 0) {
+      await db.delete(imageIntents).where(inArray(imageIntents.postId, postIds));
+      await db.delete(linkedinPosts).where(eq(linkedinPosts.runId, runId));
+    }
+    await db.delete(insights).where(eq(insights.runId, runId));
+
+    // Fire-and-forget retry
+    processWithRetry(
+      runId,
+      run.transcript,
+      run.selectedAngles || []
+    ).catch((err) => {
+      console.error("Background retry error:", err);
     });
 
-    // Fire-and-forget: start processing without awaiting
-    // In serverless (Vercel), would use waitUntil() here
-    processGeneration(runId, transcript, selectedAngles).catch((err) => {
-      console.error("Background processing error:", err);
-    });
-
-    // Return immediately with runId
-    return NextResponse.json({ runId });
+    return NextResponse.json({ retrying: true });
   } catch (error) {
-    console.error("Generate error:", error);
+    console.error("Error retrying:", error);
     return NextResponse.json(
-      { error: "Internal server error" },
+      { error: "Failed to retry generation" },
       { status: 500 }
     );
   }
