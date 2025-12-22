@@ -4,6 +4,7 @@ import { generationRuns, linkedinPosts, imageIntents, POST_ANGLES, type PostAngl
 import { eq } from "drizzle-orm";
 import { CopyButton } from "@/components/copy-button";
 import { ApprovalButtons } from "@/components/approval-buttons";
+import { StatusPoller } from "@/components/status-poller";
 import { ANGLE_DESCRIPTIONS } from "@/lib/prompts/angles";
 
 interface Props {
@@ -123,10 +124,18 @@ export default async function ResultsDashboardPage({ params }: Props) {
               <StatusBadge status={run.status} />
             </div>
 
-            {run.status === "processing" && (
+            {/* Status poller for pending/processing runs */}
+            <StatusPoller runId={runId} status={run.status} />
+
+            {(run.status === "pending" || run.status === "processing") && (
               <div className="p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
-                <div className="animate-pulse text-blue-700 dark:text-blue-400">
-                  Generating posts across {anglesWithPosts.length} angles... This may take a few minutes.
+                <div className="flex items-center gap-3">
+                  <div className="animate-spin h-5 w-5 border-2 border-blue-600 border-t-transparent rounded-full" />
+                  <span className="text-blue-700 dark:text-blue-400">
+                    {run.status === "pending"
+                      ? "Starting generation..."
+                      : `Generating posts${anglesWithPosts.length > 0 ? ` across ${anglesWithPosts.length} angles` : ""}... This may take a few minutes.`}
+                  </span>
                 </div>
               </div>
             )}

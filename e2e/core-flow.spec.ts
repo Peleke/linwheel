@@ -39,24 +39,24 @@ test.describe("Core Generation Flow", () => {
     await expect(submitButton).toBeEnabled();
   });
 
-  test("shows loading states during generation", async ({ page }) => {
+  test("shows submitting state and redirects to results", async ({ page }) => {
     await page.goto("/generate");
 
     // Fill in the form
     await page.getByLabel("Source label").fill("Test Episode");
     await page.getByLabel("Transcript").fill(SAMPLE_TRANSCRIPT);
 
-    // Submit - button text includes angle count
+    // Submit - should show "Starting generation..." briefly then redirect
     await page.getByRole("button", { name: /Generate posts/i }).click();
 
-    // Should show loading state with progress
-    await expect(page.getByText(/Chunking/i)).toBeVisible({ timeout: 5000 });
+    // Should redirect to results page (with any runId)
+    await expect(page).toHaveURL(/\/results\/[\w-]+/, { timeout: 10000 });
 
-    // Submit button should be disabled during loading
-    await expect(page.getByRole("button", { name: /Chunking|Extracting|Generating/i })).toBeDisabled();
+    // Results page should show the source label
+    await expect(page.getByText("Test Episode")).toBeVisible();
   });
 
-  test.skip("completes generation and redirects to results", async ({ page }) => {
+  test.skip("completes generation and shows posts", async ({ page }) => {
     // Skip for now - requires actual LLM calls which are slow/expensive
     // Enable when we have mock API setup
     test.setTimeout(120000);
@@ -66,38 +66,96 @@ test.describe("Core Generation Flow", () => {
     await page.getByLabel("Source label").fill("Test Episode");
     await page.getByLabel("Transcript").fill(SAMPLE_TRANSCRIPT);
 
-    await page.getByRole("button", { name: "Generate posts" }).click();
+    await page.getByRole("button", { name: /Generate posts/i }).click();
 
-    // Wait for redirect to results page (may take a while)
-    await expect(page).toHaveURL(/\/results\/[\w-]+/, { timeout: 90000 });
+    // Wait for redirect to results page
+    await expect(page).toHaveURL(/\/results\/[\w-]+/, { timeout: 10000 });
 
-    // Should show generated posts
-    await expect(page.getByText("Generated Posts")).toBeVisible();
+    // Wait for generation to complete (polls every 3s)
+    await expect(page.getByText("complete")).toBeVisible({ timeout: 120000 });
   });
 });
 
-test.describe("Loading Indicator UX", () => {
-  test("shows progress stages in sequence", async ({ page }) => {
+test.describe("Angle Selection", () => {
+  test("all angles selected by default", async ({ page }) => {
     await page.goto("/generate");
 
-    await page.getByLabel("Transcript").fill(SAMPLE_TRANSCRIPT);
-    await page.getByRole("button", { name: "Generate posts" }).click();
+    // All 6 angle checkboxes should be checked
+    const checkboxes = page.locator('input[type="checkbox"]');
+    await expect(checkboxes).toHaveCount(6);
 
-    // Should show chunking stage first
-    await expect(page.getByText(/Chunking/i)).toBeVisible({ timeout: 5000 });
+    for (let i = 0; i < 6; i++) {
+      await expect(checkboxes.nth(i)).toBeChecked();
+    }
   });
 
-  test("form inputs are disabled during generation", async ({ page }) => {
+  test("can toggle angle selection", async ({ page }) => {
+    await page.goto("/generate");
+
+    // Click the first angle to deselect it
+    const firstCheckbox = page.locator('input[type="checkbox"]').first();
+    await firstCheckbox.click();
+    await expect(firstCheckbox).not.toBeChecked();
+
+    // Click again to reselect
+    await firstCheckbox.click();
+    await expect(firstCheckbox).toBeChecked();
+  });
+
+  test("clear all deselects all angles", async ({ page }) => {
+    await page.goto("/generate");
+
+    await page.getByRole("button", { name: "Clear" }).click();
+
+    const checkboxes = page.locator('input[type="checkbox"]');
+    for (let i = 0; i < 6; i++) {
+      await expect(checkboxes.nth(i)).not.toBeChecked();
+    }
+  });
+
+  test("select all reselects all angles", async ({ page }) => {
+    await page.goto("/generate");
+
+    // Clear first
+    await page.getByRole("button", { name: "Clear" }).click();
+
+    // Then select all
+    await page.getByRole("button", { name: "Select all" }).click();
+
+    const checkboxes = page.locator('input[type="checkbox"]');
+    for (let i = 0; i < 6; i++) {
+      await expect(checkboxes.nth(i)).toBeChecked();
+    }
+  });
+
+  test("submit disabled when no angles selected", async ({ page }) => {
+    await page.goto("/generate");
+
+    // Fill transcript
+    await page.getByLabel("Transcript").fill("Some content");
+
+    // Clear all angles
+    await page.getByRole("button", { name: "Clear" }).click();
+
+    // Submit should be disabled
+    const submitButton = page.getByRole("button", { name: /Select at least one angle/i });
+    await expect(submitButton).toBeDisabled();
+  });
+});
+
+test.describe("Results Dashboard", () => {
+  test("shows processing state for pending runs", async ({ page }) => {
     await page.goto("/generate");
 
     await page.getByLabel("Transcript").fill(SAMPLE_TRANSCRIPT);
-    await page.getByRole("button", { name: "Generate posts" }).click();
+    await page.getByRole("button", { name: /Generate posts/i }).click();
 
-    // Wait for loading stage to appear (indicates isLoading is true)
-    await expect(page.getByText(/Chunking/i)).toBeVisible({ timeout: 5000 });
+    // Wait for redirect
+    await expect(page).toHaveURL(/\/results\/[\w-]+/, { timeout: 10000 });
 
-    // Form inputs should be disabled
-    await expect(page.getByLabel("Transcript")).toBeDisabled();
-    await expect(page.getByLabel("Source label")).toBeDisabled();
+    // Should show processing indicator (either pending or processing status)
+    await expect(
+      page.getByText(/Starting generation|Generating posts/i)
+    ).toBeVisible({ timeout: 5000 });
   });
 });
