@@ -79,11 +79,10 @@ export async function POST(request: NextRequest) {
         await db.insert(imageIntents).values({
           id: randomUUID(),
           postId,
+          prompt: post.imageIntent.prompt,
+          negativePrompt: post.imageIntent.negative_prompt,
           headlineText: post.imageIntent.headline_text,
-          visualStyle: post.imageIntent.visual_style,
-          background: post.imageIntent.background,
-          mood: post.imageIntent.mood,
-          layoutHint: post.imageIntent.layout_hint,
+          stylePreset: post.imageIntent.style_preset,
         });
       }
 

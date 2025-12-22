@@ -2,9 +2,9 @@ import { generateStructured, z } from "./llm";
 import {
   CHUNK_TRANSCRIPT_PROMPT,
   EXTRACT_INSIGHTS_PROMPT,
-  GENERATE_IMAGE_INTENT_PROMPT,
 } from "./prompts";
-import { runWriterSupervisor, type SupervisorResult } from "./agents/writer-supervisor";
+import { GENERATE_IMAGE_INTENT_PROMPT } from "./prompts/image-intent";
+import { runWriterSupervisor } from "./agents/writer-supervisor";
 import { POST_ANGLES, type PostAngle } from "@/db/schema";
 
 // Zod Schemas for structured output
@@ -39,12 +39,18 @@ const GeneratedPostSchema = z.object({
   full_text: z.string(),
 });
 
+// ComfyUI-optimized image intent schema
 const GeneratedImageIntentSchema = z.object({
-  headline_text: z.string(),
-  visual_style: z.string(),
-  background: z.string(),
-  mood: z.string(),
-  layout_hint: z.string(),
+  prompt: z.string(), // ComfyUI prompt with weighted keywords
+  negative_prompt: z.string(), // Elements to avoid
+  headline_text: z.string(), // Max 9 words
+  style_preset: z.enum([
+    "typographic_minimal",
+    "gradient_text",
+    "dark_mode",
+    "accent_bar",
+    "abstract_shapes",
+  ]),
 });
 
 // Inferred types from schemas

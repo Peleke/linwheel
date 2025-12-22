@@ -53,15 +53,22 @@ export const linkedinPosts = sqliteTable("linkedin_posts", {
   approved: integer("approved", { mode: "boolean" }).default(false),
 });
 
-// Image intents table
+// Image intents table (ComfyUI-optimized)
 export const imageIntents = sqliteTable("image_intents", {
   id: text("id").primaryKey(),
   postId: text("post_id").notNull().references(() => linkedinPosts.id),
-  headlineText: text("headline_text").notNull(),
-  visualStyle: text("visual_style").notNull(),
-  background: text("background").notNull(),
-  mood: text("mood").notNull(),
-  layoutHint: text("layout_hint").notNull(),
+  // ComfyUI prompt fields
+  prompt: text("prompt").notNull(), // Main image generation prompt
+  negativePrompt: text("negative_prompt").notNull(), // Elements to avoid
+  headlineText: text("headline_text").notNull(), // Display headline
+  stylePreset: text("style_preset", {
+    enum: ["typographic_minimal", "gradient_text", "dark_mode", "accent_bar", "abstract_shapes"],
+  }).notNull(),
+  // Legacy fields (kept for backward compatibility, nullable)
+  visualStyle: text("visual_style"),
+  background: text("background"),
+  mood: text("mood"),
+  layoutHint: text("layout_hint"),
 });
 
 // Types
