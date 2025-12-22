@@ -12,6 +12,7 @@ const ANGLES = [
   { id: "identity_validation", label: "Identity Validation", description: "Makes outliers feel seen" },
   { id: "provocateur", label: "Provocateur", description: "Stirs debate with edgy takes" },
   { id: "synthesizer", label: "Synthesizer", description: "Connects dots across domains" },
+  { id: "curious_cat", label: "Curious Cat", description: "Asks probing questions without answering" },
 ] as const;
 
 type AngleId = typeof ANGLES[number]["id"];
@@ -86,7 +87,7 @@ export default function GeneratePage() {
           <h1 className="text-2xl font-bold mb-2">Generate posts</h1>
           <p className="text-neutral-600 dark:text-neutral-400 mb-8">
             Paste your podcast transcript below. We&apos;ll extract insights and generate
-            posts across multiple angles (up to {selectedAngles.length * 5 * 3} posts).
+            posts across multiple angles (up to {selectedAngles.length * 2 * 3} posts).
           </p>
 
           <form onSubmit={handleSubmit} className="space-y-6">
@@ -158,7 +159,7 @@ export default function GeneratePage() {
                 ))}
               </div>
               <p className="text-xs text-neutral-500 mt-2">
-                Each angle generates 5 versions per insight. More angles = more options to choose from.
+                Each angle generates 2 versions per insight. More angles = more options to choose from.
               </p>
             </div>
 
