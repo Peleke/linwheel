@@ -2,6 +2,7 @@ import Link from "next/link";
 import { db } from "@/db";
 import { generationRuns } from "@/db/schema";
 import { desc } from "drizzle-orm";
+import { ClearRunsButton } from "@/components/clear-runs-button";
 
 export default async function ResultsListPage() {
   // Fetch all runs, most recent first
@@ -26,7 +27,10 @@ export default async function ResultsListPage() {
 
       <main className="flex-1">
         <div className="max-w-4xl mx-auto px-6 py-12">
-          <h1 className="text-2xl font-bold mb-2">Your Generations</h1>
+          <div className="flex justify-between items-start mb-2">
+            <h1 className="text-2xl font-bold">Your Generations</h1>
+            <ClearRunsButton runCount={runs.length} />
+          </div>
           <p className="text-neutral-600 dark:text-neutral-400 mb-8">
             Browse and manage your generated LinkedIn posts.
           </p>
