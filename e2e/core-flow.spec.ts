@@ -156,12 +156,12 @@ test.describe("Flow 1: Generation", () => {
 
     await page.getByLabel("Transcript").fill("Some content");
 
-    // Default: all 6 angles
-    await expect(page.getByRole("button", { name: /Generate posts \(6 angles\)/i })).toBeVisible();
+    // Default: all 7 angles
+    await expect(page.getByRole("button", { name: /Generate posts \(7 angles\)/i })).toBeVisible();
 
     // Deselect one
     await page.locator('input[type="checkbox"]').first().click();
-    await expect(page.getByRole("button", { name: /Generate posts \(5 angles\)/i })).toBeVisible();
+    await expect(page.getByRole("button", { name: /Generate posts \(6 angles\)/i })).toBeVisible();
   });
 
   test.skip("1.7 - completed generation shows posts", async ({ page }) => {
@@ -301,7 +301,7 @@ test.describe("Flow 2: Results List", () => {
 // FLOW 3: ANGLE SELECTION
 // ============================================================================
 test.describe("Flow 3: Angle Selection", () => {
-  test("3.1 - all 6 angles shown with labels", async ({ page }) => {
+  test("3.1 - all 7 angles shown with labels", async ({ page }) => {
     await page.goto("/generate");
 
     const angles = [
@@ -310,7 +310,8 @@ test.describe("Flow 3: Angle Selection", () => {
       "Demystification",
       "Identity Validation",
       "Provocateur",
-      "Synthesizer"
+      "Synthesizer",
+      "Curious Cat"
     ];
 
     for (const angle of angles) {
@@ -322,9 +323,9 @@ test.describe("Flow 3: Angle Selection", () => {
     await page.goto("/generate");
 
     const checkboxes = page.locator('input[type="checkbox"]');
-    await expect(checkboxes).toHaveCount(6);
+    await expect(checkboxes).toHaveCount(7);
 
-    for (let i = 0; i < 6; i++) {
+    for (let i = 0; i < 7; i++) {
       await expect(checkboxes.nth(i)).toBeChecked();
     }
   });
@@ -350,7 +351,7 @@ test.describe("Flow 3: Angle Selection", () => {
     await page.getByRole("button", { name: "Clear" }).click();
 
     const checkboxes = page.locator('input[type="checkbox"]');
-    for (let i = 0; i < 6; i++) {
+    for (let i = 0; i < 7; i++) {
       await expect(checkboxes.nth(i)).not.toBeChecked();
     }
   });
@@ -365,7 +366,7 @@ test.describe("Flow 3: Angle Selection", () => {
     await page.getByRole("button", { name: "Select all" }).click();
 
     const checkboxes = page.locator('input[type="checkbox"]');
-    for (let i = 0; i < 6; i++) {
+    for (let i = 0; i < 7; i++) {
       await expect(checkboxes.nth(i)).toBeChecked();
     }
   });
@@ -581,14 +582,129 @@ test.describe("Flow 9: Form UX", () => {
   test("9.2 - post count estimate updates with angle selection", async ({ page }) => {
     await page.goto("/generate");
 
-    // With all 6 angles: 6 * 5 * 3 = 90 posts max
-    await expect(page.getByText(/up to 90 posts/i)).toBeVisible();
+    // With all 7 angles: 7 * 2 * 3 = 42 posts max
+    await expect(page.getByText(/up to 42 posts/i)).toBeVisible();
 
-    // Clear 3 angles: 3 * 5 * 3 = 45 posts max
+    // Clear 3 angles: 4 * 2 * 3 = 24 posts max
     await page.locator('input[type="checkbox"]').nth(0).click();
     await page.locator('input[type="checkbox"]').nth(1).click();
     await page.locator('input[type="checkbox"]').nth(2).click();
 
-    await expect(page.getByText(/up to 45 posts/i)).toBeVisible();
+    await expect(page.getByText(/up to 24 posts/i)).toBeVisible();
+  });
+});
+
+// ============================================================================
+// FLOW 10: DELETE INDIVIDUAL RUNS
+// ============================================================================
+test.describe("Flow 10: Delete Individual Runs", () => {
+  test("10.1 - delete button shows on run cards in results list", async ({ page }) => {
+    // Create a run first
+    await page.goto("/generate");
+    await page.getByLabel("Source label").fill("Delete Test Run");
+    await page.getByLabel("Transcript").fill(SAMPLE_TRANSCRIPT);
+    await page.getByRole("button", { name: /Generate posts/i }).click();
+    await expect(page).toHaveURL(/\/results\/[\w-]+/, { timeout: 10000 });
+
+    // Go to results list
+    await page.goto("/results");
+
+    // Delete button should be visible
+    await expect(page.getByRole("button", { name: "Delete" }).first()).toBeVisible();
+  });
+
+  test("10.2 - delete button shows confirmation dialog", async ({ page }) => {
+    // Create a run first
+    await page.goto("/generate");
+    await page.getByLabel("Transcript").fill(SAMPLE_TRANSCRIPT);
+    await page.getByRole("button", { name: /Generate posts/i }).click();
+    await expect(page).toHaveURL(/\/results\/[\w-]+/, { timeout: 10000 });
+
+    // Go to results list
+    await page.goto("/results");
+
+    // Click delete on first run
+    await page.getByRole("button", { name: "Delete" }).first().click();
+
+    // Should show confirmation
+    await expect(page.getByText("Delete this run?")).toBeVisible();
+    await expect(page.getByRole("button", { name: "Confirm" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Cancel" })).toBeVisible();
+  });
+
+  test("10.3 - cancel hides confirmation dialog", async ({ page }) => {
+    await page.goto("/generate");
+    await page.getByLabel("Transcript").fill(SAMPLE_TRANSCRIPT);
+    await page.getByRole("button", { name: /Generate posts/i }).click();
+    await expect(page).toHaveURL(/\/results\/[\w-]+/, { timeout: 10000 });
+
+    await page.goto("/results");
+    await page.getByRole("button", { name: "Delete" }).first().click();
+
+    // Cancel should hide the dialog
+    await page.getByRole("button", { name: "Cancel" }).click();
+    await expect(page.getByRole("button", { name: "Delete" }).first()).toBeVisible();
+  });
+
+  test("10.4 - confirming delete removes the run", async ({ page }) => {
+    // Create a run with unique name
+    const uniqueName = `To Delete ${Date.now()}`;
+    await page.goto("/generate");
+    await page.getByLabel("Source label").fill(uniqueName);
+    await page.getByLabel("Transcript").fill(SAMPLE_TRANSCRIPT);
+    await page.getByRole("button", { name: /Generate posts/i }).click();
+    await expect(page).toHaveURL(/\/results\/[\w-]+/, { timeout: 10000 });
+
+    // Go to results and verify run exists
+    await page.goto("/results");
+    await expect(page.getByText(uniqueName)).toBeVisible();
+
+    // Find and click delete for this specific run
+    const runCard = page.locator("div").filter({ hasText: uniqueName }).first();
+    await runCard.getByRole("button", { name: "Delete" }).click();
+    await page.getByRole("button", { name: "Confirm" }).click();
+
+    // Run should be removed (page should refresh)
+    await expect(page.getByText(uniqueName)).not.toBeVisible({ timeout: 5000 });
+  });
+
+  test("10.5 - delete button on dashboard redirects to results list", async ({ page }) => {
+    // Create a run
+    await page.goto("/generate");
+    await page.getByLabel("Transcript").fill(SAMPLE_TRANSCRIPT);
+    await page.getByRole("button", { name: /Generate posts/i }).click();
+    await expect(page).toHaveURL(/\/results\/[\w-]+/, { timeout: 10000 });
+
+    // Dashboard should have delete button
+    await expect(page.getByRole("button", { name: "Delete" })).toBeVisible();
+
+    // Click delete and confirm
+    await page.getByRole("button", { name: "Delete" }).click();
+    await page.getByRole("button", { name: "Confirm" }).click();
+
+    // Should redirect to results list
+    await expect(page).toHaveURL("/results", { timeout: 5000 });
+  });
+});
+
+// ============================================================================
+// FLOW 11: GENERATE MORE
+// ============================================================================
+test.describe("Flow 11: Generate More", () => {
+  test.skip("11.1 - generate more button visible in angle buckets (requires completed run)", async ({ page }) => {
+    // REQUIRES COMPLETED RUN WITH POSTS
+    // When implemented, should test:
+    // - Generate more button visible in each angle bucket header
+    // - Clicking opens modal
+    // - Can select count (1, 2, 3, 5)
+    // - Cancel closes modal
+  });
+
+  test.skip("11.2 - generate more creates new posts (requires LLM)", async ({ page }) => {
+    // REQUIRES LLM
+    // When implemented, should test:
+    // - Select count and confirm
+    // - New posts appear in the angle bucket
+    // - Version numbers increment correctly
   });
 });

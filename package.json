@@ -12,7 +12,9 @@
     "db:studio": "drizzle-kit studio",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
-    "test:e2e:headed": "playwright test --headed"
+    "test:e2e:headed": "playwright test --headed",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "dependencies": {
     "@langchain/core": "^1.1.7",
@@ -32,12 +34,14 @@
     "@types/node": "^25.0.3",
     "@types/react": "^19.2.3",
     "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^5.1.2",
     "autoprefixer": "^10.4.23",
     "drizzle-kit": "^0.31.8",
     "eslint": "^9.39.2",
     "eslint-config-next": "^16.1.0",
     "postcss": "^8.5.6",
     "tailwindcss": "^4.1.18",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "vitest": "^4.0.16"
   }
 }
