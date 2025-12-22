@@ -1,5 +1,17 @@
 import { sqliteTable, text, integer } from "drizzle-orm/sqlite-core";
 
+// Post angle types - 6 distinct content angles
+export const POST_ANGLES = [
+  "contrarian",
+  "field_note",
+  "demystification",
+  "identity_validation",
+  "provocateur",
+  "synthesizer",
+] as const;
+
+export type PostAngle = typeof POST_ANGLES[number];
+
 // Generation runs table
 export const generationRuns = sqliteTable("generation_runs", {
   id: text("id").primaryKey(),
@@ -8,6 +20,8 @@ export const generationRuns = sqliteTable("generation_runs", {
   status: text("status", { enum: ["pending", "processing", "complete", "failed"] }).notNull().default("pending"),
   postCount: integer("post_count").default(0),
   error: text("error"),
+  // Multi-angle: which angles were selected for this run
+  selectedAngles: text("selected_angles", { mode: "json" }).$type<PostAngle[]>(),
 });
 
 // Insights table
@@ -30,9 +44,13 @@ export const linkedinPosts = sqliteTable("linkedin_posts", {
   bodyBeats: text("body_beats", { mode: "json" }).$type<string[]>().notNull(),
   openQuestion: text("open_question").notNull(),
   postType: text("post_type", {
-    enum: ["contrarian", "field_note", "demystification", "identity_validation"]
+    enum: POST_ANGLES
   }).notNull(),
   fullText: text("full_text").notNull(),
+  // Multi-angle: version number (1-5) within each angle
+  versionNumber: integer("version_number").default(1),
+  // Approval workflow
+  approved: integer("approved", { mode: "boolean" }).default(false),
 });
 
 // Image intents table
