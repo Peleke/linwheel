@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
-import { generationRuns, insights, linkedinPosts, imageIntents } from "@/db/schema";
+import { generationRuns, insights, linkedinPosts, imageIntents, POST_ANGLES, type PostAngle } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { runPipeline } from "@/lib/generate";
 import { randomUUID } from "crypto";
@@ -8,7 +8,7 @@ import { randomUUID } from "crypto";
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { transcript, sourceLabel } = body;
+    const { transcript, sourceLabel, selectedAngles: rawSelectedAngles } = body;
 
     if (!transcript || typeof transcript !== "string") {
       return NextResponse.json(
@@ -17,6 +17,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Validate and filter selected angles (default to all)
+    const selectedAngles: PostAngle[] = Array.isArray(rawSelectedAngles)
+      ? rawSelectedAngles.filter((a): a is PostAngle => POST_ANGLES.includes(a))
+      : [...POST_ANGLES];
+
     // Create run record
     const runId = randomUUID();
     await db.insert(generationRuns).values({
@@ -24,12 +29,16 @@ export async function POST(request: NextRequest) {
       createdAt: new Date(),
       sourceLabel: sourceLabel || "Untitled",
       status: "processing",
+      selectedAngles,
     });
 
-    // Run pipeline in background (for MVP, we'll do it synchronously)
-    // In production, this would be a background job
+    // Run pipeline (synchronously for MVP; would be background job in production)
     try {
-      const result = await runPipeline(transcript, 5);
+      const result = await runPipeline(transcript, {
+        maxInsights: 3,
+        selectedAngles,
+        versionsPerAngle: 5,
+      });
 
       // Save insights
       const insightRecords: { id: string; claim: string }[] = [];
@@ -61,8 +70,10 @@ export async function POST(request: NextRequest) {
           hook: post.hook,
           bodyBeats: post.body_beats,
           openQuestion: post.open_question,
-          postType: post.post_type,
+          postType: post.angle, // angle is now the post type
           fullText: post.full_text,
+          versionNumber: post.versionNumber,
+          approved: false,
         });
 
         await db.insert(imageIntents).values({
