@@ -1,0 +1,104 @@
+import { NextRequest, NextResponse } from "next/server";
+import { db } from "@/db";
+import { generationRuns, insights, linkedinPosts, imageIntents } from "@/db/schema";
+import { eq } from "drizzle-orm";
+import { runPipeline } from "@/lib/generate";
+import { randomUUID } from "crypto";
+
+export async function POST(request: NextRequest) {
+  try {
+    const body = await request.json();
+    const { transcript, sourceLabel } = body;
+
+    if (!transcript || typeof transcript !== "string") {
+      return NextResponse.json(
+        { error: "Transcript is required" },
+        { status: 400 }
+      );
+    }
+
+    // Create run record
+    const runId = randomUUID();
+    await db.insert(generationRuns).values({
+      id: runId,
+      createdAt: new Date(),
+      sourceLabel: sourceLabel || "Untitled",
+      status: "processing",
+    });
+
+    // Run pipeline in background (for MVP, we'll do it synchronously)
+    // In production, this would be a background job
+    try {
+      const result = await runPipeline(transcript, 5);
+
+      // Save insights
+      const insightRecords: { id: string; claim: string }[] = [];
+      for (const insight of result.insights) {
+        const insightId = randomUUID();
+        await db.insert(insights).values({
+          id: insightId,
+          runId,
+          topic: insight.topic,
+          claim: insight.claim,
+          whyItMatters: insight.why_it_matters,
+          misconception: insight.misconception,
+          professionalImplication: insight.professional_implication,
+        });
+        insightRecords.push({ id: insightId, claim: insight.claim });
+      }
+
+      // Save posts and image intents
+      for (const post of result.posts) {
+        const postId = randomUUID();
+        const insightRecord = insightRecords.find(
+          (i) => i.claim === post.insight.claim
+        );
+
+        await db.insert(linkedinPosts).values({
+          id: postId,
+          insightId: insightRecord?.id || randomUUID(),
+          runId,
+          hook: post.hook,
+          bodyBeats: post.body_beats,
+          openQuestion: post.open_question,
+          postType: post.post_type,
+          fullText: post.full_text,
+        });
+
+        await db.insert(imageIntents).values({
+          id: randomUUID(),
+          postId,
+          headlineText: post.imageIntent.headline_text,
+          visualStyle: post.imageIntent.visual_style,
+          background: post.imageIntent.background,
+          mood: post.imageIntent.mood,
+          layoutHint: post.imageIntent.layout_hint,
+        });
+      }
+
+      // Update run status
+      await db
+        .update(generationRuns)
+        .set({ status: "complete", postCount: result.posts.length })
+        .where(eq(generationRuns.id, runId));
+
+    } catch (pipelineError) {
+      console.error("Pipeline error:", pipelineError);
+      await db
+        .update(generationRuns)
+        .set({
+          status: "failed",
+          error: pipelineError instanceof Error ? pipelineError.message : "Unknown error",
+        })
+        .where(eq(generationRuns.id, runId));
+    }
+
+    return NextResponse.json({ runId });
+  } catch (error) {
+    console.error("Generate error:", error);
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
+  }
+}
