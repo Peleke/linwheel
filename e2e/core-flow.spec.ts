@@ -20,13 +20,13 @@ test.describe("Core Generation Flow", () => {
     await expect(page.getByRole("heading", { name: "Generate posts" })).toBeVisible();
     await expect(page.getByLabel("Source label")).toBeVisible();
     await expect(page.getByLabel("Transcript")).toBeVisible();
-    await expect(page.getByRole("button", { name: "Generate posts" })).toBeVisible();
+    await expect(page.getByRole("button", { name: /Generate posts/i })).toBeVisible();
   });
 
   test("disables submit button when transcript is empty", async ({ page }) => {
     await page.goto("/generate");
 
-    const submitButton = page.getByRole("button", { name: "Generate posts" });
+    const submitButton = page.getByRole("button", { name: /Generate posts/i });
     await expect(submitButton).toBeDisabled();
   });
 
@@ -35,7 +35,7 @@ test.describe("Core Generation Flow", () => {
 
     await page.getByLabel("Transcript").fill("Some content here");
 
-    const submitButton = page.getByRole("button", { name: "Generate posts" });
+    const submitButton = page.getByRole("button", { name: /Generate posts/i });
     await expect(submitButton).toBeEnabled();
   });
 
@@ -46,14 +46,14 @@ test.describe("Core Generation Flow", () => {
     await page.getByLabel("Source label").fill("Test Episode");
     await page.getByLabel("Transcript").fill(SAMPLE_TRANSCRIPT);
 
-    // Submit
-    await page.getByRole("button", { name: "Generate posts" }).click();
+    // Submit - button text includes angle count
+    await page.getByRole("button", { name: /Generate posts/i }).click();
 
     // Should show loading state with progress
-    await expect(page.getByRole("button")).toContainText(/Generating|Chunking|Extracting/);
+    await expect(page.getByText(/Chunking/i)).toBeVisible({ timeout: 5000 });
 
-    // Button should be disabled during loading
-    await expect(page.getByRole("button", { name: /Generating|Chunking|Extracting/ })).toBeDisabled();
+    // Submit button should be disabled during loading
+    await expect(page.getByRole("button", { name: /Chunking|Extracting|Generating/i })).toBeDisabled();
   });
 
   test.skip("completes generation and redirects to results", async ({ page }) => {

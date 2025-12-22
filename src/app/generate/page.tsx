@@ -18,13 +18,44 @@ const STAGE_DURATIONS = {
   generating: 15000,
 };
 
+// Angle configuration
+const ANGLES = [
+  { id: "contrarian", label: "Contrarian", description: "Challenges widely-held beliefs" },
+  { id: "field_note", label: "Field Note", description: "Observations from real work" },
+  { id: "demystification", label: "Demystification", description: "Strips glamour from sacred cows" },
+  { id: "identity_validation", label: "Identity Validation", description: "Makes outliers feel seen" },
+  { id: "provocateur", label: "Provocateur", description: "Stirs debate with edgy takes" },
+  { id: "synthesizer", label: "Synthesizer", description: "Connects dots across domains" },
+] as const;
+
+type AngleId = typeof ANGLES[number]["id"];
+
 export default function GeneratePage() {
   const router = useRouter();
   const [transcript, setTranscript] = useState("");
   const [sourceLabel, setSourceLabel] = useState("");
+  const [selectedAngles, setSelectedAngles] = useState<AngleId[]>(
+    ANGLES.map(a => a.id) // All selected by default
+  );
   const [isLoading, setIsLoading] = useState(false);
   const [loadingStage, setLoadingStage] = useState<LoadingStage>(null);
   const [error, setError] = useState<string | null>(null);
+
+  const toggleAngle = (angleId: AngleId) => {
+    setSelectedAngles(prev =>
+      prev.includes(angleId)
+        ? prev.filter(a => a !== angleId)
+        : [...prev, angleId]
+    );
+  };
+
+  const selectAllAngles = () => {
+    setSelectedAngles(ANGLES.map(a => a.id));
+  };
+
+  const clearAllAngles = () => {
+    setSelectedAngles([]);
+  };
 
   // Progress through loading stages
   useEffect(() => {
@@ -61,6 +92,7 @@ export default function GeneratePage() {
         body: JSON.stringify({
           transcript,
           sourceLabel: sourceLabel || "Untitled",
+          selectedAngles,
         }),
       });
 
@@ -91,7 +123,7 @@ export default function GeneratePage() {
           <h1 className="text-2xl font-bold mb-2">Generate posts</h1>
           <p className="text-neutral-600 dark:text-neutral-400 mb-8">
             Paste your podcast transcript below. We&apos;ll extract insights and generate
-            4-5 ready-to-publish LinkedIn posts.
+            posts across multiple angles (up to {selectedAngles.length * 5 * 3} posts).
           </p>
 
           <form onSubmit={handleSubmit} className="space-y-6">
@@ -108,6 +140,63 @@ export default function GeneratePage() {
                 disabled={isLoading}
                 className="w-full px-4 py-2 border border-neutral-300 dark:border-neutral-700 rounded-lg bg-transparent focus:outline-none focus:ring-2 focus:ring-neutral-900 dark:focus:ring-white disabled:opacity-50 disabled:cursor-not-allowed"
               />
+            </div>
+
+            {/* Angle selection */}
+            <div>
+              <div className="flex justify-between items-center mb-3">
+                <label className="block text-sm font-medium">
+                  Content angles
+                </label>
+                <div className="flex gap-2 text-xs">
+                  <button
+                    type="button"
+                    onClick={selectAllAngles}
+                    disabled={isLoading}
+                    className="text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-white disabled:opacity-50"
+                  >
+                    Select all
+                  </button>
+                  <span className="text-neutral-300 dark:text-neutral-700">|</span>
+                  <button
+                    type="button"
+                    onClick={clearAllAngles}
+                    disabled={isLoading}
+                    className="text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-white disabled:opacity-50"
+                  >
+                    Clear
+                  </button>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                {ANGLES.map((angle) => (
+                  <label
+                    key={angle.id}
+                    className={`flex items-start gap-3 p-3 border rounded-lg cursor-pointer transition-colors ${
+                      selectedAngles.includes(angle.id)
+                        ? "border-neutral-900 bg-neutral-50 dark:border-white dark:bg-neutral-900"
+                        : "border-neutral-200 dark:border-neutral-700 hover:border-neutral-400 dark:hover:border-neutral-500"
+                    } ${isLoading ? "opacity-50 cursor-not-allowed" : ""}`}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={selectedAngles.includes(angle.id)}
+                      onChange={() => toggleAngle(angle.id)}
+                      disabled={isLoading}
+                      className="mt-1 rounded border-neutral-300 text-neutral-900 focus:ring-neutral-900 dark:border-neutral-600 dark:bg-neutral-800 dark:text-white dark:focus:ring-white"
+                    />
+                    <div className="flex-1 min-w-0">
+                      <span className="text-sm font-medium block">{angle.label}</span>
+                      <span className="text-xs text-neutral-500 block truncate">
+                        {angle.description}
+                      </span>
+                    </div>
+                  </label>
+                ))}
+              </div>
+              <p className="text-xs text-neutral-500 mt-2">
+                Each angle generates 5 versions per insight. More angles = more options to choose from.
+              </p>
             </div>
 
             <div>
@@ -137,12 +226,14 @@ export default function GeneratePage() {
 
             <button
               type="submit"
-              disabled={isLoading || !transcript.trim()}
+              disabled={isLoading || !transcript.trim() || selectedAngles.length === 0}
               className="w-full px-6 py-3 bg-neutral-900 text-white rounded-lg font-medium hover:bg-neutral-800 dark:bg-white dark:text-neutral-900 dark:hover:bg-neutral-100 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isLoading && loadingStage
                 ? STAGE_LABELS[loadingStage]
-                : "Generate posts"}
+                : selectedAngles.length === 0
+                  ? "Select at least one angle"
+                  : `Generate posts (${selectedAngles.length} angles)`}
             </button>
           </form>
         </div>
