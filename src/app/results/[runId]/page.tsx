@@ -257,6 +257,43 @@ export default async function ResultsDashboardPage({ params }: Props) {
               </div>
             )}
 
+            {/* Empty state: completed but no content generated */}
+            {run.status === "complete" && posts.length === 0 && articleRecords.length === 0 && (
+              <div className="p-6 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg">
+                <div className="flex items-start gap-4">
+                  <span className="text-3xl">🔍</span>
+                  <div className="flex-1">
+                    <h3 className="font-semibold text-amber-800 dark:text-amber-300 mb-2">
+                      No insights found in this content
+                    </h3>
+                    <p className="text-amber-700 dark:text-amber-400 text-sm mb-4">
+                      The AI couldn&apos;t extract any actionable insights from the provided transcript.
+                      This can happen when the content is too short, too general, or lacks specific
+                      claims or observations that would make compelling LinkedIn posts.
+                    </p>
+                    <div className="text-amber-600 dark:text-amber-500 text-sm space-y-2">
+                      <p className="font-medium">Tips for better results:</p>
+                      <ul className="list-disc list-inside space-y-1 ml-2">
+                        <li>Use longer, more detailed transcripts (5+ minutes of conversation)</li>
+                        <li>Ensure the content includes specific claims, opinions, or insights</li>
+                        <li>Include real examples, data points, or contrarian takes</li>
+                        <li>Conversations with back-and-forth discussion work best</li>
+                      </ul>
+                    </div>
+                    <div className="mt-4 flex gap-3">
+                      <Link
+                        href="/generate"
+                        className="inline-flex items-center gap-2 px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white text-sm font-medium rounded-lg transition-colors"
+                      >
+                        Try with different content
+                      </Link>
+                      <RetryButton runId={runId} />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Collapsible original transcript */}
             {run.transcript && (
               <details className="border border-neutral-200 dark:border-neutral-800 rounded-lg overflow-hidden">

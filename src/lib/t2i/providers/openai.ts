@@ -6,6 +6,7 @@
  */
 
 import OpenAI from "openai";
+import type { ImagesResponse } from "openai/resources/images";
 import type {
   T2IProvider,
   ImageGenerationRequest,
@@ -28,11 +29,20 @@ const STYLE_PROMPTS: Record<StylePreset, string> = {
 };
 
 // Size mappings for LinkedIn aspect ratios
-const SIZE_MAPPINGS = {
-  "1.91:1": "1792x1024", // LinkedIn cover image (approximate)
+// DALL-E 3 supports: 1024x1024, 1024x1792, 1792x1024
+// gpt-image-1 supports: 1024x1024, 1024x1536, 1536x1024, auto
+const SIZE_MAPPINGS_DALLE = {
+  "1.91:1": "1792x1024", // LinkedIn cover image
   "16:9": "1792x1024",
   "1:1": "1024x1024",
-  "4:5": "1024x1280",
+  "4:5": "1024x1792",
+} as const;
+
+const SIZE_MAPPINGS_GPT_IMAGE = {
+  "1.91:1": "1536x1024", // Closest to LinkedIn cover (1.5:1)
+  "16:9": "1536x1024",
+  "1:1": "1024x1024",
+  "4:5": "1024x1536",
 } as const;
 
 export class OpenAIImageProvider implements T2IProvider {
@@ -60,19 +70,30 @@ export class OpenAIImageProvider implements T2IProvider {
       const stylePrompt = STYLE_PROMPTS[request.stylePreset];
       const fullPrompt = this.buildPrompt(request, stylePrompt);
 
-      // Determine size based on aspect ratio
-      const aspectRatio = request.aspectRatio || "1.91:1";
-      const size = SIZE_MAPPINGS[aspectRatio] || "1792x1024";
+      // Check if using DALL-E or gpt-image model
+      const isDallE = this.model.startsWith("dall-e");
 
-      // Call OpenAI Image Generation API
-      const response = await this.client.images.generate({
+      // Determine size based on aspect ratio and model
+      const aspectRatio = request.aspectRatio || "1.91:1";
+      const sizeMappings = isDallE ? SIZE_MAPPINGS_DALLE : SIZE_MAPPINGS_GPT_IMAGE;
+      const defaultSize = isDallE ? "1792x1024" : "1536x1024";
+      const size = sizeMappings[aspectRatio as keyof typeof sizeMappings] || defaultSize;
+
+      const generateParams: Parameters<typeof this.client.images.generate>[0] = {
         model: this.model,
         prompt: fullPrompt,
         n: 1,
         size: size as "1024x1024" | "1792x1024" | "1024x1792",
-        quality: request.quality === "hd" ? "hd" : "standard",
-        response_format: "url",
-      });
+      };
+
+      // Add DALL-E specific params if applicable
+      if (isDallE) {
+        generateParams.quality = request.quality === "hd" ? "hd" : "standard";
+        generateParams.response_format = "url";
+      }
+
+      // Cast to ImagesResponse since we're not using streaming
+      const response = (await this.client.images.generate(generateParams)) as ImagesResponse;
 
       const imageData = response.data?.[0];
 

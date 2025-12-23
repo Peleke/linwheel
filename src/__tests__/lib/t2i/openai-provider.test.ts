@@ -89,16 +89,20 @@ describe("OpenAI Image Provider", () => {
         const provider = new OpenAIImageProvider();
         await provider.generate(sampleRequest);
 
+        // gpt-image-1 uses 1536x1024 (doesn't support 1792x1024)
         expect(mockGenerate).toHaveBeenCalledWith(
           expect.objectContaining({
             model: expect.any(String),
             prompt: expect.stringContaining("LinkedIn cover image"),
             n: 1,
-            size: "1792x1024",
-            quality: "hd",
-            response_format: "url",
+            size: "1536x1024",
           })
         );
+
+        // Verify DALL-E specific params are NOT included for gpt-image-1
+        const callArgs = mockGenerate.mock.calls[0][0];
+        expect(callArgs.response_format).toBeUndefined();
+        expect(callArgs.quality).toBeUndefined();
       });
 
       it("should include headline text in prompt", async () => {
@@ -161,12 +165,12 @@ describe("OpenAI Image Provider", () => {
         expect(result.error).toBe("No image URL returned from OpenAI");
       });
 
-      it("should use correct size for different aspect ratios", async () => {
+      it("should use correct size for different aspect ratios (gpt-image-1)", async () => {
         mockGenerate.mockResolvedValue({
           data: [{ url: "https://openai.com/image.png" }],
         });
 
-        const provider = new OpenAIImageProvider();
+        const provider = new OpenAIImageProvider(); // defaults to gpt-image-1
 
         // Test 1:1 aspect ratio
         await provider.generate({ ...sampleRequest, aspectRatio: "1:1" });
@@ -174,23 +178,50 @@ describe("OpenAI Image Provider", () => {
 
         mockGenerate.mockClear();
 
-        // Test 4:5 aspect ratio
+        // Test 4:5 aspect ratio - gpt-image-1 uses 1024x1536
         await provider.generate({ ...sampleRequest, aspectRatio: "4:5" });
-        expect(mockGenerate.mock.calls[0][0].size).toBe("1024x1280");
+        expect(mockGenerate.mock.calls[0][0].size).toBe("1024x1536");
       });
 
-      it("should use standard quality when specified", async () => {
+      it("should use DALL-E sizes for dall-e-3 model", async () => {
         mockGenerate.mockResolvedValue({
           data: [{ url: "https://openai.com/image.png" }],
         });
 
-        const provider = new OpenAIImageProvider();
+        const provider = new OpenAIImageProvider({ model: "dall-e-3" });
+
+        // DALL-E 3 uses 1792x1024 for LinkedIn cover ratio
+        await provider.generate({ ...sampleRequest, aspectRatio: "1.91:1" });
+        expect(mockGenerate.mock.calls[0][0].size).toBe("1792x1024");
+      });
+
+      it("should use standard quality when specified (DALL-E only)", async () => {
+        mockGenerate.mockResolvedValue({
+          data: [{ url: "https://openai.com/image.png" }],
+        });
+
+        // Quality param only applies to DALL-E models
+        const provider = new OpenAIImageProvider({ model: "dall-e-3" });
         await provider.generate({
           ...sampleRequest,
           quality: "standard",
         });
 
         expect(mockGenerate.mock.calls[0][0].quality).toBe("standard");
+      });
+
+      it("should not include quality param for gpt-image-1", async () => {
+        mockGenerate.mockResolvedValue({
+          data: [{ url: "https://openai.com/image.png" }],
+        });
+
+        const provider = new OpenAIImageProvider(); // defaults to gpt-image-1
+        await provider.generate({
+          ...sampleRequest,
+          quality: "hd",
+        });
+
+        expect(mockGenerate.mock.calls[0][0].quality).toBeUndefined();
       });
 
       it("should apply style preset to prompt", async () => {
