@@ -8,6 +8,15 @@ import { GENERATE_ARTICLE_IMAGE_INTENT_PROMPT } from "./prompts/article-image-in
 import { runWriterSupervisor } from "./agents/writer-supervisor";
 import { runArticleWriterSupervisor } from "./agents/article-writer-supervisor";
 import { POST_ANGLES, ARTICLE_ANGLES, type PostAngle, type ArticleAngle } from "@/db/schema";
+import {
+  fetchSources,
+  parseSources,
+  distillSourceInsights,
+  toExtractedInsights,
+  type FetchedSource,
+  type SourceSummary,
+  type DistilledInsight,
+} from "./sources";
 
 // Zod Schemas for structured output
 // Note: OpenAI structured output requires top-level to be an object, not array
@@ -121,6 +130,23 @@ export interface PipelineConfig {
   // Article options
   selectedArticleAngles?: ArticleAngle[];
   articleVersionsPerAngle?: number;
+  // Source links (optional)
+  sourceUrls?: string[];
+}
+
+// Source processing result (for database storage)
+export interface ProcessedSource {
+  id: string;
+  url: string;
+  title: string;
+  content: string;
+  summary: SourceSummary;
+}
+
+export interface SourceProcessingResult {
+  sources: ProcessedSource[];
+  distilledInsights: DistilledInsight[];
+  errors: { url: string; error: string }[];
 }
 
 // Post with all metadata
@@ -159,19 +185,76 @@ export interface PipelineResult {
   articles: EnrichedArticle[];
   articleAnglesGenerated: ArticleAngle[];
   totalArticles: number;
+  // Source processing results (when source URLs provided)
+  sourceProcessing?: SourceProcessingResult;
+}
+
+/**
+ * Process source URLs: fetch, parse, and distill insights
+ */
+async function processSourceUrls(
+  urls: string[],
+  transcriptInsights?: ExtractedInsight[]
+): Promise<SourceProcessingResult> {
+  console.log(`Processing ${urls.length} source URLs...`);
+
+  // Step 1: Fetch all sources
+  const { sources: fetchedSources, errors } = await fetchSources(urls);
+  console.log(`Fetched ${fetchedSources.length} sources, ${errors.length} errors`);
+
+  if (fetchedSources.length === 0) {
+    return {
+      sources: [],
+      distilledInsights: [],
+      errors,
+    };
+  }
+
+  // Step 2: Parse each source (generate IDs)
+  const sourcesWithIds = fetchedSources.map((source, idx) => ({
+    source,
+    sourceId: `source-${idx + 1}`,
+  }));
+
+  const summaries = await parseSources(sourcesWithIds);
+  console.log(`Parsed ${summaries.length} source summaries`);
+
+  // Step 3: Distill cross-source insights
+  const distilledInsights = await distillSourceInsights(summaries, transcriptInsights);
+  console.log(`Distilled ${distilledInsights.length} cross-source insights`);
+
+  // Build processed sources for storage
+  const processedSources: ProcessedSource[] = sourcesWithIds.map(({ source, sourceId }) => {
+    const summary = summaries.find((s) => s.sourceId === sourceId)!;
+    return {
+      id: sourceId,
+      url: source.url,
+      title: source.title,
+      content: source.content,
+      summary,
+    };
+  });
+
+  return {
+    sources: processedSources,
+    distilledInsights,
+    errors,
+  };
 }
 
 /**
  * Multi-angle content generation pipeline
  *
  * Flow:
- * 1. Chunk transcript into segments
- * 2. Extract insights from each chunk
- * 3. Deduplicate and select top insights
- * 4. For each insight:
+ * 1. (Optional) Fetch and process source URLs
+ * 2. Chunk transcript into segments (if provided)
+ * 3. Extract insights from each chunk
+ * 4. Combine with source-derived insights (if any)
+ * 5. Deduplicate and select top insights
+ * 6. For each insight:
  *    - Run writer supervisor for posts (7 angles × 2 versions)
  *    - Run article writer supervisor for articles (4 angles × 1 version)
- * 5. Generate image intents for each post and article
+ * 7. Generate image intents for each post and article
  */
 export async function runPipeline(
   transcript: string,
@@ -184,28 +267,48 @@ export async function runPipeline(
     // Article config - empty array means no articles
     selectedArticleAngles = [],
     articleVersionsPerAngle = 1,
+    // Source URLs (optional)
+    sourceUrls = [],
   } = config;
 
-  // Step 1: Chunk
-  console.log("Chunking transcript...");
-  const chunks = await chunkTranscript(transcript);
-  console.log(`Created ${chunks.length} chunks`);
+  let transcriptInsights: ExtractedInsight[] = [];
+  let sourceProcessing: SourceProcessingResult | undefined;
 
-  // Step 2: Extract insights from all chunks
-  console.log("Extracting insights...");
-  const allInsights: ExtractedInsight[] = [];
-  for (const chunk of chunks) {
-    const insights = await extractInsights(chunk);
-    allInsights.push(...insights);
+  // Step 1: Process transcript (if provided)
+  if (transcript && transcript.trim()) {
+    console.log("Chunking transcript...");
+    const chunks = await chunkTranscript(transcript);
+    console.log(`Created ${chunks.length} chunks`);
+
+    console.log("Extracting insights from transcript...");
+    for (const chunk of chunks) {
+      const insights = await extractInsights(chunk);
+      transcriptInsights.push(...insights);
+    }
+    console.log(`Extracted ${transcriptInsights.length} raw transcript insights`);
   }
-  console.log(`Extracted ${allInsights.length} raw insights`);
+
+  // Step 2: Process source URLs (if provided)
+  if (sourceUrls.length > 0) {
+    sourceProcessing = await processSourceUrls(sourceUrls, transcriptInsights);
+  }
+
+  // Step 3: Combine insights from all sources
+  let allInsights: ExtractedInsight[] = [...transcriptInsights];
+
+  // Add source-derived insights (converted to ExtractedInsight format)
+  if (sourceProcessing && sourceProcessing.distilledInsights.length > 0) {
+    const sourceInsights = toExtractedInsights(sourceProcessing.distilledInsights);
+    allInsights.push(...sourceInsights);
+    console.log(`Added ${sourceInsights.length} source-derived insights`);
+  }
 
   // Deduplicate and select top insights
   const uniqueInsights = deduplicateInsights(allInsights);
   const selectedInsights = uniqueInsights.slice(0, maxInsights);
-  console.log(`Selected ${selectedInsights.length} unique insights`);
+  console.log(`Selected ${selectedInsights.length} unique insights from ${allInsights.length} total`);
 
-  // Step 3: Generate posts using writer supervisor (parallel across angles)
+  // Step 4: Generate posts using writer supervisor (parallel across angles)
   console.log("Generating posts across angles...");
   const allPosts: EnrichedPost[] = [];
   const allArticles: EnrichedArticle[] = [];
@@ -263,6 +366,7 @@ export async function runPipeline(
     articles: allArticles,
     articleAnglesGenerated: selectedArticleAngles,
     totalArticles: allArticles.length,
+    sourceProcessing,
   };
 }
 

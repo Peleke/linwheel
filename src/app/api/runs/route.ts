@@ -2,7 +2,8 @@ import { NextResponse } from "next/server";
 import { db } from "@/db";
 import {
   generationRuns, insights, linkedinPosts, imageIntents,
-  articles, articleImageIntents
+  articles, articleImageIntents,
+  sourceLinks, sourceSummaries, distilledInsights
 } from "@/db/schema";
 import { inArray } from "drizzle-orm";
 
@@ -46,6 +47,11 @@ export async function DELETE() {
       await db.delete(articleImageIntents).where(inArray(articleImageIntents.articleId, articleIds));
       await db.delete(articles).where(inArray(articles.runId, runIds));
     }
+
+    // Delete source-related tables (must come before insights/generationRuns due to FK constraints)
+    await db.delete(distilledInsights).where(inArray(distilledInsights.runId, runIds));
+    await db.delete(sourceSummaries).where(inArray(sourceSummaries.runId, runIds));
+    await db.delete(sourceLinks).where(inArray(sourceLinks.runId, runIds));
 
     await db.delete(insights).where(inArray(insights.runId, runIds));
     await db.delete(generationRuns).where(inArray(generationRuns.id, runIds));

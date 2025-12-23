@@ -84,6 +84,42 @@ export const imageIntents = sqliteTable("image_intents", {
 // Style presets constant for reuse
 export const STYLE_PRESETS = ["typographic_minimal", "gradient_text", "dark_mode", "accent_bar", "abstract_shapes"] as const;
 
+// Source links table - external sources for content generation
+export const sourceLinks = sqliteTable("source_links", {
+  id: text("id").primaryKey(),
+  runId: text("run_id").notNull().references(() => generationRuns.id),
+  url: text("url").notNull(),
+  // Fetched content
+  title: text("title"),
+  rawContent: text("raw_content"),
+  fetchedAt: integer("fetched_at", { mode: "timestamp" }),
+  // Status
+  status: text("status", { enum: ["pending", "fetching", "fetched", "failed"] }).notNull().default("pending"),
+  error: text("error"),
+});
+
+// Source summaries table - parsed insights from each source
+export const sourceSummaries = sqliteTable("source_summaries", {
+  id: text("id").primaryKey(),
+  sourceLinkId: text("source_link_id").notNull().references(() => sourceLinks.id),
+  runId: text("run_id").notNull().references(() => generationRuns.id),
+  mainClaims: text("main_claims", { mode: "json" }).$type<string[]>().notNull(),
+  keyDetails: text("key_details", { mode: "json" }).$type<string[]>().notNull(),
+  impliedAssumptions: text("implied_assumptions", { mode: "json" }).$type<string[]>().notNull(),
+  relevanceToAIProfessionals: text("relevance_to_ai_professionals").notNull(),
+});
+
+// Distilled insights from source supervisor
+export const distilledInsights = sqliteTable("distilled_insights", {
+  id: text("id").primaryKey(),
+  runId: text("run_id").notNull().references(() => generationRuns.id),
+  theme: text("theme").notNull(),
+  synthesizedClaim: text("synthesized_claim").notNull(),
+  supportingSources: text("supporting_sources", { mode: "json" }).$type<string[]>().notNull(),
+  whyItMatters: text("why_it_matters").notNull(),
+  commonMisread: text("common_misread").notNull(),
+});
+
 // Articles table - long-form content (500-750 words)
 export const articles = sqliteTable("articles", {
   id: text("id").primaryKey(),
@@ -125,3 +161,9 @@ export type Article = typeof articles.$inferSelect;
 export type NewArticle = typeof articles.$inferInsert;
 export type ArticleImageIntent = typeof articleImageIntents.$inferSelect;
 export type NewArticleImageIntent = typeof articleImageIntents.$inferInsert;
+export type SourceLink = typeof sourceLinks.$inferSelect;
+export type NewSourceLink = typeof sourceLinks.$inferInsert;
+export type SourceSummary = typeof sourceSummaries.$inferSelect;
+export type NewSourceSummary = typeof sourceSummaries.$inferInsert;
+export type DistilledInsight = typeof distilledInsights.$inferSelect;
+export type NewDistilledInsight = typeof distilledInsights.$inferInsert;

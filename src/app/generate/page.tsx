@@ -31,12 +31,19 @@ export default function GeneratePage() {
   const router = useRouter();
   const [transcript, setTranscript] = useState("");
   const [sourceLabel, setSourceLabel] = useState("");
+  const [sourceLinks, setSourceLinks] = useState("");
   const [selectedAngles, setSelectedAngles] = useState<PostAngleId[]>(
     POST_ANGLES.map(a => a.id) // All selected by default
   );
   const [selectedArticleAngles, setSelectedArticleAngles] = useState<ArticleAngleId[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Parse source links (one URL per line)
+  const parsedSourceLinks = sourceLinks
+    .split("\n")
+    .map(line => line.trim())
+    .filter(line => line && (line.startsWith("http://") || line.startsWith("https://")));
 
   // Post angle toggles
   const toggleAngle = (angleId: PostAngleId) => {
@@ -90,6 +97,7 @@ export default function GeneratePage() {
           sourceLabel: sourceLabel || "Untitled",
           selectedAngles,
           selectedArticleAngles,
+          sourceUrls: parsedSourceLinks,
         }),
       });
 
@@ -109,6 +117,9 @@ export default function GeneratePage() {
 
   // Check if any content is selected
   const hasContentSelected = selectedAngles.length > 0 || selectedArticleAngles.length > 0;
+
+  // Check if we have any input (transcript or source links)
+  const hasInput = transcript.trim() || parsedSourceLinks.length > 0;
 
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-b from-neutral-50 via-white to-neutral-50 dark:from-neutral-950 dark:via-neutral-900 dark:to-neutral-950">
@@ -161,6 +172,41 @@ export default function GeneratePage() {
                   className="relative w-full px-4 py-3 border border-neutral-200 dark:border-neutral-700 rounded-xl bg-white dark:bg-neutral-900 focus:outline-none focus:ring-2 focus:ring-neutral-900 dark:focus:ring-white disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300"
                 />
               </div>
+            </motion.div>
+
+            {/* Source links section */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.15 }}
+              className="p-6 rounded-2xl bg-gradient-to-br from-emerald-50/50 via-teal-50/30 to-emerald-50/50 dark:from-emerald-900/10 dark:via-teal-900/5 dark:to-emerald-900/10 border border-emerald-200/50 dark:border-emerald-800/30"
+            >
+              <div className="flex justify-between items-center mb-4">
+                <label className="text-sm font-bold text-emerald-800 dark:text-emerald-300 flex items-center gap-2">
+                  <span className="text-lg">🔗</span>
+                  Source links <span className="text-emerald-500 dark:text-emerald-400 font-normal">(optional)</span>
+                </label>
+                {parsedSourceLinks.length > 0 && (
+                  <span className="text-xs px-2 py-1 rounded-full bg-emerald-200 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300">
+                    {parsedSourceLinks.length} link{parsedSourceLinks.length !== 1 ? "s" : ""} detected
+                  </span>
+                )}
+              </div>
+              <div className="relative group">
+                <div className="absolute -inset-0.5 bg-gradient-to-r from-emerald-300 via-teal-200 to-emerald-300 dark:from-emerald-700 dark:via-teal-600 dark:to-emerald-700 rounded-xl opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity duration-300 blur-sm" />
+                <textarea
+                  value={sourceLinks}
+                  onChange={(e) => setSourceLinks(e.target.value)}
+                  placeholder="Paste URLs here (one per line)&#10;https://example.com/article&#10;https://blog.example.com/post"
+                  rows={4}
+                  disabled={isSubmitting}
+                  className="relative w-full px-4 py-3 border border-emerald-200/70 dark:border-emerald-800/50 rounded-xl bg-white/80 dark:bg-neutral-900/80 font-mono text-sm focus:outline-none focus:ring-2 focus:ring-emerald-600 dark:focus:ring-emerald-400 resize-y disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300"
+                />
+              </div>
+              <p className="text-xs text-emerald-600 dark:text-emerald-400 mt-3 flex items-center gap-1">
+                <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                Add articles, blog posts, or documentation to enrich generated content with external insights.
+              </p>
             </motion.div>
 
             {/* Post angle selection */}
@@ -331,7 +377,6 @@ export default function GeneratePage() {
                   rows={16}
                   disabled={isSubmitting}
                   className="relative w-full px-4 py-4 border border-neutral-200 dark:border-neutral-700 rounded-xl bg-white dark:bg-neutral-900 font-mono text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900 dark:focus:ring-white resize-y disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300"
-                  required
                 />
               </div>
               <p className="text-sm text-neutral-500 mt-3 flex items-center gap-2">
@@ -361,27 +406,27 @@ export default function GeneratePage() {
             >
               <button
                 type="submit"
-                disabled={isSubmitting || !transcript.trim() || !hasContentSelected}
+                disabled={isSubmitting || !hasInput || !hasContentSelected}
                 className="group relative w-full overflow-hidden rounded-xl font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300"
               >
                 {/* Button background with gradient */}
                 <div className={`absolute inset-0 transition-all duration-300 ${
                   isSubmitting
                     ? "bg-gradient-to-r from-neutral-600 via-neutral-500 to-neutral-600 animate-pulse"
-                    : !hasContentSelected || !transcript.trim()
+                    : !hasContentSelected || !hasInput
                       ? "bg-neutral-300 dark:bg-neutral-700"
                       : "bg-gradient-to-r from-neutral-900 via-neutral-800 to-neutral-900 dark:from-white dark:via-neutral-100 dark:to-white group-hover:from-neutral-800 group-hover:via-neutral-700 group-hover:to-neutral-800 dark:group-hover:from-neutral-100 dark:group-hover:via-neutral-200 dark:group-hover:to-neutral-100"
                 }`} />
 
                 {/* Shimmer effect */}
-                {!isSubmitting && hasContentSelected && transcript.trim() && (
+                {!isSubmitting && hasContentSelected && hasInput && (
                   <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500">
                     <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-1000 bg-gradient-to-r from-transparent via-white/20 to-transparent" />
                   </div>
                 )}
 
                 <span className={`relative block px-6 py-4 ${
-                  isSubmitting || !hasContentSelected || !transcript.trim()
+                  isSubmitting || !hasContentSelected || !hasInput
                     ? "text-neutral-500 dark:text-neutral-400"
                     : "text-white dark:text-neutral-900"
                 }`}>
@@ -394,8 +439,10 @@ export default function GeneratePage() {
                     </span>
                   ) : !hasContentSelected ? (
                     "Select at least one angle"
+                  ) : !hasInput ? (
+                    "Add transcript or source links"
                   ) : (
-                    <span className="flex items-center justify-center gap-2">
+                    <span className="flex items-center justify-center gap-2 flex-wrap">
                       <span>Generate content</span>
                       {selectedAngles.length > 0 && (
                         <span className="px-2 py-0.5 rounded-full bg-white/20 dark:bg-neutral-900/20 text-xs">
@@ -405,6 +452,11 @@ export default function GeneratePage() {
                       {selectedArticleAngles.length > 0 && (
                         <span className="px-2 py-0.5 rounded-full bg-blue-500/30 dark:bg-blue-600/30 text-xs">
                           {selectedArticleAngles.length} articles
+                        </span>
+                      )}
+                      {parsedSourceLinks.length > 0 && (
+                        <span className="px-2 py-0.5 rounded-full bg-emerald-500/30 dark:bg-emerald-600/30 text-xs">
+                          {parsedSourceLinks.length} links
                         </span>
                       )}
                     </span>

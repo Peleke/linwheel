@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
 import {
   generationRuns, insights, linkedinPosts, imageIntents,
-  articles, articleImageIntents,
+  articles, articleImageIntents, sourceLinks, sourceSummaries, distilledInsights,
   POST_ANGLES, ARTICLE_ANGLES, type PostAngle, type ArticleAngle
 } from "@/db/schema";
 import { eq } from "drizzle-orm";
@@ -17,7 +17,8 @@ async function processGeneration(
   runId: string,
   transcript: string,
   selectedAngles: PostAngle[],
-  selectedArticleAngles: ArticleAngle[] = []
+  selectedArticleAngles: ArticleAngle[] = [],
+  sourceUrls: string[] = []
 ) {
   try {
     // Update status to processing
@@ -32,6 +33,7 @@ async function processGeneration(
       versionsPerAngle: 2, // Reduced from 5 to avoid rate limits
       selectedArticleAngles,
       articleVersionsPerAngle: 1, // 1 version per article angle
+      sourceUrls,
     });
 
     // Check if run still exists (could be deleted by "Clear all")
@@ -150,6 +152,60 @@ async function processGeneration(
       }
     }
 
+    // Save source processing results (if any)
+    if (result.sourceProcessing) {
+      const { sources, distilledInsights: distilled, errors } = result.sourceProcessing;
+
+      // Save source links and summaries
+      for (const source of sources) {
+        const sourceLinkId = randomUUID();
+        await db.insert(sourceLinks).values({
+          id: sourceLinkId,
+          runId,
+          url: source.url,
+          title: source.title,
+          rawContent: source.content,
+          fetchedAt: new Date(),
+          status: "fetched",
+        });
+
+        // Save source summary
+        await db.insert(sourceSummaries).values({
+          id: randomUUID(),
+          sourceLinkId,
+          runId,
+          mainClaims: source.summary.mainClaims,
+          keyDetails: source.summary.keyDetails,
+          impliedAssumptions: source.summary.impliedAssumptions,
+          relevanceToAIProfessionals: source.summary.relevanceToAIProfessionals,
+        });
+      }
+
+      // Save failed source links
+      for (const err of errors) {
+        await db.insert(sourceLinks).values({
+          id: randomUUID(),
+          runId,
+          url: err.url,
+          status: "failed",
+          error: err.error,
+        });
+      }
+
+      // Save distilled insights
+      for (const insight of distilled) {
+        await db.insert(distilledInsights).values({
+          id: randomUUID(),
+          runId,
+          theme: insight.theme,
+          synthesizedClaim: insight.synthesizedClaim,
+          supportingSources: insight.supportingSources,
+          whyItMatters: insight.whyItMatters,
+          commonMisread: insight.commonMisread,
+        });
+      }
+    }
+
     // Update run status to complete
     await db
       .update(generationRuns)
@@ -180,11 +236,19 @@ export async function POST(request: NextRequest) {
       sourceLabel,
       selectedAngles: rawSelectedAngles,
       selectedArticleAngles: rawSelectedArticleAngles,
+      sourceUrls: rawSourceUrls,
     } = body;
 
-    if (!transcript || typeof transcript !== "string") {
+    // Validate that we have at least transcript or source URLs
+    const hasTranscript = transcript && typeof transcript === "string" && transcript.trim();
+    const validSourceUrls = Array.isArray(rawSourceUrls)
+      ? rawSourceUrls.filter((url): url is string =>
+          typeof url === "string" && (url.startsWith("http://") || url.startsWith("https://")))
+      : [];
+
+    if (!hasTranscript && validSourceUrls.length === 0) {
       return NextResponse.json(
-        { error: "Transcript is required" },
+        { error: "Transcript or source URLs are required" },
         { status: 400 }
       );
     }
@@ -205,7 +269,7 @@ export async function POST(request: NextRequest) {
       id: runId,
       createdAt: new Date(),
       sourceLabel: sourceLabel || "Untitled",
-      transcript, // Store for display and regeneration
+      transcript: hasTranscript ? transcript : null, // Store for display and regeneration
       status: "pending",
       selectedAngles,
       selectedArticleAngles: selectedArticleAngles.length > 0 ? selectedArticleAngles : null,
@@ -213,7 +277,13 @@ export async function POST(request: NextRequest) {
 
     // Fire-and-forget: start processing without awaiting
     // In serverless (Vercel), would use waitUntil() here
-    processGeneration(runId, transcript, selectedAngles, selectedArticleAngles).catch((err) => {
+    processGeneration(
+      runId,
+      hasTranscript ? transcript : "",
+      selectedAngles,
+      selectedArticleAngles,
+      validSourceUrls
+    ).catch((err) => {
       console.error("Background processing error:", err);
     });
 
