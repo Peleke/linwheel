@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import ReactMarkdown from "react-markdown";
 import { ApprovalButtons } from "./approval-buttons";
 import { CopyButton } from "./copy-button";
-import { GenerateImageButton } from "./generate-image-button";
+import { ImagePreview } from "./image-preview";
 
 interface ArticleWithIntent {
   id: string;
@@ -233,13 +233,14 @@ export function ArticleCard({
                       {article.imageIntent.stylePreset}
                     </p>
                   </div>
-                  {/* Generate Image Button */}
+                  {/* Image Preview */}
                   <div className="mt-3">
-                    <GenerateImageButton
+                    <ImagePreview
                       intentId={article.imageIntent.id}
                       isArticle={true}
-                      existingImageUrl={article.imageIntent.generatedImageUrl}
+                      generatedImageUrl={article.imageIntent.generatedImageUrl}
                       headlineText={article.imageIntent.headlineText}
+                      isApproved={article.approved ?? false}
                     />
                   </div>
                 </motion.div>

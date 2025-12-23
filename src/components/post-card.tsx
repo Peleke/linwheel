@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import ReactMarkdown from "react-markdown";
 import { CopyButton } from "@/components/copy-button";
 import { ApprovalButtons } from "@/components/approval-buttons";
-import { GenerateImageButton } from "@/components/generate-image-button";
+import { ImagePreview } from "./image-preview";
 
 interface PostWithIntent {
   id: string;
@@ -174,13 +174,14 @@ export function PostCard({ post, runId }: PostCardProps) {
                       {post.imageIntent.stylePreset}
                     </p>
                   </div>
-                  {/* Generate Image Button */}
+                  {/* Image Preview */}
                   <div className="mt-3">
-                    <GenerateImageButton
+                    <ImagePreview
                       intentId={post.imageIntent.id}
                       isArticle={false}
-                      existingImageUrl={post.imageIntent.generatedImageUrl}
+                      generatedImageUrl={post.imageIntent.generatedImageUrl}
                       headlineText={post.imageIntent.headlineText}
+                      isApproved={post.approved ?? false}
                     />
                   </div>
                 </motion.div>
