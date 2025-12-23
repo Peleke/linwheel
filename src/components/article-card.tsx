@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import ReactMarkdown from "react-markdown";
 import { ApprovalButtons } from "./approval-buttons";
 import { CopyButton } from "./copy-button";
+import { GenerateImageButton } from "./generate-image-button";
 
 interface ArticleWithIntent {
   id: string;
@@ -18,10 +19,12 @@ interface ArticleWithIntent {
   versionNumber: number | null;
   approved: boolean | null;
   imageIntent?: {
+    id: string;
     headlineText: string;
     prompt: string;
     negativePrompt: string;
     stylePreset: string;
+    generatedImageUrl?: string | null;
   };
 }
 
@@ -229,6 +232,15 @@ export function ArticleCard({
                       <span className="text-slate-500">style: </span>
                       {article.imageIntent.stylePreset}
                     </p>
+                  </div>
+                  {/* Generate Image Button */}
+                  <div className="mt-3">
+                    <GenerateImageButton
+                      intentId={article.imageIntent.id}
+                      isArticle={true}
+                      existingImageUrl={article.imageIntent.generatedImageUrl}
+                      headlineText={article.imageIntent.headlineText}
+                    />
                   </div>
                 </motion.div>
               )}

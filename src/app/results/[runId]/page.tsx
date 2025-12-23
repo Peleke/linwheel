@@ -34,10 +34,12 @@ type PostWithIntent = {
   versionNumber: number | null;
   approved: boolean | null;
   imageIntent?: {
+    id: string;
     headlineText: string;
     prompt: string;
     negativePrompt: string;
     stylePreset: string;
+    generatedImageUrl?: string | null;
   };
 };
 
@@ -56,10 +58,12 @@ type ArticleWithIntent = {
   versionNumber: number | null;
   approved: boolean | null;
   imageIntent?: {
+    id: string;
     headlineText: string;
     prompt: string;
     negativePrompt: string;
     stylePreset: string;
+    generatedImageUrl?: string | null;
   };
 };
 
@@ -103,10 +107,12 @@ export default async function ResultsDashboardPage({ params }: Props) {
         versionNumber: post.versionNumber,
         approved: post.approved,
         imageIntent: intent ? {
+          id: intent.id,
           headlineText: intent.headlineText,
           prompt: intent.prompt,
           negativePrompt: intent.negativePrompt,
           stylePreset: intent.stylePreset,
+          generatedImageUrl: intent.generatedImageUrl,
         } : undefined,
       };
     })
@@ -135,10 +141,12 @@ export default async function ResultsDashboardPage({ params }: Props) {
         versionNumber: article.versionNumber,
         approved: article.approved,
         imageIntent: intent ? {
+          id: intent.id,
           headlineText: intent.headlineText,
           prompt: intent.prompt,
           negativePrompt: intent.negativePrompt,
           stylePreset: intent.stylePreset,
+          generatedImageUrl: intent.generatedImageUrl,
         } : undefined,
       };
     })

@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import ReactMarkdown from "react-markdown";
 import { CopyButton } from "@/components/copy-button";
 import { ApprovalButtons } from "@/components/approval-buttons";
+import { GenerateImageButton } from "@/components/generate-image-button";
 
 interface PostWithIntent {
   id: string;
@@ -14,10 +15,12 @@ interface PostWithIntent {
   versionNumber: number | null;
   approved: boolean | null;
   imageIntent?: {
+    id: string;
     headlineText: string;
     prompt: string;
     negativePrompt: string;
     stylePreset: string;
+    generatedImageUrl?: string | null;
   };
 }
 
@@ -170,6 +173,15 @@ export function PostCard({ post, runId }: PostCardProps) {
                       <span className="text-slate-500">style: </span>
                       {post.imageIntent.stylePreset}
                     </p>
+                  </div>
+                  {/* Generate Image Button */}
+                  <div className="mt-3">
+                    <GenerateImageButton
+                      intentId={post.imageIntent.id}
+                      isArticle={false}
+                      existingImageUrl={post.imageIntent.generatedImageUrl}
+                      headlineText={post.imageIntent.headlineText}
+                    />
                   </div>
                 </motion.div>
               )}

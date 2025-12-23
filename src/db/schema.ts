@@ -79,6 +79,13 @@ export const imageIntents = sqliteTable("image_intents", {
   stylePreset: text("style_preset", {
     enum: ["typographic_minimal", "gradient_text", "dark_mode", "accent_bar", "abstract_shapes"],
   }).notNull(),
+  // Generated image data
+  generatedImageUrl: text("generated_image_url"),
+  generatedAt: integer("generated_at", { mode: "timestamp" }),
+  generationProvider: text("generation_provider", {
+    enum: ["openai", "comfyui", "fal"],
+  }),
+  generationError: text("generation_error"),
 });
 
 // Style presets constant for reuse
@@ -110,6 +117,13 @@ export const articleImageIntents = sqliteTable("article_image_intents", {
   stylePreset: text("style_preset", {
     enum: STYLE_PRESETS,
   }).notNull(),
+  // Generated image data
+  generatedImageUrl: text("generated_image_url"),
+  generatedAt: integer("generated_at", { mode: "timestamp" }),
+  generationProvider: text("generation_provider", {
+    enum: ["openai", "comfyui", "fal"],
+  }),
+  generationError: text("generation_error"),
 });
 
 // Types
