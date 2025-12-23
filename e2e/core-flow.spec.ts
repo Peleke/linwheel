@@ -872,3 +872,76 @@ test.describe("Flow 12: Article Generation", () => {
     // - Generating creates new articles
   });
 });
+
+// ============================================================================
+// FLOW 13: IMAGE GENERATION (T2I Pipeline)
+// ============================================================================
+test.describe("Flow 13: Image Generation", () => {
+  test.skip("13.1 - image intent section visible in post card (requires completed run)", async ({ page }) => {
+    // REQUIRES COMPLETED RUN WITH POSTS
+    // When implemented, should test:
+    // - Post card has "Image:" section with headline text
+    // - Click to expand shows prompt details
+    // - Style preset visible
+  });
+
+  test.skip("13.2 - image preview shows placeholder before approval", async ({ page }) => {
+    // REQUIRES COMPLETED RUN WITH POSTS
+    // When implemented, should test:
+    // - Image preview shows placeholder message
+    // - Message indicates image will generate on approval
+  });
+
+  test.skip("13.3 - approving post triggers image generation", async ({ page }) => {
+    // REQUIRES COMPLETED RUN WITH POSTS AND OPENAI_API_KEY
+    // When implemented, should test:
+    // - Click approve on post with image intent
+    // - Loading spinner appears ("Generating image...")
+    // - Wait for image to appear
+    test.setTimeout(60000);
+  });
+
+  test.skip("13.4 - generated image displays in preview", async ({ page }) => {
+    // REQUIRES COMPLETED RUN WITH GENERATED IMAGES
+    // When implemented, should test:
+    // - Image visible in the preview area
+    // - "Generated" badge appears
+    // - Headline text visible as overlay
+  });
+
+  test.skip("13.5 - image generation error shows error state", async ({ page }) => {
+    // REQUIRES MOCK OR INVALID API KEY
+    // When implemented, should test:
+    // - Error message displayed
+    // - User-friendly error text
+  });
+
+  test.skip("13.6 - unapproving does not regenerate image", async ({ page }) => {
+    // REQUIRES COMPLETED RUN WITH GENERATED IMAGES
+    // When implemented, should test:
+    // - Unapprove a post with generated image
+    // - Image still visible (cached)
+    // - Re-approving doesn't regenerate
+  });
+
+  test.skip("13.7 - article cover image generates on approval", async ({ page }) => {
+    // REQUIRES COMPLETED RUN WITH ARTICLES AND OPENAI_API_KEY
+    // When implemented, should test:
+    // - Article has "Cover Image:" section
+    // - Approve article
+    // - Image generates and displays
+    test.setTimeout(60000);
+  });
+
+  test.skip("13.8 - image polling updates UI when generation completes", async ({ page }) => {
+    // REQUIRES COMPLETED RUN WITH POSTS AND OPENAI_API_KEY
+    // Tests the polling mechanism
+    // When implemented, should test:
+    // - Approve post
+    // - Initially shows "Generating..." state
+    // - Poll every 2 seconds
+    // - Image appears when generation completes
+    // - Polling stops after image appears
+    test.setTimeout(90000);
+  });
+});

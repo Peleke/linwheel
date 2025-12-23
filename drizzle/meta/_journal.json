@@ -43,6 +43,13 @@
       "when": 1766440643205,
       "tag": "0005_high_supernaut",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "6",
+      "when": 1766487285203,
+      "tag": "0006_curly_warpath",
+      "breakpoints": true
     }
   ]
 }
