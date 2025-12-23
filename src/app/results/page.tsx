@@ -5,6 +5,8 @@ import { desc } from "drizzle-orm";
 import { ClearRunsButton } from "@/components/clear-runs-button";
 import { DeleteRunButton } from "@/components/delete-run-button";
 
+export const dynamic = "force-dynamic";
+
 export default async function ResultsListPage() {
   // Fetch all runs, most recent first
   const runs = await db.query.generationRuns.findMany({

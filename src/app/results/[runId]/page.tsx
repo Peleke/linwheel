@@ -13,8 +13,11 @@ import { RetryButton } from "@/components/retry-button";
 import { ContentTabs } from "@/components/content-tabs";
 import { ArticleCard } from "@/components/article-card";
 import { PostCard } from "@/components/post-card";
+
 import { ANGLE_DESCRIPTIONS } from "@/lib/prompts/angles";
 import { ARTICLE_ANGLE_DESCRIPTIONS } from "@/lib/prompts/article-angles";
+
+export const dynamic = "force-dynamic";
 
 interface Props {
   params: Promise<{ runId: string }>;
