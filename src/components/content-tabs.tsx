@@ -34,60 +34,62 @@ export function ContentTabs({
   return (
     <div>
       {/* Tab headers with animated indicator */}
-      <div className="relative mb-6">
-        <div className="flex gap-2 p-1.5 bg-gradient-to-r from-neutral-100 via-neutral-50 to-neutral-100 dark:from-neutral-800 dark:via-neutral-900 dark:to-neutral-800 rounded-xl w-fit border border-neutral-200/50 dark:border-neutral-700/50">
-          {/* Sliding background indicator */}
-          <motion.div
-            className="absolute top-1.5 bottom-1.5 rounded-lg bg-gradient-to-r from-white via-white to-white dark:from-neutral-700 dark:via-neutral-700 dark:to-neutral-700 shadow-md"
-            layoutId="activeTabBg"
-            initial={false}
-            animate={{
-              left: activeTab === "posts" ? 6 : "calc(50% + 2px)",
-              width: "calc(50% - 8px)",
-            }}
-            transition={{ type: "spring", stiffness: 400, damping: 30 }}
-          />
-
+      <div className="mb-6">
+        <div className="inline-flex p-1.5 bg-gradient-to-r from-indigo-100/80 via-slate-100/80 to-indigo-100/80 dark:from-indigo-950/50 dark:via-slate-900/80 dark:to-indigo-950/50 rounded-xl border border-indigo-200/50 dark:border-indigo-800/30">
           <button
             onClick={() => setActiveTab("posts")}
-            className={`relative z-10 px-5 py-2.5 rounded-lg text-sm font-semibold transition-colors flex items-center gap-2 ${
-              activeTab === "posts"
-                ? "text-neutral-900 dark:text-white"
-                : "text-neutral-500 dark:text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-300"
-            }`}
+            className="relative px-5 py-2.5 rounded-lg text-sm font-semibold transition-colors flex items-center gap-2"
           >
-            <span className="text-lg">📝</span>
-            <span>Posts</span>
-            <motion.span
-              className={`px-2 py-0.5 rounded-full text-xs font-bold ${
-                activeTab === "posts"
-                  ? "bg-gradient-to-r from-neutral-800 to-neutral-900 text-white dark:from-neutral-100 dark:to-white dark:text-neutral-900"
-                  : "bg-neutral-200 dark:bg-neutral-700 text-neutral-600 dark:text-neutral-400"
-              }`}
-            >
-              {postCount}
-            </motion.span>
+            {activeTab === "posts" && (
+              <motion.div
+                layoutId="activeTabIndicator"
+                className="absolute inset-0 bg-white dark:bg-indigo-900/80 rounded-lg shadow-md"
+                transition={{ type: "spring", stiffness: 400, damping: 30 }}
+              />
+            )}
+            <span className="relative z-10 flex items-center gap-2">
+              <span className="text-lg">📝</span>
+              <span className={activeTab === "posts" ? "text-indigo-900 dark:text-white" : "text-slate-500 dark:text-slate-400"}>
+                Posts
+              </span>
+              <span
+                className={`px-2 py-0.5 rounded-full text-xs font-bold transition-colors ${
+                  activeTab === "posts"
+                    ? "bg-gradient-to-r from-indigo-600 to-violet-600 text-white"
+                    : "bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-400"
+                }`}
+              >
+                {postCount}
+              </span>
+            </span>
           </button>
 
           <button
             onClick={() => setActiveTab("articles")}
-            className={`relative z-10 px-5 py-2.5 rounded-lg text-sm font-semibold transition-colors flex items-center gap-2 ${
-              activeTab === "articles"
-                ? "text-neutral-900 dark:text-white"
-                : "text-neutral-500 dark:text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-300"
-            }`}
+            className="relative px-5 py-2.5 rounded-lg text-sm font-semibold transition-colors flex items-center gap-2"
           >
-            <span className="text-lg">📄</span>
-            <span>Articles</span>
-            <motion.span
-              className={`px-2 py-0.5 rounded-full text-xs font-bold ${
-                activeTab === "articles"
-                  ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white"
-                  : "bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400"
-              }`}
-            >
-              {articleCount}
-            </motion.span>
+            {activeTab === "articles" && (
+              <motion.div
+                layoutId="activeTabIndicator"
+                className="absolute inset-0 bg-white dark:bg-indigo-900/80 rounded-lg shadow-md"
+                transition={{ type: "spring", stiffness: 400, damping: 30 }}
+              />
+            )}
+            <span className="relative z-10 flex items-center gap-2">
+              <span className="text-lg">📄</span>
+              <span className={activeTab === "articles" ? "text-indigo-900 dark:text-white" : "text-slate-500 dark:text-slate-400"}>
+                Articles
+              </span>
+              <span
+                className={`px-2 py-0.5 rounded-full text-xs font-bold transition-colors ${
+                  activeTab === "articles"
+                    ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white"
+                    : "bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400"
+                }`}
+              >
+                {articleCount}
+              </span>
+            </span>
           </button>
         </div>
       </div>

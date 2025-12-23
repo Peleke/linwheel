@@ -40,42 +40,42 @@ export function PostCard({ post, runId }: PostCardProps) {
       <div
         className={`absolute -inset-0.5 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 blur-sm ${
           post.approved
-            ? "bg-gradient-to-r from-green-500/30 via-emerald-500/30 to-green-500/30"
-            : "bg-gradient-to-r from-neutral-400/20 via-neutral-300/20 to-neutral-400/20"
+            ? "bg-gradient-to-r from-emerald-500/30 via-green-500/30 to-emerald-500/30"
+            : "bg-gradient-to-r from-indigo-500/20 via-violet-500/20 to-indigo-500/20"
         }`}
       />
 
       <div
         className={`relative border rounded-xl overflow-hidden transition-all duration-300 group-hover:scale-[1.02] ${
           post.approved
-            ? "border-green-300 dark:border-green-700 bg-gradient-to-br from-green-50 via-white to-emerald-50/50 dark:from-green-900/20 dark:via-neutral-900 dark:to-emerald-900/10"
-            : "border-neutral-200 dark:border-neutral-700 bg-gradient-to-br from-white via-neutral-50/50 to-neutral-100/30 dark:from-neutral-900 dark:via-neutral-800/50 dark:to-neutral-900"
+            ? "border-emerald-300 dark:border-emerald-700 bg-gradient-to-br from-emerald-50 via-white to-green-50/50 dark:from-emerald-900/20 dark:via-slate-900 dark:to-green-900/10"
+            : "border-indigo-200/70 dark:border-indigo-800/50 bg-gradient-to-br from-slate-50 via-white to-indigo-50/30 dark:from-slate-900 dark:via-slate-800/50 dark:to-indigo-950/30"
         }`}
       >
+        {/* Gradient slice bar at top - always visible */}
+        <div
+          className={`h-1 w-full ${
+            post.approved
+              ? "bg-gradient-to-r from-emerald-400 via-green-500 to-emerald-400"
+              : "bg-gradient-to-r from-indigo-400 via-violet-500 to-indigo-400"
+          }`}
+        />
+
         {/* Shimmer effect on hover */}
         <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none overflow-hidden">
           <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-1000 bg-gradient-to-r from-transparent via-white/10 to-transparent" />
         </div>
 
-        {/* Top accent line */}
-        <div
-          className={`absolute top-0 left-0 right-0 h-1 opacity-0 group-hover:opacity-100 transition-opacity duration-300 ${
-            post.approved
-              ? "bg-gradient-to-r from-green-400/50 via-emerald-500 to-green-400/50"
-              : "bg-gradient-to-r from-neutral-300/50 via-neutral-400 to-neutral-300/50 dark:from-neutral-600/50 dark:via-neutral-500 dark:to-neutral-600/50"
-          }`}
-        />
-
         {/* Card header */}
-        <div className="relative px-4 py-3 bg-gradient-to-r from-neutral-100/80 via-neutral-50/50 to-neutral-100/80 dark:from-neutral-800/80 dark:via-neutral-900/50 dark:to-neutral-800/80 border-b border-neutral-200 dark:border-neutral-700 flex justify-between items-center">
-          <span className="text-sm font-semibold bg-clip-text text-transparent bg-gradient-to-r from-neutral-700 to-neutral-500 dark:from-neutral-200 dark:to-neutral-400">
+        <div className="relative px-4 py-3 bg-gradient-to-r from-indigo-50/80 via-slate-50/50 to-indigo-50/80 dark:from-indigo-950/40 dark:via-slate-900/50 dark:to-indigo-950/40 border-b border-indigo-100 dark:border-indigo-900/50 flex justify-between items-center">
+          <span className="text-sm font-semibold bg-clip-text text-transparent bg-gradient-to-r from-indigo-700 to-violet-600 dark:from-indigo-300 dark:to-violet-400">
             Version {post.versionNumber ?? 1}
           </span>
           {post.approved && (
             <motion.span
               initial={{ scale: 0.8, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
-              className="px-2.5 py-1 text-xs font-bold rounded-full bg-gradient-to-r from-green-500 to-emerald-500 text-white shadow-lg shadow-green-500/25"
+              className="px-2.5 py-1 text-xs font-bold rounded-full bg-gradient-to-r from-emerald-500 to-green-500 text-white shadow-lg shadow-emerald-500/25"
             >
               <span className="flex items-center gap-1">
                 <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
@@ -93,13 +93,13 @@ export function PostCard({ post, runId }: PostCardProps) {
 
         {/* Hook preview */}
         <div className="relative p-4">
-          <p className="text-sm font-medium mb-3 line-clamp-2 text-neutral-800 dark:text-neutral-200">
+          <p className="text-sm font-medium mb-3 line-clamp-2 text-slate-800 dark:text-slate-200">
             {post.hook}
           </p>
 
           <button
             onClick={() => setIsExpanded(!isExpanded)}
-            className="text-sm text-neutral-500 hover:text-neutral-700 dark:text-neutral-400 dark:hover:text-neutral-200 transition-colors flex items-center gap-1"
+            className="text-sm text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300 transition-colors flex items-center gap-1"
           >
             <motion.span
               animate={{ rotate: isExpanded ? 180 : 0 }}
@@ -119,7 +119,7 @@ export function PostCard({ post, runId }: PostCardProps) {
                 transition={{ duration: 0.3, ease: "easeInOut" }}
                 className="overflow-hidden"
               >
-                <pre className="mt-3 whitespace-pre-wrap font-sans text-sm leading-relaxed border-t border-neutral-200 dark:border-neutral-700 pt-3 text-neutral-600 dark:text-neutral-400">
+                <pre className="mt-3 whitespace-pre-wrap font-sans text-sm leading-relaxed border-t border-indigo-100 dark:border-indigo-900/50 pt-3 text-slate-600 dark:text-slate-400">
                   {post.fullText}
                 </pre>
               </motion.div>
@@ -129,7 +129,7 @@ export function PostCard({ post, runId }: PostCardProps) {
 
         {/* Image intent */}
         {post.imageIntent && (
-          <div className="px-4 py-3 bg-gradient-to-r from-violet-50/50 via-purple-50/30 to-violet-50/50 dark:from-violet-900/10 dark:via-purple-900/5 dark:to-violet-900/10 border-t border-neutral-200 dark:border-neutral-700">
+          <div className="px-4 py-3 bg-gradient-to-r from-violet-50/50 via-purple-50/30 to-violet-50/50 dark:from-violet-900/10 dark:via-purple-900/5 dark:to-violet-900/10 border-t border-indigo-100 dark:border-indigo-900/50">
             <button
               onClick={() => setShowImageIntent(!showImageIntent)}
               className="w-full text-left text-sm text-violet-600 dark:text-violet-400 hover:text-violet-700 dark:hover:text-violet-300 transition-colors flex items-center gap-2"
@@ -156,17 +156,17 @@ export function PostCard({ post, runId }: PostCardProps) {
                   transition={{ duration: 0.2 }}
                   className="overflow-hidden"
                 >
-                  <div className="mt-2 p-3 bg-gradient-to-br from-neutral-900 to-neutral-800 rounded-lg text-xs font-mono">
-                    <p className="text-green-400">
-                      <span className="text-neutral-500">+ </span>
+                  <div className="mt-2 p-3 bg-gradient-to-br from-slate-900 to-slate-800 rounded-lg text-xs font-mono">
+                    <p className="text-emerald-400">
+                      <span className="text-slate-500">+ </span>
                       {post.imageIntent.prompt}
                     </p>
-                    <p className="text-red-400 mt-1">
-                      <span className="text-neutral-500">- </span>
+                    <p className="text-rose-400 mt-1">
+                      <span className="text-slate-500">- </span>
                       {post.imageIntent.negativePrompt}
                     </p>
                     <p className="text-violet-400 mt-1">
-                      <span className="text-neutral-500">style: </span>
+                      <span className="text-slate-500">style: </span>
                       {post.imageIntent.stylePreset}
                     </p>
                   </div>
@@ -177,7 +177,7 @@ export function PostCard({ post, runId }: PostCardProps) {
         )}
 
         {/* Actions */}
-        <div className="relative px-4 py-3 border-t border-neutral-200 dark:border-neutral-700 flex justify-between items-center bg-gradient-to-r from-neutral-50/50 via-transparent to-neutral-50/50 dark:from-neutral-800/30 dark:via-transparent dark:to-neutral-800/30">
+        <div className="relative px-4 py-3 border-t border-indigo-100 dark:border-indigo-900/50 flex justify-between items-center bg-gradient-to-r from-slate-50/50 via-transparent to-slate-50/50 dark:from-slate-800/30 dark:via-transparent dark:to-slate-800/30">
           <ApprovalButtons postId={post.id} approved={post.approved ?? false} />
           <CopyButton text={post.fullText} />
         </div>

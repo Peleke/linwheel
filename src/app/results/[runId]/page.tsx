@@ -296,38 +296,41 @@ function AngleBucket({
   const approvedCount = posts.filter(p => p.approved).length;
 
   return (
-    <details className="group border border-neutral-200 dark:border-neutral-700 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-300" open>
-      <summary className="px-6 py-5 bg-gradient-to-r from-neutral-50 via-white to-neutral-50 dark:from-neutral-900 dark:via-neutral-800 dark:to-neutral-900 cursor-pointer hover:from-neutral-100 hover:via-neutral-50 hover:to-neutral-100 dark:hover:from-neutral-800 dark:hover:via-neutral-700 dark:hover:to-neutral-800 list-none transition-all duration-300">
+    <details className="group border border-indigo-200/70 dark:border-indigo-800/50 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-300" open>
+      {/* Gradient slice bar at top */}
+      <div className="h-1 w-full bg-gradient-to-r from-indigo-400 via-violet-500 to-indigo-400" />
+
+      <summary className="px-6 py-5 bg-gradient-to-r from-indigo-50/80 via-slate-50/50 to-indigo-50/80 dark:from-indigo-950/40 dark:via-slate-900/50 dark:to-indigo-950/40 cursor-pointer hover:from-indigo-100/80 hover:via-slate-100/50 hover:to-indigo-100/80 dark:hover:from-indigo-950/60 dark:hover:via-slate-800/50 dark:hover:to-indigo-950/60 list-none transition-all duration-300">
         <div className="flex justify-between items-center">
           <div className="flex items-center gap-3">
             <span className="text-xl">📝</span>
-            <span className="text-lg font-bold capitalize bg-clip-text text-transparent bg-gradient-to-r from-neutral-900 to-neutral-600 dark:from-white dark:to-neutral-300">
+            <span className="text-lg font-bold capitalize bg-clip-text text-transparent bg-gradient-to-r from-indigo-700 to-violet-600 dark:from-indigo-300 dark:to-violet-400">
               {angle.replace("_", " ")}
             </span>
-            <span className="text-sm text-neutral-500 dark:text-neutral-400 hidden sm:inline">
+            <span className="text-sm text-indigo-500 dark:text-indigo-400 hidden sm:inline">
               {ANGLE_DESCRIPTIONS[angle]}
             </span>
           </div>
           <div className="flex items-center gap-4">
             <GenerateMoreButton runId={runId} angle={angle} />
             <div className="flex items-center gap-2">
-              <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-neutral-200 dark:bg-neutral-700 text-neutral-700 dark:text-neutral-300">
+              <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300">
                 {posts.length} version{posts.length !== 1 ? "s" : ""}
               </span>
               {approvedCount > 0 && (
-                <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-gradient-to-r from-green-500 to-emerald-500 text-white shadow-sm">
+                <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-gradient-to-r from-emerald-500 to-green-500 text-white shadow-sm">
                   {approvedCount} approved
                 </span>
               )}
             </div>
-            <span className="text-neutral-400 group-open:rotate-180 transition-transform duration-300">
+            <span className="text-indigo-400 group-open:rotate-180 transition-transform duration-300">
               ▼
             </span>
           </div>
         </div>
       </summary>
 
-      <div className="p-6 bg-gradient-to-b from-neutral-50/50 to-white dark:from-neutral-900/50 dark:to-neutral-900 grid gap-5 md:grid-cols-2 lg:grid-cols-3">
+      <div className="p-6 bg-gradient-to-b from-slate-50/50 to-white dark:from-slate-900/50 dark:to-slate-900 grid gap-5 md:grid-cols-2 lg:grid-cols-3">
         {posts.map((post) => (
           <PostCard key={post.id} post={post} runId={runId} />
         ))}
@@ -348,12 +351,15 @@ function ArticleBucket({
   const approvedCount = articles.filter(a => a.approved).length;
 
   return (
-    <details className="group border border-blue-200 dark:border-blue-700 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-300" open>
-      <summary className="px-6 py-5 bg-gradient-to-r from-blue-50 via-indigo-50/50 to-blue-50 dark:from-blue-900/20 dark:via-indigo-900/10 dark:to-blue-900/20 cursor-pointer hover:from-blue-100 hover:via-indigo-100/50 hover:to-blue-100 dark:hover:from-blue-900/30 dark:hover:via-indigo-900/20 dark:hover:to-blue-900/30 list-none transition-all duration-300">
+    <details className="group border border-blue-200/70 dark:border-blue-800/50 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-300" open>
+      {/* Gradient slice bar at top */}
+      <div className="h-1 w-full bg-gradient-to-r from-blue-400 via-indigo-500 to-blue-400" />
+
+      <summary className="px-6 py-5 bg-gradient-to-r from-blue-50/80 via-indigo-50/50 to-blue-50/80 dark:from-blue-950/40 dark:via-indigo-950/30 dark:to-blue-950/40 cursor-pointer hover:from-blue-100/80 hover:via-indigo-100/50 hover:to-blue-100/80 dark:hover:from-blue-950/60 dark:hover:via-indigo-950/40 dark:hover:to-blue-950/60 list-none transition-all duration-300">
         <div className="flex justify-between items-center">
           <div className="flex items-center gap-3">
             <span className="text-xl">📄</span>
-            <span className="text-lg font-bold capitalize bg-clip-text text-transparent bg-gradient-to-r from-blue-700 to-indigo-600 dark:from-blue-300 dark:to-indigo-300">
+            <span className="text-lg font-bold capitalize bg-clip-text text-transparent bg-gradient-to-r from-blue-700 to-indigo-600 dark:from-blue-300 dark:to-indigo-400">
               {angle.replace("_", " ")}
             </span>
             <span className="text-sm text-blue-600 dark:text-blue-400 hidden sm:inline">
@@ -367,7 +373,7 @@ function ArticleBucket({
                 {articles.length} version{articles.length !== 1 ? "s" : ""}
               </span>
               {approvedCount > 0 && (
-                <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-gradient-to-r from-green-500 to-emerald-500 text-white shadow-sm">
+                <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-gradient-to-r from-emerald-500 to-green-500 text-white shadow-sm">
                   {approvedCount} approved
                 </span>
               )}
@@ -379,7 +385,7 @@ function ArticleBucket({
         </div>
       </summary>
 
-      <div className="p-6 bg-gradient-to-b from-blue-50/30 to-white dark:from-blue-900/10 dark:to-neutral-900 grid gap-5 md:grid-cols-2">
+      <div className="p-6 bg-gradient-to-b from-blue-50/30 to-white dark:from-blue-950/20 dark:to-slate-900 grid gap-5 md:grid-cols-2">
         {articles.map((article) => (
           <ArticleCard key={article.id} article={article} runId={runId} />
         ))}
