@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import ReactMarkdown from "react-markdown";
 import { ApprovalButtons } from "./approval-buttons";
 import { CopyButton } from "./copy-button";
 
@@ -146,9 +147,9 @@ export function ArticleCard({
                       <h4 className="font-semibold text-slate-900 dark:text-white mb-2 flex items-center gap-2">
                         <span className="text-blue-500">Introduction</span>
                       </h4>
-                      <p className="whitespace-pre-wrap text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
-                        {article.introduction}
-                      </p>
+                      <div className="prose prose-sm prose-slate dark:prose-invert max-w-none prose-p:my-2 prose-p:text-slate-700 dark:prose-p:text-slate-300">
+                        <ReactMarkdown>{article.introduction}</ReactMarkdown>
+                      </div>
                     </div>
                   </div>
 
@@ -162,10 +163,8 @@ export function ArticleCard({
                       className="relative"
                     >
                       <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-indigo-400 to-violet-400 rounded-full opacity-50" />
-                      <div className="pl-4">
-                        <p className="whitespace-pre-wrap text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
-                          {section}
-                        </p>
+                      <div className="pl-4 prose prose-sm prose-slate dark:prose-invert max-w-none prose-p:my-2 prose-p:text-slate-700 dark:prose-p:text-slate-300">
+                        <ReactMarkdown>{section}</ReactMarkdown>
                       </div>
                     </motion.div>
                   ))}
@@ -177,9 +176,9 @@ export function ArticleCard({
                       <h4 className="font-semibold text-slate-900 dark:text-white mb-2 flex items-center gap-2">
                         <span className="text-emerald-500">Conclusion</span>
                       </h4>
-                      <p className="whitespace-pre-wrap text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
-                        {article.conclusion}
-                      </p>
+                      <div className="prose prose-sm prose-slate dark:prose-invert max-w-none prose-p:my-2 prose-p:text-slate-700 dark:prose-p:text-slate-300">
+                        <ReactMarkdown>{article.conclusion}</ReactMarkdown>
+                      </div>
                     </div>
                   </div>
                 </div>

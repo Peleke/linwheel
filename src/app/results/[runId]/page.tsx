@@ -182,7 +182,7 @@ export default async function ResultsDashboardPage({ params }: Props) {
         {/* Header */}
         <header className="border-b border-neutral-200 dark:border-neutral-800">
           <div className="max-w-6xl mx-auto px-6 py-4 flex justify-between items-center">
-            <Link href="/" className="font-semibold text-lg">LinWheel</Link>
+            <Link href="/" className="font-bold text-lg gradient-text">LinWheel</Link>
             <div className="flex gap-4">
               <Link
                 href="/results"

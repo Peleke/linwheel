@@ -183,3 +183,51 @@ body {
   background: rgba(139, 92, 246, 0.4);
   border-radius: 50%;
 }
+
+/* Enhanced prose styles for markdown content */
+.prose h1,
+.prose h2,
+.prose h3,
+.prose h4 {
+  font-weight: 700;
+  margin-top: 1.5em;
+  margin-bottom: 0.5em;
+}
+
+.prose h1 {
+  font-size: 1.5em;
+}
+
+.prose h2 {
+  font-size: 1.3em;
+}
+
+.prose h3 {
+  font-size: 1.15em;
+  color: var(--foreground);
+}
+
+.prose h4 {
+  font-size: 1.05em;
+}
+
+.prose blockquote {
+  border-left: 3px solid #8b5cf6;
+  padding-left: 1em;
+  font-style: italic;
+  color: #a1a1aa;
+}
+
+.prose strong {
+  font-weight: 700;
+}
+
+.prose ul,
+.prose ol {
+  padding-left: 1.5em;
+  margin: 0.75em 0;
+}
+
+.prose li {
+  margin: 0.25em 0;
+}

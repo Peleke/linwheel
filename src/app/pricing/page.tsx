@@ -6,7 +6,7 @@ export default function PricingPage() {
       {/* Header */}
       <header className="border-b border-neutral-200 dark:border-neutral-800">
         <div className="max-w-4xl mx-auto px-6 py-4 flex justify-between items-center">
-          <Link href="/" className="font-semibold text-lg">LinWheel</Link>
+          <Link href="/" className="font-bold text-lg gradient-text">LinWheel</Link>
         </div>
       </header>
 

@@ -115,7 +115,7 @@ export default function GeneratePage() {
       {/* Header */}
       <header className="border-b border-neutral-200/50 dark:border-neutral-800/50 backdrop-blur-sm bg-white/80 dark:bg-neutral-900/80 sticky top-0 z-50">
         <div className="max-w-4xl mx-auto px-6 py-4 flex justify-between items-center">
-          <Link href="/" className="font-bold text-lg bg-clip-text text-transparent bg-gradient-to-r from-neutral-900 to-neutral-600 dark:from-white dark:to-neutral-400">
+          <Link href="/" className="font-bold text-lg gradient-text">
             LinWheel
           </Link>
         </div>
