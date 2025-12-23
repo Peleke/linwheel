@@ -1,0 +1,76 @@
+import { generateArticleVersionsForAngle, type SubwriterArticle } from "./article-subwriters";
+import { ARTICLE_ANGLES, type ArticleAngle } from "@/db/schema";
+import type { ExtractedInsight } from "../generate";
+
+export interface ArticleSupervisorConfig {
+  selectedAngles?: ArticleAngle[];
+  versionsPerAngle?: number;
+}
+
+export interface ArticleSupervisorResult {
+  insight: ExtractedInsight;
+  articles: SubwriterArticle[];
+  anglesGenerated: ArticleAngle[];
+  totalArticles: number;
+}
+
+/**
+ * Article Writer Supervisor - Orchestrates parallel generation across all selected article angles
+ *
+ * Uses Promise.all to fan out to multiple article subwriters simultaneously:
+ * - Each angle generates `versionsPerAngle` variations (default: 1 for articles)
+ * - All angles run in parallel for maximum throughput
+ * - Returns all articles grouped by angle
+ */
+export async function runArticleWriterSupervisor(
+  insight: ExtractedInsight,
+  config: ArticleSupervisorConfig = {}
+): Promise<ArticleSupervisorResult> {
+  const {
+    selectedAngles = [...ARTICLE_ANGLES], // Default: all 4 angles
+    versionsPerAngle = 1, // Default: 1 version per angle for articles
+  } = config;
+
+  console.log(`Article Supervisor: Generating ${selectedAngles.length} angles × ${versionsPerAngle} versions = ${selectedAngles.length * versionsPerAngle} total articles`);
+
+  // Fan out to all article subwriters in parallel
+  const anglePromises = selectedAngles.map(async (angle) => {
+    console.log(`  → Starting ${angle} article writer...`);
+    const articles = await generateArticleVersionsForAngle(insight, angle, versionsPerAngle);
+    console.log(`  ✓ ${angle}: ${articles.length} articles generated`);
+    return articles;
+  });
+
+  // Wait for all article writers to complete
+  const results = await Promise.all(anglePromises);
+
+  // Flatten results
+  const allArticles = results.flat();
+
+  console.log(`Article Supervisor: Complete. Generated ${allArticles.length} total articles.`);
+
+  return {
+    insight,
+    articles: allArticles,
+    anglesGenerated: selectedAngles,
+    totalArticles: allArticles.length,
+  };
+}
+
+/**
+ * Generate articles for multiple insights
+ * Processes insights sequentially but angles in parallel within each insight
+ */
+export async function runArticleWriterSupervisorBatch(
+  insights: ExtractedInsight[],
+  config: ArticleSupervisorConfig = {}
+): Promise<ArticleSupervisorResult[]> {
+  const results: ArticleSupervisorResult[] = [];
+
+  for (const insight of insights) {
+    const result = await runArticleWriterSupervisor(insight, config);
+    results.push(result);
+  }
+
+  return results;
+}

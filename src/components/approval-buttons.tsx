@@ -6,9 +6,10 @@ import { useRouter } from "next/navigation";
 interface ApprovalButtonsProps {
   postId: string;
   approved: boolean;
+  isArticle?: boolean;
 }
 
-export function ApprovalButtons({ postId, approved }: ApprovalButtonsProps) {
+export function ApprovalButtons({ postId, approved, isArticle = false }: ApprovalButtonsProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [optimisticApproved, setOptimisticApproved] = useState(approved);
@@ -17,8 +18,13 @@ export function ApprovalButtons({ postId, approved }: ApprovalButtonsProps) {
     // Optimistic update
     setOptimisticApproved(newApproved);
 
+    // Use different API endpoints for posts vs articles
+    const endpoint = isArticle
+      ? `/api/articles/${postId}/approve`
+      : `/api/posts/${postId}/approve`;
+
     try {
-      const response = await fetch(`/api/posts/${postId}/approve`, {
+      const response = await fetch(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ approved: newApproved }),

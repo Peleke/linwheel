@@ -4,8 +4,10 @@ import {
   EXTRACT_INSIGHTS_PROMPT,
 } from "./prompts";
 import { GENERATE_IMAGE_INTENT_PROMPT } from "./prompts/image-intent";
+import { GENERATE_ARTICLE_IMAGE_INTENT_PROMPT } from "./prompts/article-image-intent";
 import { runWriterSupervisor } from "./agents/writer-supervisor";
-import { POST_ANGLES, type PostAngle } from "@/db/schema";
+import { runArticleWriterSupervisor } from "./agents/article-writer-supervisor";
+import { POST_ANGLES, ARTICLE_ANGLES, type PostAngle, type ArticleAngle } from "@/db/schema";
 
 // Zod Schemas for structured output
 // Note: OpenAI structured output requires top-level to be an object, not array
@@ -83,6 +85,7 @@ export async function extractInsights(chunk: TranscriptChunk): Promise<Extracted
 
 // Re-export types from subwriters
 export type { SubwriterPost } from "./agents/subwriters";
+export type { SubwriterArticle } from "./agents/article-subwriters";
 
 // Step 3: Generate image intent from post
 export async function generateImageIntent(
@@ -97,11 +100,27 @@ export async function generateImageIntent(
   return result.data;
 }
 
+// Step 3b: Generate image intent from article
+export async function generateArticleImageIntent(
+  article: { title: string; subtitle?: string; introduction: string; sections: string[] }
+): Promise<GeneratedImageIntent> {
+  const result = await generateStructured(
+    GENERATE_ARTICLE_IMAGE_INTENT_PROMPT,
+    JSON.stringify(article, null, 2),
+    GeneratedImageIntentSchema,
+    0.6
+  );
+  return result.data;
+}
+
 // Pipeline configuration
 export interface PipelineConfig {
   maxInsights?: number;
   selectedAngles?: PostAngle[];
   versionsPerAngle?: number;
+  // Article options
+  selectedArticleAngles?: ArticleAngle[];
+  articleVersionsPerAngle?: number;
 }
 
 // Post with all metadata
@@ -116,12 +135,30 @@ export interface EnrichedPost {
   imageIntent: GeneratedImageIntent;
 }
 
+// Article with all metadata
+export interface EnrichedArticle {
+  title: string;
+  subtitle?: string;
+  introduction: string;
+  sections: string[];
+  conclusion: string;
+  full_text: string;
+  angle: ArticleAngle;
+  versionNumber: number;
+  insight: ExtractedInsight;
+  imageIntent: GeneratedImageIntent;
+}
+
 // Full pipeline result
 export interface PipelineResult {
   insights: ExtractedInsight[];
   posts: EnrichedPost[];
   anglesGenerated: PostAngle[];
   totalPosts: number;
+  // Article results
+  articles: EnrichedArticle[];
+  articleAnglesGenerated: ArticleAngle[];
+  totalArticles: number;
 }
 
 /**
@@ -131,8 +168,10 @@ export interface PipelineResult {
  * 1. Chunk transcript into segments
  * 2. Extract insights from each chunk
  * 3. Deduplicate and select top insights
- * 4. For each insight, run writer supervisor (6 angles × 5 versions = 30 posts per insight)
- * 5. Generate image intents for each post
+ * 4. For each insight:
+ *    - Run writer supervisor for posts (7 angles × 2 versions)
+ *    - Run article writer supervisor for articles (4 angles × 1 version)
+ * 5. Generate image intents for each post and article
  */
 export async function runPipeline(
   transcript: string,
@@ -142,6 +181,9 @@ export async function runPipeline(
     maxInsights = 3, // Fewer insights since each generates many posts
     selectedAngles = [...POST_ANGLES],
     versionsPerAngle = 5,
+    // Article config - empty array means no articles
+    selectedArticleAngles = [],
+    articleVersionsPerAngle = 1,
   } = config;
 
   // Step 1: Chunk
@@ -166,34 +208,61 @@ export async function runPipeline(
   // Step 3: Generate posts using writer supervisor (parallel across angles)
   console.log("Generating posts across angles...");
   const allPosts: EnrichedPost[] = [];
+  const allArticles: EnrichedArticle[] = [];
 
   for (const insight of selectedInsights) {
     console.log(`\nProcessing insight: "${insight.claim.substring(0, 50)}..."`);
 
-    const result = await runWriterSupervisor(insight, {
-      selectedAngles,
-      versionsPerAngle,
-    });
-
-    // Step 4: Generate image intents for each post
-    console.log(`Generating image intents for ${result.posts.length} posts...`);
-    for (const post of result.posts) {
-      const imageIntent = await generateImageIntent(post);
-      allPosts.push({
-        ...post,
-        insight,
-        imageIntent,
+    // Generate posts if any post angles selected
+    if (selectedAngles.length > 0) {
+      const result = await runWriterSupervisor(insight, {
+        selectedAngles,
+        versionsPerAngle,
       });
+
+      // Generate image intents for each post
+      console.log(`Generating image intents for ${result.posts.length} posts...`);
+      for (const post of result.posts) {
+        const imageIntent = await generateImageIntent(post);
+        allPosts.push({
+          ...post,
+          insight,
+          imageIntent,
+        });
+      }
+    }
+
+    // Generate articles if any article angles selected
+    if (selectedArticleAngles.length > 0) {
+      console.log(`Generating articles for insight...`);
+      const articleResult = await runArticleWriterSupervisor(insight, {
+        selectedAngles: selectedArticleAngles,
+        versionsPerAngle: articleVersionsPerAngle,
+      });
+
+      // Generate image intents for each article
+      console.log(`Generating image intents for ${articleResult.articles.length} articles...`);
+      for (const article of articleResult.articles) {
+        const imageIntent = await generateArticleImageIntent(article);
+        allArticles.push({
+          ...article,
+          insight,
+          imageIntent,
+        });
+      }
     }
   }
 
-  console.log(`\nPipeline complete. Generated ${allPosts.length} total posts.`);
+  console.log(`\nPipeline complete. Generated ${allPosts.length} posts and ${allArticles.length} articles.`);
 
   return {
     insights: selectedInsights,
     posts: allPosts,
     anglesGenerated: selectedAngles,
     totalPosts: allPosts.length,
+    articles: allArticles,
+    articleAnglesGenerated: selectedArticleAngles,
+    totalArticles: allArticles.length,
   };
 }
 

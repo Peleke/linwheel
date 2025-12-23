@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
-import { generationRuns, insights, linkedinPosts, imageIntents, POST_ANGLES, type PostAngle } from "@/db/schema";
+import {
+  generationRuns, insights, linkedinPosts, imageIntents,
+  articles, articleImageIntents,
+  POST_ANGLES, ARTICLE_ANGLES, type PostAngle, type ArticleAngle
+} from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { runPipeline } from "@/lib/generate";
 import { randomUUID } from "crypto";
@@ -12,7 +16,8 @@ import { randomUUID } from "crypto";
 async function processGeneration(
   runId: string,
   transcript: string,
-  selectedAngles: PostAngle[]
+  selectedAngles: PostAngle[],
+  selectedArticleAngles: ArticleAngle[] = []
 ) {
   try {
     // Update status to processing
@@ -25,6 +30,8 @@ async function processGeneration(
       maxInsights: 3,
       selectedAngles,
       versionsPerAngle: 2, // Reduced from 5 to avoid rate limits
+      selectedArticleAngles,
+      articleVersionsPerAngle: 1, // 1 version per article angle
     });
 
     // Check if run still exists (could be deleted by "Clear all")
@@ -102,10 +109,55 @@ async function processGeneration(
       }
     }
 
+    // Save articles and article image intents
+    for (const article of result.articles) {
+      // Skip articles with missing required data
+      if (!article.full_text && !article.title) {
+        console.warn(`Skipping article for ${article.angle} - missing full_text and title`);
+        continue;
+      }
+
+      const articleId = randomUUID();
+      const insightRecord = insightRecords.find(
+        (i) => i.claim === article.insight.claim
+      );
+
+      await db.insert(articles).values({
+        id: articleId,
+        insightId: insightRecord?.id || randomUUID(),
+        runId,
+        articleType: article.angle,
+        title: article.title || `${article.angle} article`,
+        subtitle: article.subtitle || null,
+        introduction: article.introduction || "",
+        sections: article.sections || [],
+        conclusion: article.conclusion || "",
+        fullText: article.full_text || article.title,
+        versionNumber: article.versionNumber,
+        approved: false,
+      });
+
+      // Only save article image intent if we have the required data
+      if (article.imageIntent?.prompt && article.imageIntent?.headline_text) {
+        await db.insert(articleImageIntents).values({
+          id: randomUUID(),
+          articleId,
+          prompt: article.imageIntent.prompt,
+          negativePrompt: article.imageIntent.negative_prompt || "",
+          headlineText: article.imageIntent.headline_text,
+          stylePreset: article.imageIntent.style_preset || "typographic_minimal",
+        });
+      }
+    }
+
     // Update run status to complete
     await db
       .update(generationRuns)
-      .set({ status: "complete", postCount: result.posts.length })
+      .set({
+        status: "complete",
+        postCount: result.posts.length,
+        articleCount: result.articles.length,
+      })
       .where(eq(generationRuns.id, runId));
 
   } catch (pipelineError) {
@@ -123,7 +175,12 @@ async function processGeneration(
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { transcript, sourceLabel, selectedAngles: rawSelectedAngles } = body;
+    const {
+      transcript,
+      sourceLabel,
+      selectedAngles: rawSelectedAngles,
+      selectedArticleAngles: rawSelectedArticleAngles,
+    } = body;
 
     if (!transcript || typeof transcript !== "string") {
       return NextResponse.json(
@@ -132,10 +189,15 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Validate and filter selected angles (default to all)
+    // Validate and filter selected angles (default to all for posts)
     const selectedAngles: PostAngle[] = Array.isArray(rawSelectedAngles)
       ? rawSelectedAngles.filter((a): a is PostAngle => POST_ANGLES.includes(a))
       : [...POST_ANGLES];
+
+    // Validate and filter selected article angles (default to none)
+    const selectedArticleAngles: ArticleAngle[] = Array.isArray(rawSelectedArticleAngles)
+      ? rawSelectedArticleAngles.filter((a): a is ArticleAngle => ARTICLE_ANGLES.includes(a))
+      : [];
 
     // Create run record with pending status
     const runId = randomUUID();
@@ -146,11 +208,12 @@ export async function POST(request: NextRequest) {
       transcript, // Store for display and regeneration
       status: "pending",
       selectedAngles,
+      selectedArticleAngles: selectedArticleAngles.length > 0 ? selectedArticleAngles : null,
     });
 
     // Fire-and-forget: start processing without awaiting
     // In serverless (Vercel), would use waitUntil() here
-    processGeneration(runId, transcript, selectedAngles).catch((err) => {
+    processGeneration(runId, transcript, selectedAngles, selectedArticleAngles).catch((err) => {
       console.error("Background processing error:", err);
     });
 

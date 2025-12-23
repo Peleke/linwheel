@@ -13,6 +13,16 @@ export const POST_ANGLES = [
 
 export type PostAngle = typeof POST_ANGLES[number];
 
+// Article angle types - 4 long-form content angles
+export const ARTICLE_ANGLES = [
+  "deep_dive",
+  "contrarian",
+  "how_to",
+  "case_study",
+] as const;
+
+export type ArticleAngle = typeof ARTICLE_ANGLES[number];
+
 // Generation runs table
 export const generationRuns = sqliteTable("generation_runs", {
   id: text("id").primaryKey(),
@@ -22,9 +32,11 @@ export const generationRuns = sqliteTable("generation_runs", {
   transcript: text("transcript"),
   status: text("status", { enum: ["pending", "processing", "complete", "failed"] }).notNull().default("pending"),
   postCount: integer("post_count").default(0),
+  articleCount: integer("article_count").default(0),
   error: text("error"),
   // Multi-angle: which angles were selected for this run
   selectedAngles: text("selected_angles", { mode: "json" }).$type<PostAngle[]>(),
+  selectedArticleAngles: text("selected_article_angles", { mode: "json" }).$type<ArticleAngle[]>(),
 });
 
 // Insights table
@@ -69,6 +81,37 @@ export const imageIntents = sqliteTable("image_intents", {
   }).notNull(),
 });
 
+// Style presets constant for reuse
+export const STYLE_PRESETS = ["typographic_minimal", "gradient_text", "dark_mode", "accent_bar", "abstract_shapes"] as const;
+
+// Articles table - long-form content (500-750 words)
+export const articles = sqliteTable("articles", {
+  id: text("id").primaryKey(),
+  runId: text("run_id").notNull().references(() => generationRuns.id),
+  insightId: text("insight_id").notNull().references(() => insights.id),
+  articleType: text("article_type", { enum: ARTICLE_ANGLES }).notNull(),
+  title: text("title").notNull(),
+  subtitle: text("subtitle"),
+  introduction: text("introduction").notNull(),
+  sections: text("sections", { mode: "json" }).$type<string[]>().notNull(),
+  conclusion: text("conclusion").notNull(),
+  fullText: text("full_text").notNull(),
+  versionNumber: integer("version_number").default(1),
+  approved: integer("approved", { mode: "boolean" }).default(false),
+});
+
+// Article image intents table (ComfyUI-optimized)
+export const articleImageIntents = sqliteTable("article_image_intents", {
+  id: text("id").primaryKey(),
+  articleId: text("article_id").notNull().references(() => articles.id),
+  prompt: text("prompt").notNull(),
+  negativePrompt: text("negative_prompt").notNull(),
+  headlineText: text("headline_text").notNull(),
+  stylePreset: text("style_preset", {
+    enum: STYLE_PRESETS,
+  }).notNull(),
+});
+
 // Types
 export type GenerationRun = typeof generationRuns.$inferSelect;
 export type NewGenerationRun = typeof generationRuns.$inferInsert;
@@ -78,3 +121,7 @@ export type LinkedInPost = typeof linkedinPosts.$inferSelect;
 export type NewLinkedInPost = typeof linkedinPosts.$inferInsert;
 export type ImageIntent = typeof imageIntents.$inferSelect;
 export type NewImageIntent = typeof imageIntents.$inferInsert;
+export type Article = typeof articles.$inferSelect;
+export type NewArticle = typeof articles.$inferInsert;
+export type ArticleImageIntent = typeof articleImageIntents.$inferSelect;
+export type NewArticleImageIntent = typeof articleImageIntents.$inferInsert;

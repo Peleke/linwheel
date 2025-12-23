@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
 import { db } from "@/db";
-import { generationRuns, insights, linkedinPosts, imageIntents } from "@/db/schema";
+import {
+  generationRuns, insights, linkedinPosts, imageIntents,
+  articles, articleImageIntents
+} from "@/db/schema";
 import { inArray } from "drizzle-orm";
 
 /**
@@ -26,10 +29,22 @@ export async function DELETE() {
     });
     const postIds = posts.map((p) => p.id);
 
-    // Delete in order: image_intents -> linkedin_posts -> insights -> generation_runs
+    // Get all article IDs for these runs
+    const articleRecords = await db.query.articles.findMany({
+      where: inArray(articles.runId, runIds),
+      columns: { id: true },
+    });
+    const articleIds = articleRecords.map((a) => a.id);
+
+    // Delete in order: image_intents -> content -> insights -> generation_runs
     if (postIds.length > 0) {
       await db.delete(imageIntents).where(inArray(imageIntents.postId, postIds));
       await db.delete(linkedinPosts).where(inArray(linkedinPosts.runId, runIds));
+    }
+
+    if (articleIds.length > 0) {
+      await db.delete(articleImageIntents).where(inArray(articleImageIntents.articleId, articleIds));
+      await db.delete(articles).where(inArray(articles.runId, runIds));
     }
 
     await db.delete(insights).where(inArray(insights.runId, runIds));

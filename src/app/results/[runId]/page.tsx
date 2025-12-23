@@ -1,14 +1,20 @@
 import Link from "next/link";
 import { db } from "@/db";
-import { generationRuns, linkedinPosts, imageIntents, POST_ANGLES, type PostAngle } from "@/db/schema";
+import {
+  generationRuns, linkedinPosts, imageIntents, articles, articleImageIntents,
+  POST_ANGLES, ARTICLE_ANGLES, type PostAngle, type ArticleAngle
+} from "@/db/schema";
 import { eq } from "drizzle-orm";
-import { CopyButton } from "@/components/copy-button";
-import { ApprovalButtons } from "@/components/approval-buttons";
 import { StatusPoller } from "@/components/status-poller";
 import { DeleteRunButton } from "@/components/delete-run-button";
 import { GenerateMoreButton } from "@/components/generate-more-button";
+import { GenerateMoreArticlesButton } from "@/components/generate-more-articles-button";
 import { RetryButton } from "@/components/retry-button";
+import { ContentTabs } from "@/components/content-tabs";
+import { ArticleCard } from "@/components/article-card";
+import { PostCard } from "@/components/post-card";
 import { ANGLE_DESCRIPTIONS } from "@/lib/prompts/angles";
+import { ARTICLE_ANGLE_DESCRIPTIONS } from "@/lib/prompts/article-angles";
 
 interface Props {
   params: Promise<{ runId: string }>;
@@ -31,6 +37,28 @@ type PostWithIntent = {
 };
 
 type PostsByAngle = Record<PostAngle, PostWithIntent[]>;
+
+// Group articles by angle
+type ArticleWithIntent = {
+  id: string;
+  title: string;
+  subtitle: string | null;
+  introduction: string;
+  sections: string[];
+  conclusion: string;
+  fullText: string;
+  articleType: ArticleAngle;
+  versionNumber: number | null;
+  approved: boolean | null;
+  imageIntent?: {
+    headlineText: string;
+    prompt: string;
+    negativePrompt: string;
+    stylePreset: string;
+  };
+};
+
+type ArticlesByAngle = Record<ArticleAngle, ArticleWithIntent[]>;
 
 export default async function ResultsDashboardPage({ params }: Props) {
   const { runId } = await params;
@@ -79,16 +107,57 @@ export default async function ResultsDashboardPage({ params }: Props) {
     })
   );
 
-  // Group by angle
+  // Fetch articles
+  const articleRecords = await db.query.articles.findMany({
+    where: eq(articles.runId, runId),
+  });
+
+  // Fetch article image intents and build lookup
+  const articlesWithIntents: ArticleWithIntent[] = await Promise.all(
+    articleRecords.map(async (article) => {
+      const intent = await db.query.articleImageIntents.findFirst({
+        where: eq(articleImageIntents.articleId, article.id),
+      });
+      return {
+        id: article.id,
+        title: article.title,
+        subtitle: article.subtitle,
+        introduction: article.introduction,
+        sections: article.sections as string[],
+        conclusion: article.conclusion,
+        fullText: article.fullText,
+        articleType: article.articleType as ArticleAngle,
+        versionNumber: article.versionNumber,
+        approved: article.approved,
+        imageIntent: intent ? {
+          headlineText: intent.headlineText,
+          prompt: intent.prompt,
+          negativePrompt: intent.negativePrompt,
+          stylePreset: intent.stylePreset,
+        } : undefined,
+      };
+    })
+  );
+
+  // Group posts by angle
   const postsByAngle = POST_ANGLES.reduce<PostsByAngle>((acc, angle) => {
     acc[angle] = postsWithIntents.filter(p => p.postType === angle)
       .sort((a, b) => (a.versionNumber ?? 0) - (b.versionNumber ?? 0));
     return acc;
   }, {} as PostsByAngle);
 
+  // Group articles by angle
+  const articlesByAngle = ARTICLE_ANGLES.reduce<ArticlesByAngle>((acc, angle) => {
+    acc[angle] = articlesWithIntents.filter(a => a.articleType === angle)
+      .sort((a, b) => (a.versionNumber ?? 0) - (b.versionNumber ?? 0));
+    return acc;
+  }, {} as ArticlesByAngle);
+
   // Count stats
-  const approvedCount = postsWithIntents.filter(p => p.approved).length;
+  const approvedPostsCount = postsWithIntents.filter(p => p.approved).length;
+  const approvedArticlesCount = articlesWithIntents.filter(a => a.approved).length;
   const anglesWithPosts = POST_ANGLES.filter(a => postsByAngle[a].length > 0);
+  const anglesWithArticles = ARTICLE_ANGLES.filter(a => articlesByAngle[a].length > 0);
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -121,7 +190,11 @@ export default async function ResultsDashboardPage({ params }: Props) {
               <div>
                 <h1 className="text-2xl font-bold mb-2">{run.sourceLabel}</h1>
                 <p className="text-neutral-600 dark:text-neutral-400">
-                  {posts.length} posts • {approvedCount} approved • {formatDate(run.createdAt)}
+                  {posts.length > 0 && <span>{posts.length} posts</span>}
+                  {posts.length > 0 && articleRecords.length > 0 && " • "}
+                  {articleRecords.length > 0 && <span>{articleRecords.length} articles</span>}
+                  {" • "}
+                  {approvedPostsCount + approvedArticlesCount} approved • {formatDate(run.createdAt)}
                 </p>
               </div>
               <div className="flex items-center gap-3">
@@ -140,7 +213,7 @@ export default async function ResultsDashboardPage({ params }: Props) {
                   <span className="text-blue-700 dark:text-blue-400">
                     {run.status === "pending"
                       ? "Starting generation..."
-                      : `Generating posts${anglesWithPosts.length > 0 ? ` across ${anglesWithPosts.length} angles` : ""}... This may take a few minutes.`}
+                      : `Generating content${anglesWithPosts.length > 0 ? ` (${anglesWithPosts.length} post angles)` : ""}${anglesWithArticles.length > 0 ? ` + ${anglesWithArticles.length} article angles` : ""}... This may take a few minutes.`}
                   </span>
                 </div>
               </div>
@@ -176,17 +249,35 @@ export default async function ResultsDashboardPage({ params }: Props) {
             )}
           </div>
 
-          {/* Angle buckets */}
-          <div className="space-y-8">
-            {anglesWithPosts.map((angle) => (
-              <AngleBucket
-                key={angle}
-                angle={angle}
-                posts={postsByAngle[angle]}
-                runId={runId}
-              />
-            ))}
-          </div>
+          {/* Content tabs (Posts / Articles) */}
+          <ContentTabs
+            postCount={posts.length}
+            articleCount={articleRecords.length}
+            postsContent={
+              <div className="space-y-8">
+                {anglesWithPosts.map((angle) => (
+                  <AngleBucket
+                    key={angle}
+                    angle={angle}
+                    posts={postsByAngle[angle]}
+                    runId={runId}
+                  />
+                ))}
+              </div>
+            }
+            articlesContent={
+              <div className="space-y-8">
+                {anglesWithArticles.map((angle) => (
+                  <ArticleBucket
+                    key={angle}
+                    angle={angle}
+                    articles={articlesByAngle[angle]}
+                    runId={runId}
+                  />
+                ))}
+              </div>
+            }
+          />
         </div>
       </main>
     </div>
@@ -205,30 +296,38 @@ function AngleBucket({
   const approvedCount = posts.filter(p => p.approved).length;
 
   return (
-    <details className="group border border-neutral-200 dark:border-neutral-800 rounded-xl overflow-hidden" open>
-      <summary className="px-6 py-4 bg-neutral-50 dark:bg-neutral-900 cursor-pointer hover:bg-neutral-100 dark:hover:bg-neutral-800 list-none">
+    <details className="group border border-neutral-200 dark:border-neutral-700 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-300" open>
+      <summary className="px-6 py-5 bg-gradient-to-r from-neutral-50 via-white to-neutral-50 dark:from-neutral-900 dark:via-neutral-800 dark:to-neutral-900 cursor-pointer hover:from-neutral-100 hover:via-neutral-50 hover:to-neutral-100 dark:hover:from-neutral-800 dark:hover:via-neutral-700 dark:hover:to-neutral-800 list-none transition-all duration-300">
         <div className="flex justify-between items-center">
           <div className="flex items-center gap-3">
-            <span className="text-lg font-semibold capitalize">
+            <span className="text-xl">📝</span>
+            <span className="text-lg font-bold capitalize bg-clip-text text-transparent bg-gradient-to-r from-neutral-900 to-neutral-600 dark:from-white dark:to-neutral-300">
               {angle.replace("_", " ")}
             </span>
-            <span className="text-sm text-neutral-500">
+            <span className="text-sm text-neutral-500 dark:text-neutral-400 hidden sm:inline">
               {ANGLE_DESCRIPTIONS[angle]}
             </span>
           </div>
           <div className="flex items-center gap-4">
             <GenerateMoreButton runId={runId} angle={angle} />
-            <span className="text-sm text-neutral-600 dark:text-neutral-400">
-              {posts.length} versions • {approvedCount} approved
-            </span>
-            <span className="text-neutral-400 group-open:rotate-180 transition-transform">
+            <div className="flex items-center gap-2">
+              <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-neutral-200 dark:bg-neutral-700 text-neutral-700 dark:text-neutral-300">
+                {posts.length} version{posts.length !== 1 ? "s" : ""}
+              </span>
+              {approvedCount > 0 && (
+                <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-gradient-to-r from-green-500 to-emerald-500 text-white shadow-sm">
+                  {approvedCount} approved
+                </span>
+              )}
+            </div>
+            <span className="text-neutral-400 group-open:rotate-180 transition-transform duration-300">
               ▼
             </span>
           </div>
         </div>
       </summary>
 
-      <div className="p-6 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+      <div className="p-6 bg-gradient-to-b from-neutral-50/50 to-white dark:from-neutral-900/50 dark:to-neutral-900 grid gap-5 md:grid-cols-2 lg:grid-cols-3">
         {posts.map((post) => (
           <PostCard key={post.id} post={post} runId={runId} />
         ))}
@@ -237,73 +336,107 @@ function AngleBucket({
   );
 }
 
-function PostCard({ post, runId }: { post: PostWithIntent; runId: string }) {
+function ArticleBucket({
+  angle,
+  articles,
+  runId,
+}: {
+  angle: ArticleAngle;
+  articles: ArticleWithIntent[];
+  runId: string;
+}) {
+  const approvedCount = articles.filter(a => a.approved).length;
+
   return (
-    <div className={`border rounded-lg overflow-hidden ${
-      post.approved
-        ? "border-green-300 dark:border-green-800 bg-green-50/50 dark:bg-green-900/10"
-        : "border-neutral-200 dark:border-neutral-700"
-    }`}>
-      {/* Card header */}
-      <div className="px-4 py-3 bg-neutral-50 dark:bg-neutral-900 border-b border-neutral-200 dark:border-neutral-700 flex justify-between items-center">
-        <span className="text-sm font-medium">
-          Version {post.versionNumber ?? 1}
-        </span>
-        {post.approved && (
-          <span className="px-2 py-0.5 text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-400 rounded-full">
-            Approved
-          </span>
-        )}
-      </div>
-
-      {/* Hook preview */}
-      <div className="p-4">
-        <p className="text-sm font-medium mb-2 line-clamp-2">{post.hook}</p>
-        <details className="text-sm text-neutral-600 dark:text-neutral-400">
-          <summary className="cursor-pointer hover:text-neutral-900 dark:hover:text-white">
-            View full post
-          </summary>
-          <pre className="mt-3 whitespace-pre-wrap font-sans text-sm leading-relaxed border-t border-neutral-200 dark:border-neutral-700 pt-3">
-            {post.fullText}
-          </pre>
-        </details>
-      </div>
-
-      {/* Image intent */}
-      {post.imageIntent && (
-        <div className="px-4 py-3 bg-neutral-50 dark:bg-neutral-900 border-t border-neutral-200 dark:border-neutral-700">
-          <details className="text-sm">
-            <summary className="cursor-pointer text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white">
-              Image: &ldquo;{post.imageIntent.headlineText}&rdquo;
-            </summary>
-            <div className="mt-2 p-2 bg-neutral-100 dark:bg-neutral-800 rounded text-xs font-mono">
-              <p className="text-green-600 dark:text-green-400">{post.imageIntent.prompt}</p>
-              <p className="text-red-600 dark:text-red-400 mt-1">Negative: {post.imageIntent.negativePrompt}</p>
+    <details className="group border border-blue-200 dark:border-blue-700 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-300" open>
+      <summary className="px-6 py-5 bg-gradient-to-r from-blue-50 via-indigo-50/50 to-blue-50 dark:from-blue-900/20 dark:via-indigo-900/10 dark:to-blue-900/20 cursor-pointer hover:from-blue-100 hover:via-indigo-100/50 hover:to-blue-100 dark:hover:from-blue-900/30 dark:hover:via-indigo-900/20 dark:hover:to-blue-900/30 list-none transition-all duration-300">
+        <div className="flex justify-between items-center">
+          <div className="flex items-center gap-3">
+            <span className="text-xl">📄</span>
+            <span className="text-lg font-bold capitalize bg-clip-text text-transparent bg-gradient-to-r from-blue-700 to-indigo-600 dark:from-blue-300 dark:to-indigo-300">
+              {angle.replace("_", " ")}
+            </span>
+            <span className="text-sm text-blue-600 dark:text-blue-400 hidden sm:inline">
+              {ARTICLE_ANGLE_DESCRIPTIONS[angle]}
+            </span>
+          </div>
+          <div className="flex items-center gap-4">
+            <GenerateMoreArticlesButton runId={runId} angle={angle} />
+            <div className="flex items-center gap-2">
+              <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300">
+                {articles.length} version{articles.length !== 1 ? "s" : ""}
+              </span>
+              {approvedCount > 0 && (
+                <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-gradient-to-r from-green-500 to-emerald-500 text-white shadow-sm">
+                  {approvedCount} approved
+                </span>
+              )}
             </div>
-          </details>
+            <span className="text-blue-400 group-open:rotate-180 transition-transform duration-300">
+              ▼
+            </span>
+          </div>
         </div>
-      )}
+      </summary>
 
-      {/* Actions */}
-      <div className="px-4 py-3 border-t border-neutral-200 dark:border-neutral-700 flex justify-between items-center">
-        <ApprovalButtons postId={post.id} approved={post.approved ?? false} />
-        <CopyButton text={post.fullText} />
+      <div className="p-6 bg-gradient-to-b from-blue-50/30 to-white dark:from-blue-900/10 dark:to-neutral-900 grid gap-5 md:grid-cols-2">
+        {articles.map((article) => (
+          <ArticleCard key={article.id} article={article} runId={runId} />
+        ))}
       </div>
-    </div>
+    </details>
   );
 }
 
 function StatusBadge({ status }: { status: string }) {
-  const styles: Record<string, string> = {
-    pending: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400",
-    processing: "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400",
-    complete: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400",
-    failed: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400",
+  const baseStyles: Record<string, string> = {
+    pending: "bg-gradient-to-r from-yellow-400 to-amber-500 text-white shadow-lg shadow-yellow-500/30",
+    processing: "bg-gradient-to-r from-blue-500 to-indigo-500 text-white shadow-lg shadow-blue-500/30",
+    complete: "bg-gradient-to-r from-green-500 to-emerald-500 text-white shadow-lg shadow-green-500/30",
+    failed: "bg-gradient-to-r from-red-500 to-rose-500 text-white shadow-lg shadow-red-500/30",
   };
 
+  const isActive = status === "pending" || status === "processing";
+
   return (
-    <span className={`px-3 py-1 text-sm font-medium rounded-full ${styles[status] || styles.pending}`}>
-      {status}
+    <span className="relative inline-flex">
+      {/* Pulsing glow for active states */}
+      {isActive && (
+        <span
+          className={`absolute inset-0 rounded-full animate-ping opacity-40 ${
+            status === "pending"
+              ? "bg-yellow-400"
+              : "bg-blue-500"
+          }`}
+          style={{ animationDuration: "1.5s" }}
+        />
+      )}
+      <span
+        className={`relative px-3.5 py-1.5 text-sm font-bold rounded-full ${baseStyles[status] || baseStyles.pending} ${
+          isActive ? "animate-pulse" : ""
+        }`}
+        style={isActive ? { animationDuration: "2s" } : undefined}
+      >
+        <span className="flex items-center gap-1.5">
+          {status === "processing" && (
+            <span className="w-2 h-2 bg-white rounded-full animate-bounce" style={{ animationDuration: "0.6s" }} />
+          )}
+          {status === "pending" && (
+            <span className="w-2 h-2 bg-white rounded-full animate-pulse" />
+          )}
+          {status === "complete" && (
+            <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+            </svg>
+          )}
+          {status === "failed" && (
+            <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+            </svg>
+          )}
+          {status}
+        </span>
+      </span>
     </span>
   );
 }
