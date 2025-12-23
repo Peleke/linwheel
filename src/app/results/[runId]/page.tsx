@@ -13,6 +13,8 @@ import { RetryButton } from "@/components/retry-button";
 import { ContentTabs } from "@/components/content-tabs";
 import { ArticleCard } from "@/components/article-card";
 import { PostCard } from "@/components/post-card";
+import { ResultsClientWrapper } from "@/components/results-client-wrapper";
+import { ToastContainer } from "@/components/toast";
 
 import { ANGLE_DESCRIPTIONS } from "@/lib/prompts/angles";
 import { ARTICLE_ANGLE_DESCRIPTIONS } from "@/lib/prompts/article-angles";
@@ -162,28 +164,41 @@ export default async function ResultsDashboardPage({ params }: Props) {
   const anglesWithPosts = POST_ANGLES.filter(a => postsByAngle[a].length > 0);
   const anglesWithArticles = ARTICLE_ANGLES.filter(a => articlesByAngle[a].length > 0);
 
+  // Prepare posts data for client wrapper
+  const postsForClient = postsWithIntents.map((p) => ({
+    id: p.id,
+    hook: p.hook,
+    bodyBeats: [] as string[], // Not needed for keyboard nav
+    openQuestion: "",
+    postType: p.postType,
+    fullText: p.fullText,
+    approved: p.approved,
+  }));
+
   return (
-    <div className="min-h-screen flex flex-col">
-      {/* Header */}
-      <header className="border-b border-neutral-200 dark:border-neutral-800">
-        <div className="max-w-6xl mx-auto px-6 py-4 flex justify-between items-center">
-          <Link href="/" className="font-semibold text-lg">LinWheel</Link>
-          <div className="flex gap-4">
-            <Link
-              href="/results"
-              className="text-sm text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-white"
-            >
-              All runs
-            </Link>
-            <Link
-              href="/generate"
-              className="text-sm text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-white"
-            >
-              New generation
-            </Link>
+    <ResultsClientWrapper posts={postsForClient} runLabel={run.sourceLabel}>
+      <ToastContainer />
+      <div className="min-h-screen flex flex-col">
+        {/* Header */}
+        <header className="border-b border-neutral-200 dark:border-neutral-800">
+          <div className="max-w-6xl mx-auto px-6 py-4 flex justify-between items-center">
+            <Link href="/" className="font-semibold text-lg">LinWheel</Link>
+            <div className="flex gap-4">
+              <Link
+                href="/results"
+                className="text-sm text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-white"
+              >
+                All runs
+              </Link>
+              <Link
+                href="/generate"
+                className="text-sm text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-white"
+              >
+                New generation
+              </Link>
+            </div>
           </div>
-        </div>
-      </header>
+        </header>
 
       <main className="flex-1">
         <div className="max-w-6xl mx-auto px-6 py-8">
@@ -283,7 +298,8 @@ export default async function ResultsDashboardPage({ params }: Props) {
           />
         </div>
       </main>
-    </div>
+      </div>
+    </ResultsClientWrapper>
   );
 }
 
