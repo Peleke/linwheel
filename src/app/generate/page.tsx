@@ -118,6 +118,20 @@ export default function GeneratePage() {
           <Link href="/" className="font-bold text-lg gradient-text">
             LinWheel
           </Link>
+          <div className="flex items-center gap-4">
+            <Link
+              href="/results"
+              className="text-sm text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-white transition-colors"
+            >
+              All Runs
+            </Link>
+            <Link
+              href="/settings"
+              className="text-sm text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-white transition-colors"
+            >
+              Settings
+            </Link>
+          </div>
         </div>
       </header>
 
