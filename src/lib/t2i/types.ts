@@ -47,6 +47,7 @@ export interface ImageGenerationResult {
     model?: string;
     generationTime?: number;
     revisedPrompt?: string;
+    seed?: number;
   };
 }
 

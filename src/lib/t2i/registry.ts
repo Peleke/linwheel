@@ -7,16 +7,17 @@
 
 import type { T2IProvider, T2IProviderType, T2IConfig } from "./types";
 import { createOpenAIProvider } from "./providers/openai";
+import { createFALProvider } from "./providers/fal";
 
 // Registered providers (lazy-loaded)
 const providers = new Map<T2IProviderType, () => T2IProvider>();
 
 // Register built-in providers
 providers.set("openai", () => createOpenAIProvider());
+providers.set("fal", () => createFALProvider());
 
 // Placeholder for future providers
 // providers.set("comfyui", () => createComfyUIProvider());
-// providers.set("fal", () => createFALProvider());
 
 /**
  * Get the default provider based on environment configuration

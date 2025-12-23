@@ -17,6 +17,7 @@
     "test:watch": "vitest"
   },
   "dependencies": {
+    "@fal-ai/client": "^1.8.1",
     "@langchain/core": "^1.1.7",
     "@langchain/openai": "^1.2.0",
     "@tailwindcss/postcss": "^4.1.18",
