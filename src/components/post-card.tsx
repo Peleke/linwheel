@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import ReactMarkdown from "react-markdown";
 import { CopyButton } from "@/components/copy-button";
 import { ApprovalButtons } from "@/components/approval-buttons";
 
@@ -119,9 +120,9 @@ export function PostCard({ post, runId }: PostCardProps) {
                 transition={{ duration: 0.3, ease: "easeInOut" }}
                 className="overflow-hidden"
               >
-                <pre className="mt-3 whitespace-pre-wrap font-sans text-sm leading-relaxed border-t border-indigo-100 dark:border-indigo-900/50 pt-3 text-slate-600 dark:text-slate-400">
-                  {post.fullText}
-                </pre>
+                <div className="mt-3 border-t border-indigo-100 dark:border-indigo-900/50 pt-3 text-slate-600 dark:text-slate-400 prose prose-sm prose-slate dark:prose-invert max-w-none prose-p:my-2 prose-strong:text-slate-700 dark:prose-strong:text-slate-300 prose-headings:text-slate-800 dark:prose-headings:text-slate-200">
+                  <ReactMarkdown>{post.fullText}</ReactMarkdown>
+                </div>
               </motion.div>
             )}
           </AnimatePresence>

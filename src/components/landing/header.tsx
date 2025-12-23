@@ -22,11 +22,13 @@ export function Header() {
       }`}
     >
       <div className="max-w-6xl mx-auto px-6 py-4 flex justify-between items-center">
-        <Link href="/" className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
-            <span className="text-white font-bold text-sm">L</span>
+        <Link href="/" className="flex items-center gap-2 group">
+          <div className="relative w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center overflow-hidden">
+            {/* Shimmer effect */}
+            <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-700 bg-gradient-to-r from-transparent via-white/30 to-transparent" />
+            <span className="relative text-white font-bold text-sm">L</span>
           </div>
-          <span className="font-semibold text-lg">LinWheel</span>
+          <span className="font-semibold text-lg gradient-text">LinWheel</span>
         </Link>
 
         <nav className="hidden md:flex items-center gap-8">
