@@ -61,25 +61,35 @@ interface FALResponse {
   has_nsfw_concepts?: boolean[];
 }
 
+// Get FAL API key from various possible env var names
+function getFALKey(): string | undefined {
+  return process.env.FAL_KEY || process.env.FAL_API_KEY;
+}
+
 export class FALImageProvider implements T2IProvider {
   type = "fal" as const;
   name = "FAL.ai FLUX";
 
   private model: string;
+  private configured: boolean = false;
 
   constructor(options?: { model?: string }) {
-    // Configure FAL client with API key
-    if (process.env.FAL_KEY) {
-      fal.config({ credentials: process.env.FAL_KEY });
+    // Configure FAL client with API key from various sources
+    const apiKey = getFALKey();
+    if (apiKey) {
+      fal.config({ credentials: apiKey });
+      this.configured = true;
     }
 
     // Default to flux-dev, can be overridden
     const modelKey = (options?.model || process.env.FAL_MODEL || "flux-dev") as FALModelKey;
     this.model = FAL_MODELS[modelKey] || options?.model || FAL_MODELS["flux-dev"];
+
+    console.log(`[FAL T2I] Initialized with model: ${this.model}, configured: ${this.configured}`);
   }
 
   isAvailable(): boolean {
-    return !!process.env.FAL_KEY;
+    return this.configured;
   }
 
   async generate(request: ImageGenerationRequest): Promise<ImageGenerationResult> {

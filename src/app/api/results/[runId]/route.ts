@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
-import { generationRuns, linkedinPosts, imageIntents } from "@/db/schema";
+import { generationRuns, linkedinPosts, imageIntents, articles, articleImageIntents } from "@/db/schema";
 import { eq } from "drizzle-orm";
 
 export async function GET(
@@ -37,9 +37,25 @@ export async function GET(
       })
     );
 
+    // Fetch articles
+    const articleRecords = await db.query.articles.findMany({
+      where: eq(articles.runId, runId),
+    });
+
+    // Fetch article image intents
+    const articlesWithIntents = await Promise.all(
+      articleRecords.map(async (article) => {
+        const intent = await db.query.articleImageIntents.findFirst({
+          where: eq(articleImageIntents.articleId, article.id),
+        });
+        return { ...article, imageIntent: intent };
+      })
+    );
+
     return NextResponse.json({
       run,
       posts: postsWithIntents,
+      articles: articlesWithIntents,
     });
   } catch (error) {
     console.error("Results error:", error);

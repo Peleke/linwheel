@@ -4,6 +4,7 @@ import { generationRuns } from "@/db/schema";
 import { desc } from "drizzle-orm";
 import { ClearRunsButton } from "@/components/clear-runs-button";
 import { DeleteRunButton } from "@/components/delete-run-button";
+import { AppHeader } from "@/components/app-header";
 
 export const dynamic = "force-dynamic";
 
@@ -15,18 +16,7 @@ export default async function ResultsListPage() {
 
   return (
     <div className="min-h-screen flex flex-col">
-      {/* Header */}
-      <header className="border-b border-neutral-200 dark:border-neutral-800">
-        <div className="max-w-4xl mx-auto px-6 py-4 flex justify-between items-center">
-          <Link href="/" className="font-bold text-lg gradient-text">LinWheel</Link>
-          <Link
-            href="/generate"
-            className="px-4 py-2 bg-neutral-900 text-white rounded-lg text-sm font-medium hover:bg-neutral-800 dark:bg-white dark:text-neutral-900 dark:hover:bg-neutral-100"
-          >
-            New generation
-          </Link>
-        </div>
-      </header>
+      <AppHeader />
 
       <main className="flex-1">
         <div className="max-w-4xl mx-auto px-6 py-12">

@@ -15,6 +15,7 @@ import { ArticleCard } from "@/components/article-card";
 import { PostCard } from "@/components/post-card";
 import { ResultsClientWrapper } from "@/components/results-client-wrapper";
 import { ToastContainer } from "@/components/toast";
+import { AppHeader } from "@/components/app-header";
 
 import { ANGLE_DESCRIPTIONS } from "@/lib/prompts/angles";
 import { ARTICLE_ANGLE_DESCRIPTIONS } from "@/lib/prompts/article-angles";
@@ -187,26 +188,7 @@ export default async function ResultsDashboardPage({ params }: Props) {
     <ResultsClientWrapper posts={postsForClient} runLabel={run.sourceLabel}>
       <ToastContainer />
       <div className="min-h-screen flex flex-col">
-        {/* Header */}
-        <header className="border-b border-neutral-200 dark:border-neutral-800">
-          <div className="max-w-6xl mx-auto px-6 py-4 flex justify-between items-center">
-            <Link href="/" className="font-bold text-lg gradient-text">LinWheel</Link>
-            <div className="flex gap-4">
-              <Link
-                href="/results"
-                className="text-sm text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-white"
-              >
-                All runs
-              </Link>
-              <Link
-                href="/generate"
-                className="text-sm text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-white"
-              >
-                New generation
-              </Link>
-            </div>
-          </div>
-        </header>
+        <AppHeader />
 
       <main className="flex-1">
         <div className="max-w-6xl mx-auto px-6 py-8">
@@ -229,18 +211,47 @@ export default async function ResultsDashboardPage({ params }: Props) {
               </div>
             </div>
 
-            {/* Status poller for pending/processing runs */}
-            <StatusPoller runId={runId} status={run.status} />
+            {/* Status poller for pending/processing runs - progressive rendering */}
+            <StatusPoller
+              runId={runId}
+              status={run.status}
+              postCount={posts.length}
+              articleCount={articleRecords.length}
+            />
 
             {(run.status === "pending" || run.status === "processing") && (
-              <div className="p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
-                <div className="flex items-center gap-3">
-                  <div className="animate-spin h-5 w-5 border-2 border-blue-600 border-t-transparent rounded-full" />
-                  <span className="text-blue-700 dark:text-blue-400">
-                    {run.status === "pending"
-                      ? "Starting generation..."
-                      : `Generating content${anglesWithPosts.length > 0 ? ` (${anglesWithPosts.length} post angles)` : ""}${anglesWithArticles.length > 0 ? ` + ${anglesWithArticles.length} article angles` : ""}... This may take a few minutes.`}
-                  </span>
+              <div className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="relative">
+                      <div className="animate-spin h-6 w-6 border-2 border-blue-600 border-t-transparent rounded-full" />
+                      <div className="absolute inset-0 animate-ping h-6 w-6 border border-blue-400 rounded-full opacity-30" />
+                    </div>
+                    <div>
+                      <span className="text-blue-700 dark:text-blue-300 font-medium">
+                        {run.status === "pending"
+                          ? "Starting generation..."
+                          : "Generating content..."}
+                      </span>
+                      <p className="text-blue-600/70 dark:text-blue-400/70 text-sm">
+                        Content appears as it&apos;s ready
+                      </p>
+                    </div>
+                  </div>
+                  {run.status === "processing" && (posts.length > 0 || articleRecords.length > 0) && (
+                    <div className="flex items-center gap-3 text-sm">
+                      {posts.length > 0 && (
+                        <span className="px-2.5 py-1 rounded-full bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300 font-medium">
+                          {posts.length} post{posts.length !== 1 ? "s" : ""}
+                        </span>
+                      )}
+                      {articleRecords.length > 0 && (
+                        <span className="px-2.5 py-1 rounded-full bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 font-medium">
+                          {articleRecords.length} article{articleRecords.length !== 1 ? "s" : ""}
+                        </span>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
             )}

@@ -9,15 +9,23 @@ import type { T2IProvider, T2IProviderType, T2IConfig } from "./types";
 import { createOpenAIProvider } from "./providers/openai";
 import { createFALProvider } from "./providers/fal";
 
+// Provider factory function type that accepts optional model
+type ProviderFactory = (options?: { model?: string }) => T2IProvider;
+
 // Registered providers (lazy-loaded)
-const providers = new Map<T2IProviderType, () => T2IProvider>();
+const providers = new Map<T2IProviderType, ProviderFactory>();
 
 // Register built-in providers
-providers.set("openai", () => createOpenAIProvider());
-providers.set("fal", () => createFALProvider());
+providers.set("openai", (opts) => createOpenAIProvider(opts));
+providers.set("fal", (opts) => createFALProvider(opts));
 
 // Placeholder for future providers
 // providers.set("comfyui", () => createComfyUIProvider());
+
+// Helper to check for FAL key in various env var names
+function hasFALKey(): boolean {
+  return !!(process.env.FAL_KEY || process.env.FAL_API_KEY);
+}
 
 /**
  * Get the default provider based on environment configuration
@@ -31,7 +39,7 @@ export function getDefaultProviderType(): T2IProviderType {
 
   // Default fallback order: openai > fal > comfyui
   if (process.env.OPENAI_API_KEY) return "openai";
-  if (process.env.FAL_KEY) return "fal";
+  if (hasFALKey()) return "fal";
   if (process.env.COMFYUI_SERVER_URL) return "comfyui";
 
   return "openai"; // Ultimate fallback
@@ -40,7 +48,7 @@ export function getDefaultProviderType(): T2IProviderType {
 /**
  * Get a specific provider instance
  */
-export function getProvider(type?: T2IProviderType): T2IProvider {
+export function getProvider(type?: T2IProviderType, model?: string): T2IProvider {
   const providerType = type || getDefaultProviderType();
   const factory = providers.get(providerType);
 
@@ -48,7 +56,7 @@ export function getProvider(type?: T2IProviderType): T2IProvider {
     throw new Error(`Unknown T2I provider: ${providerType}`);
   }
 
-  return factory();
+  return factory({ model });
 }
 
 /**

@@ -126,6 +126,37 @@ export const articleImageIntents = sqliteTable("article_image_intents", {
   generationError: text("generation_error"),
 });
 
+// Carousel page structure (stored in JSON)
+export interface CarouselPage {
+  pageNumber: number;
+  slideType: "title" | "content" | "cta";
+  prompt: string;
+  headlineText: string;
+  bodyText?: string;
+  imageUrl?: string;
+  generatedAt?: Date;
+  generationError?: string;
+}
+
+// Article carousel intents table
+export const articleCarouselIntents = sqliteTable("article_carousel_intents", {
+  id: text("id").primaryKey(),
+  articleId: text("article_id").notNull().references(() => articles.id),
+  pageCount: integer("page_count").notNull().default(5),
+  pages: text("pages", { mode: "json" }).$type<CarouselPage[]>(),
+  stylePreset: text("style_preset", {
+    enum: STYLE_PRESETS,
+  }).notNull(),
+  // Generated PDF data
+  generatedPdfUrl: text("generated_pdf_url"),
+  generatedAt: integer("generated_at", { mode: "timestamp" }),
+  generationProvider: text("generation_provider", {
+    enum: ["openai", "comfyui", "fal"],
+  }),
+  generationError: text("generation_error"),
+  createdAt: integer("created_at", { mode: "timestamp" }).$defaultFn(() => new Date()),
+});
+
 // Types
 export type GenerationRun = typeof generationRuns.$inferSelect;
 export type NewGenerationRun = typeof generationRuns.$inferInsert;
@@ -139,3 +170,5 @@ export type Article = typeof articles.$inferSelect;
 export type NewArticle = typeof articles.$inferInsert;
 export type ArticleImageIntent = typeof articleImageIntents.$inferSelect;
 export type NewArticleImageIntent = typeof articleImageIntents.$inferInsert;
+export type ArticleCarouselIntent = typeof articleCarouselIntents.$inferSelect;
+export type NewArticleCarouselIntent = typeof articleCarouselIntents.$inferInsert;

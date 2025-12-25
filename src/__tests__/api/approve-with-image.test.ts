@@ -99,13 +99,13 @@ const createArticleWithIntentData = async () => {
     id: articleId,
     runId,
     insightId,
-    articleType: "deep_dive",
-    title: "Test Article with Image",
+    title: "Test Article",
     subtitle: "Test Subtitle",
     introduction: "Test introduction",
     sections: ["Section 1", "Section 2"],
     conclusion: "Test conclusion",
-    fullText: "Full article text for image test",
+    fullText: "Full article text",
+    articleType: "thought_leadership",
     versionNumber: 1,
     approved: false,
   });
@@ -122,38 +122,23 @@ const createArticleWithIntentData = async () => {
   return { runId, insightId, articleId, intentId };
 };
 
-const cleanupPostData = async (runId: string) => {
-  const posts = await db.query.linkedinPosts.findMany({
-    where: eq(linkedinPosts.runId, runId),
-  });
-
-  for (const post of posts) {
-    await db.delete(imageIntents).where(eq(imageIntents.postId, post.id));
-  }
-
+// Cleanup helpers
+const cleanupPostData = async (runId: string, postId: string) => {
+  await db.delete(imageIntents).where(eq(imageIntents.postId, postId));
   await db.delete(linkedinPosts).where(eq(linkedinPosts.runId, runId));
   await db.delete(insights).where(eq(insights.runId, runId));
   await db.delete(generationRuns).where(eq(generationRuns.id, runId));
 };
 
-const cleanupArticleData = async (runId: string) => {
-  const articleList = await db.query.articles.findMany({
-    where: eq(articles.runId, runId),
-  });
-
-  for (const article of articleList) {
-    await db
-      .delete(articleImageIntents)
-      .where(eq(articleImageIntents.articleId, article.id));
-  }
-
+const cleanupArticleData = async (runId: string, articleId: string) => {
+  await db.delete(articleImageIntents).where(eq(articleImageIntents.articleId, articleId));
   await db.delete(articles).where(eq(articles.runId, runId));
   await db.delete(insights).where(eq(insights.runId, runId));
   await db.delete(generationRuns).where(eq(generationRuns.id, runId));
 };
 
-describe("POST /api/posts/[postId]/approve - Image Generation", () => {
-  let testData: Awaited<ReturnType<typeof createPostWithIntentData>>;
+describe("POST /api/posts/[postId]/approve - Approval without Image Generation", () => {
+  let testData: { runId: string; insightId: string; postId: string; intentId: string };
 
   beforeEach(async () => {
     vi.clearAllMocks();
@@ -161,10 +146,10 @@ describe("POST /api/posts/[postId]/approve - Image Generation", () => {
   });
 
   afterEach(async () => {
-    await cleanupPostData(testData.runId);
+    await cleanupPostData(testData.runId, testData.postId);
   });
 
-  it("should trigger image generation when approving a post with intent", async () => {
+  it("should approve a post without triggering image generation", async () => {
     const { generateImage } = await import("@/lib/t2i");
     const { POST } = await import("@/app/api/posts/[postId]/approve/route");
 
@@ -180,26 +165,49 @@ describe("POST /api/posts/[postId]/approve - Image Generation", () => {
     const response = await POST(request, {
       params: Promise.resolve({ postId: testData.postId }),
     });
+
     const data = await response.json();
 
     expect(response.status).toBe(200);
     expect(data.success).toBe(true);
     expect(data.approved).toBe(true);
-    expect(data.image).toBeDefined();
-    expect(data.image.generating).toBe(true);
-    expect(data.image.intentId).toBe(testData.intentId);
 
-    // Verify generateImage was called with correct parameters
-    expect(generateImage).toHaveBeenCalledWith(
-      expect.objectContaining({
-        prompt: "Professional LinkedIn cover with abstract tech patterns",
-        negativePrompt: "blurry, low quality, text errors",
-        headlineText: "10 Tips for Better Networking",
-        stylePreset: "typographic_minimal",
-        aspectRatio: "1.91:1",
-        quality: "hd",
-      })
+    // Verify generateImage was NOT called
+    expect(generateImage).not.toHaveBeenCalled();
+
+    // Verify imageIntent info is returned but no generation happened
+    expect(data.imageIntent).toBeDefined();
+    expect(data.imageIntent.intentId).toBe(testData.intentId);
+    expect(data.imageIntent.hasImage).toBe(false);
+  });
+
+  it("should return imageIntent info with hasImage=true when image already exists", async () => {
+    // First, manually set an image URL
+    await db
+      .update(imageIntents)
+      .set({ generatedImageUrl: "https://existing-image.com/image.png" })
+      .where(eq(imageIntents.id, testData.intentId));
+
+    const { POST } = await import("@/app/api/posts/[postId]/approve/route");
+
+    const request = new Request(
+      `http://localhost/api/posts/${testData.postId}/approve`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ approved: true }),
+      }
     );
+
+    const response = await POST(request, {
+      params: Promise.resolve({ postId: testData.postId }),
+    });
+
+    const data = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(data.imageIntent.hasImage).toBe(true);
+    expect(data.imageIntent.imageUrl).toBe("https://existing-image.com/image.png");
   });
 
   it("should not trigger image generation when unapproving", async () => {
@@ -225,52 +233,18 @@ describe("POST /api/posts/[postId]/approve - Image Generation", () => {
     const response = await POST(request, {
       params: Promise.resolve({ postId: testData.postId }),
     });
+
     const data = await response.json();
 
     expect(response.status).toBe(200);
+    expect(data.success).toBe(true);
     expect(data.approved).toBe(false);
-    expect(data.image).toBeNull();
-    expect(generateImage).not.toHaveBeenCalled();
-  });
-
-  it("should return cached image if already generated", async () => {
-    const { generateImage } = await import("@/lib/t2i");
-
-    // Pre-set a generated image
-    await db
-      .update(imageIntents)
-      .set({
-        generatedImageUrl: "https://cached.com/existing-image.png",
-        generatedAt: new Date(),
-        generationProvider: "openai",
-      })
-      .where(eq(imageIntents.id, testData.intentId));
-
-    const { POST } = await import("@/app/api/posts/[postId]/approve/route");
-
-    const request = new Request(
-      `http://localhost/api/posts/${testData.postId}/approve`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ approved: true }),
-      }
-    );
-
-    const response = await POST(request, {
-      params: Promise.resolve({ postId: testData.postId }),
-    });
-    const data = await response.json();
-
-    expect(response.status).toBe(200);
-    expect(data.image.cached).toBe(true);
-    expect(data.image.imageUrl).toBe("https://cached.com/existing-image.png");
     expect(generateImage).not.toHaveBeenCalled();
   });
 });
 
-describe("POST /api/articles/[articleId]/approve - Image Generation", () => {
-  let testData: Awaited<ReturnType<typeof createArticleWithIntentData>>;
+describe("POST /api/articles/[articleId]/approve - Approval without Image Generation", () => {
+  let testData: { runId: string; insightId: string; articleId: string; intentId: string };
 
   beforeEach(async () => {
     vi.clearAllMocks();
@@ -278,10 +252,10 @@ describe("POST /api/articles/[articleId]/approve - Image Generation", () => {
   });
 
   afterEach(async () => {
-    await cleanupArticleData(testData.runId);
+    await cleanupArticleData(testData.runId, testData.articleId);
   });
 
-  it("should trigger image generation when approving an article with intent", async () => {
+  it("should approve an article without triggering image generation", async () => {
     const { generateImage } = await import("@/lib/t2i");
     const { POST } = await import(
       "@/app/api/articles/[articleId]/approve/route"
@@ -299,23 +273,20 @@ describe("POST /api/articles/[articleId]/approve - Image Generation", () => {
     const response = await POST(request, {
       params: Promise.resolve({ articleId: testData.articleId }),
     });
+
     const data = await response.json();
 
     expect(response.status).toBe(200);
     expect(data.success).toBe(true);
     expect(data.approved).toBe(true);
-    expect(data.image).toBeDefined();
-    expect(data.image.generating).toBe(true);
-    expect(data.image.intentId).toBe(testData.intentId);
 
-    // Verify generateImage was called
-    expect(generateImage).toHaveBeenCalledWith(
-      expect.objectContaining({
-        prompt: "Professional article cover image",
-        headlineText: "Article Cover Headline",
-        stylePreset: "gradient_text",
-      })
-    );
+    // Verify generateImage was NOT called
+    expect(generateImage).not.toHaveBeenCalled();
+
+    // Verify imageIntent info is returned
+    expect(data.imageIntent).toBeDefined();
+    expect(data.imageIntent.intentId).toBe(testData.intentId);
+    expect(data.imageIntent.hasImage).toBe(false);
   });
 
   it("should not trigger image generation when unapproving article", async () => {
@@ -342,46 +313,12 @@ describe("POST /api/articles/[articleId]/approve - Image Generation", () => {
     const response = await POST(request, {
       params: Promise.resolve({ articleId: testData.articleId }),
     });
+
     const data = await response.json();
 
     expect(response.status).toBe(200);
+    expect(data.success).toBe(true);
     expect(data.approved).toBe(false);
-    expect(generateImage).not.toHaveBeenCalled();
-  });
-
-  it("should return cached article image if already generated", async () => {
-    const { generateImage } = await import("@/lib/t2i");
-
-    await db
-      .update(articleImageIntents)
-      .set({
-        generatedImageUrl: "https://cached.com/article-cover.png",
-        generatedAt: new Date(),
-        generationProvider: "openai",
-      })
-      .where(eq(articleImageIntents.id, testData.intentId));
-
-    const { POST } = await import(
-      "@/app/api/articles/[articleId]/approve/route"
-    );
-
-    const request = new Request(
-      `http://localhost/api/articles/${testData.articleId}/approve`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ approved: true }),
-      }
-    );
-
-    const response = await POST(request, {
-      params: Promise.resolve({ articleId: testData.articleId }),
-    });
-    const data = await response.json();
-
-    expect(response.status).toBe(200);
-    expect(data.image.cached).toBe(true);
-    expect(data.image.imageUrl).toBe("https://cached.com/article-cover.png");
     expect(generateImage).not.toHaveBeenCalled();
   });
 });

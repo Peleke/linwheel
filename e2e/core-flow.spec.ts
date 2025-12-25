@@ -874,7 +874,7 @@ test.describe("Flow 12: Article Generation", () => {
 });
 
 // ============================================================================
-// FLOW 13: IMAGE GENERATION (T2I Pipeline)
+// FLOW 13: IMAGE GENERATION (T2I Pipeline - Separated Approve/Generate Flow)
 // ============================================================================
 test.describe("Flow 13: Image Generation", () => {
   test.skip("13.1 - image intent section visible in post card (requires completed run)", async ({ page }) => {
@@ -889,59 +889,146 @@ test.describe("Flow 13: Image Generation", () => {
     // REQUIRES COMPLETED RUN WITH POSTS
     // When implemented, should test:
     // - Image preview shows placeholder message
-    // - Message indicates image will generate on approval
+    // - "Generate Image" button disabled/hidden before approval
   });
 
-  test.skip("13.3 - approving post triggers image generation", async ({ page }) => {
-    // REQUIRES COMPLETED RUN WITH POSTS AND OPENAI_API_KEY
-    // When implemented, should test:
+  test.skip("13.3 - approving post does NOT trigger image generation", async ({ page }) => {
+    // REQUIRES COMPLETED RUN WITH POSTS
+    // Key test for separated flow:
     // - Click approve on post with image intent
-    // - Loading spinner appears ("Generating image...")
-    // - Wait for image to appear
+    // - Post shows "Approved" badge
+    // - NO loading spinner for image
+    // - "Generate Image" button now appears/becomes enabled
+    // - Image preview still shows placeholder
+  });
+
+  test.skip("13.4 - Generate Image button appears after approval", async ({ page }) => {
+    // REQUIRES COMPLETED RUN WITH POSTS
+    // When implemented, should test:
+    // - Before approval: Generate Image button hidden or disabled
+    // - After approval: Generate Image button visible and clickable
+    // - Button shows camera/image icon
+  });
+
+  test.skip("13.5 - clicking Generate Image opens modal with editable prompts", async ({ page }) => {
+    // REQUIRES COMPLETED RUN WITH APPROVED POST
+    // When implemented, should test:
+    // - Click Generate Image button
+    // - Modal opens with backdrop
+    // - Prompt field populated from intent
+    // - Negative prompt field populated
+    // - Headline text field populated
+    // - Style preset selector visible with current selection
+    // - Generate button visible
+    // - Close/Cancel button visible
+  });
+
+  test.skip("13.6 - can edit prompts in modal", async ({ page }) => {
+    // REQUIRES COMPLETED RUN WITH APPROVED POST
+    // When implemented, should test:
+    // - Open modal via Generate Image button
+    // - Edit the positive prompt text
+    // - Edit the negative prompt text
+    // - Change the headline text
+    // - Select a different style preset
+    // - Changes persist in form (before generate)
+  });
+
+  test.skip("13.7 - generating image from modal calls API and updates UI", async ({ page }) => {
+    // REQUIRES COMPLETED RUN WITH APPROVED POST AND FAL_KEY/OPENAI_API_KEY
+    // When implemented, should test:
+    // - Open modal and optionally edit prompts
+    // - Click Generate button
+    // - Loading state shown in modal
+    // - On success: image preview appears in modal
+    // - On success: success message shown
+    // - Image persists after closing modal
     test.setTimeout(60000);
   });
 
-  test.skip("13.4 - generated image displays in preview", async ({ page }) => {
-    // REQUIRES COMPLETED RUN WITH GENERATED IMAGES
+  test.skip("13.8 - edited prompts are saved to database", async ({ page }) => {
+    // REQUIRES COMPLETED RUN WITH APPROVED POST
     // When implemented, should test:
-    // - Image visible in the preview area
-    // - "Generated" badge appears
-    // - Headline text visible as overlay
+    // - Open modal
+    // - Edit prompts
+    // - Click Generate
+    // - Close modal
+    // - Re-open modal
+    // - Edited prompts are still there (saved to DB)
   });
 
-  test.skip("13.5 - image generation error shows error state", async ({ page }) => {
+  test.skip("13.9 - generated image displays in card after modal close", async ({ page }) => {
+    // REQUIRES COMPLETED RUN WITH GENERATED IMAGES
+    // When implemented, should test:
+    // - After generating in modal, close modal
+    // - Image visible in the post card preview area
+    // - "Generated" or success indicator visible
+  });
+
+  test.skip("13.10 - can regenerate image with new prompts", async ({ page }) => {
+    // REQUIRES COMPLETED RUN WITH GENERATED IMAGES AND API KEY
+    // When implemented, should test:
+    // - Post already has generated image
+    // - Click Generate Image (or Regenerate)
+    // - Modal opens showing current image
+    // - Edit prompts
+    // - Click Generate
+    // - New image appears, replacing old one
+    test.setTimeout(60000);
+  });
+
+  test.skip("13.11 - image generation error shows error state in modal", async ({ page }) => {
     // REQUIRES MOCK OR INVALID API KEY
     // When implemented, should test:
-    // - Error message displayed
+    // - Open modal
+    // - Click Generate
+    // - Error message displayed in modal
     // - User-friendly error text
+    // - Can retry or close
   });
 
-  test.skip("13.6 - unapproving does not regenerate image", async ({ page }) => {
-    // REQUIRES COMPLETED RUN WITH GENERATED IMAGES
+  test.skip("13.12 - article Generate Image flow works same as posts", async ({ page }) => {
+    // REQUIRES COMPLETED RUN WITH ARTICLES
     // When implemented, should test:
-    // - Unapprove a post with generated image
-    // - Image still visible (cached)
-    // - Re-approving doesn't regenerate
-  });
-
-  test.skip("13.7 - article cover image generates on approval", async ({ page }) => {
-    // REQUIRES COMPLETED RUN WITH ARTICLES AND OPENAI_API_KEY
-    // When implemented, should test:
-    // - Article has "Cover Image:" section
-    // - Approve article
-    // - Image generates and displays
+    // - Article has image intent
+    // - Approve article (no image generated)
+    // - Generate Image button appears
+    // - Click opens modal with article intent prompts
+    // - Generate works and shows image
     test.setTimeout(60000);
   });
 
-  test.skip("13.8 - image polling updates UI when generation completes", async ({ page }) => {
-    // REQUIRES COMPLETED RUN WITH POSTS AND OPENAI_API_KEY
-    // Tests the polling mechanism
+  test.skip("13.13 - style preset selector shows all options", async ({ page }) => {
+    // REQUIRES COMPLETED RUN WITH APPROVED POST
     // When implemented, should test:
-    // - Approve post
-    // - Initially shows "Generating..." state
-    // - Poll every 2 seconds
-    // - Image appears when generation completes
-    // - Polling stops after image appears
-    test.setTimeout(90000);
+    // - Open modal
+    // - Style preset buttons visible:
+    //   - Typographic Minimal
+    //   - Bold Geometric
+    //   - Gradient Text
+    //   - Dark Mode
+    //   - Light Airy
+    //   - Professional Corporate
+    // - Current selection highlighted
+    // - Clicking changes selection
+  });
+
+  test.skip("13.14 - modal responsive on mobile", async ({ page }) => {
+    // Set viewport to mobile size
+    await page.setViewportSize({ width: 375, height: 667 });
+    // When implemented, should test:
+    // - Modal fits screen
+    // - Form fields usable
+    // - Buttons reachable
+    // - Can scroll if needed
+  });
+
+  test.skip("13.15 - unapproving post preserves generated image", async ({ page }) => {
+    // REQUIRES COMPLETED RUN WITH GENERATED IMAGES
+    // When implemented, should test:
+    // - Post has generated image
+    // - Unapprove the post
+    // - Image still visible in preview
+    // - Re-approve: no regeneration, same image
   });
 });

@@ -51,3 +51,7 @@ next-env.d.ts
 .turbo
 test-results/
 playwright-report/
+
+# Generated images (cached locally, stored in GCP for prod)
+public/images/generated/*
+!public/images/generated/.gitkeep

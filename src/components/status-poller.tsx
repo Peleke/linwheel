@@ -1,24 +1,33 @@
 "use client";
 
-import { useEffect, useCallback } from "react";
+import { useEffect, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 
 interface StatusPollerProps {
   runId: string;
   status: string;
+  /** Current post count (for progressive refresh) */
+  postCount?: number;
+  /** Current article count (for progressive refresh) */
+  articleCount?: number;
   pollInterval?: number;
 }
 
 /**
  * Client component that polls for status updates when a run is pending/processing.
- * Triggers a page refresh when the status changes to complete or failed.
+ * Triggers a page refresh when:
+ * - Status changes to complete or failed
+ * - New posts or articles are generated (progressive rendering)
  */
 export function StatusPoller({
   runId,
   status,
+  postCount = 0,
+  articleCount = 0,
   pollInterval = 3000,
 }: StatusPollerProps) {
   const router = useRouter();
+  const lastCountRef = useRef({ posts: postCount, articles: articleCount });
 
   const checkStatus = useCallback(async () => {
     try {
@@ -27,9 +36,18 @@ export function StatusPoller({
 
       const data = await response.json();
       const newStatus = data.run?.status;
+      const newPostCount = data.posts?.length ?? 0;
+      const newArticleCount = data.articles?.length ?? 0;
 
-      // If status changed from processing to something else, refresh
-      if (newStatus && newStatus !== status) {
+      // Refresh if status changed OR if new content was generated
+      const statusChanged = newStatus && newStatus !== status;
+      const contentAdded =
+        newPostCount > lastCountRef.current.posts ||
+        newArticleCount > lastCountRef.current.articles;
+
+      if (statusChanged || contentAdded) {
+        // Update ref before refresh to avoid double-refresh
+        lastCountRef.current = { posts: newPostCount, articles: newArticleCount };
         router.refresh();
       }
     } catch (error) {

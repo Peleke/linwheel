@@ -33,9 +33,10 @@ import { getProvider } from "./registry";
  */
 export async function generateImage(
   request: ImageGenerationRequest,
-  providerType?: T2IProviderType
+  providerType?: T2IProviderType,
+  model?: string
 ): Promise<ImageGenerationResult> {
-  const provider = getProvider(providerType);
+  const provider = getProvider(providerType, model);
 
   if (!provider.isAvailable()) {
     return {
@@ -53,9 +54,10 @@ export async function generateImage(
  */
 export async function generateImages(
   requests: ImageGenerationRequest[],
-  providerType?: T2IProviderType
+  providerType?: T2IProviderType,
+  model?: string
 ): Promise<ImageGenerationResult[]> {
-  const provider = getProvider(providerType);
+  const provider = getProvider(providerType, model);
 
   if (!provider.isAvailable()) {
     return requests.map(() => ({

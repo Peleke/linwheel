@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
 import {
   generationRuns, insights, linkedinPosts, imageIntents,
-  articles, articleImageIntents
+  articles, articleImageIntents, articleCarouselIntents
 } from "@/db/schema";
 import { eq, inArray } from "drizzle-orm";
 
@@ -48,6 +48,7 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
     }
 
     if (articleIds.length > 0) {
+      await db.delete(articleCarouselIntents).where(inArray(articleCarouselIntents.articleId, articleIds));
       await db.delete(articleImageIntents).where(inArray(articleImageIntents.articleId, articleIds));
       await db.delete(articles).where(eq(articles.runId, runId));
     }

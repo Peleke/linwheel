@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
 import { useImagePreferences, type ImagePreferences } from "@/hooks/use-image-preferences";
+import { AppHeader } from "@/components/app-header";
 import type { T2IProviderType } from "@/lib/t2i/types";
+import Link from "next/link";
 
 interface ProviderStatus {
   openai: boolean;
@@ -48,21 +49,18 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="min-h-screen py-12 px-6">
-      <div className="max-w-2xl mx-auto">
-        {/* Header */}
-        <div className="mb-8">
-          <Link
-            href="/generate"
-            className="text-sm text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300 mb-4 inline-block"
-          >
-            ← Back to Generate
-          </Link>
-          <h1 className="text-2xl font-bold">Settings</h1>
-          <p className="text-neutral-600 dark:text-neutral-400 mt-1">
-            Configure your image generation preferences.
-          </p>
-        </div>
+    <div className="min-h-screen flex flex-col">
+      <AppHeader />
+
+      <main className="flex-1 py-12 px-6">
+        <div className="max-w-2xl mx-auto">
+          {/* Header */}
+          <div className="mb-8">
+            <h1 className="text-2xl font-bold">Settings</h1>
+            <p className="text-neutral-600 dark:text-neutral-400 mt-1">
+              Configure your image generation preferences.
+            </p>
+          </div>
 
         {/* Image Generation Section */}
         <section className="bg-white dark:bg-neutral-800 rounded-xl border border-neutral-200 dark:border-neutral-700 p-6 mb-6">
@@ -224,7 +222,8 @@ export default function SettingsPage() {
             {JSON.stringify(preferences, null, 2)}
           </pre>
         </div>
-      </div>
+        </div>
+      </main>
     </div>
   );
 }
