@@ -20,6 +20,7 @@
     "@fal-ai/client": "^1.8.1",
     "@langchain/core": "^1.1.7",
     "@langchain/openai": "^1.2.0",
+    "@libsql/client": "^0.15.15",
     "@tailwindcss/postcss": "^4.1.18",
     "@tailwindcss/typography": "^0.5.19",
     "better-sqlite3": "^12.5.0",
