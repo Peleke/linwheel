@@ -55,8 +55,10 @@ export async function generateStructured<T>(
     });
   }
 
-  // Use withStructuredOutput for reliable JSON extraction
-  const structuredModel = model.withStructuredOutput(schema);
+  // Use withStructuredOutput with name for Claude compatibility
+  const structuredModel = model.withStructuredOutput(schema, {
+    name: "structured_response",
+  });
 
   const result = await structuredModel.invoke([
     new SystemMessage(systemPrompt),
