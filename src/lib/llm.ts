@@ -12,18 +12,48 @@ export interface LLMResponse<T> {
 /**
  * LLM Provider Configuration
  *
- * Priority: Claude (better writing) > OpenAI (fallback)
- * Set LLM_PROVIDER=openai to force OpenAI
+ * Priority: Request override > LLM_PROVIDER env > Default (OpenAI)
  */
-type LLMProvider = "claude" | "openai";
+export type LLMProvider = "claude" | "openai";
+
+// Runtime override (set per-request)
+let runtimeProviderOverride: LLMProvider | null = null;
+
+/**
+ * Set the LLM provider for the current request.
+ * Call this at the start of API handlers to use client preferences.
+ */
+export function setLLMProvider(provider: LLMProvider | null) {
+  runtimeProviderOverride = provider;
+}
+
+/**
+ * Clear the runtime provider override.
+ * Call this after processing to reset to default.
+ */
+export function clearLLMProvider() {
+  runtimeProviderOverride = null;
+}
 
 function getProvider(): LLMProvider {
+  // 1. Runtime override (from request)
+  if (runtimeProviderOverride) {
+    // Validate the provider is available
+    if (runtimeProviderOverride === "claude" && process.env.ANTHROPIC_API_KEY) {
+      return "claude";
+    }
+    if (runtimeProviderOverride === "openai" && process.env.OPENAI_API_KEY) {
+      return "openai";
+    }
+    console.warn(`[LLM] Requested provider ${runtimeProviderOverride} not available, falling back`);
+  }
+
+  // 2. Environment variable
   const envProvider = process.env.LLM_PROVIDER?.toLowerCase();
-
-  // Explicit provider selection only
   if (envProvider === "claude" && process.env.ANTHROPIC_API_KEY) return "claude";
+  if (envProvider === "openai" && process.env.OPENAI_API_KEY) return "openai";
 
-  // Default to OpenAI gpt-4o (most reliable for structured output)
+  // 3. Default to OpenAI gpt-4o (most reliable for structured output)
   return "openai";
 }
 
@@ -37,6 +67,10 @@ async function generateStructuredClaude<T>(
   temperature: number
 ): Promise<T> {
   const anthropic = new Anthropic();
+  const model = process.env.ANTHROPIC_MODEL || "claude-sonnet-4-20250514";
+
+  console.log(`[Claude] Starting request (input: ${userContent.length} chars, model: ${model})`);
+  const startTime = Date.now();
 
   // Create a tool that extracts structured data
   let extractedData: T | null = null;
@@ -52,13 +86,16 @@ async function generateStructuredClaude<T>(
 
   // Run with tool - Claude will call our extraction tool with structured data
   await anthropic.beta.messages.toolRunner({
-    model: process.env.ANTHROPIC_MODEL || "claude-sonnet-4-20250514",
+    model,
     max_tokens: 8192,
     system: systemPrompt,
     messages: [{ role: "user", content: userContent }],
     tools: [extractionTool],
     tool_choice: { type: "tool", name: "extract_structured_data" },
   });
+
+  const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
+  console.log(`[Claude] Completed in ${elapsed}s`);
 
   if (!extractedData) {
     throw new Error("Claude did not return structured data");
@@ -76,8 +113,13 @@ async function generateStructuredOpenAI<T>(
   schema: ZodType<T>,
   temperature: number
 ): Promise<T> {
+  const modelName = process.env.OPENAI_MODEL || "gpt-4o";
+
+  console.log(`[OpenAI] Starting request (input: ${userContent.length} chars, model: ${modelName})`);
+  const startTime = Date.now();
+
   const model = new ChatOpenAI({
-    model: process.env.OPENAI_MODEL || "gpt-4o",
+    model: modelName,
     temperature,
   });
 
@@ -89,6 +131,9 @@ async function generateStructuredOpenAI<T>(
     new SystemMessage(systemPrompt),
     new HumanMessage(userContent),
   ]);
+
+  const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
+  console.log(`[OpenAI] Completed in ${elapsed}s`);
 
   return result as T;
 }
@@ -104,6 +149,7 @@ export async function generateStructured<T>(
   temperature: number = 0.5
 ): Promise<LLMResponse<T>> {
   const provider = getProvider();
+  console.log(`[LLM] Using provider: ${provider}`);
 
   let data: T;
   if (provider === "claude") {

@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { useImagePreferences, type ImagePreferences } from "@/hooks/use-image-preferences";
+import { useLLMPreferences, type LLMPreferences, type LLMProvider } from "@/hooks/use-llm-preferences";
 import { AppHeader } from "@/components/app-header";
 import type { T2IProviderType } from "@/lib/t2i/types";
 
@@ -9,6 +10,11 @@ interface ProviderStatus {
   openai: boolean;
   fal: boolean;
   comfyui: boolean;
+}
+
+interface LLMProviderStatus {
+  claude: boolean;
+  openai: boolean;
 }
 
 interface VoiceProfile {
@@ -22,18 +28,31 @@ interface VoiceProfile {
 
 export default function SettingsPage() {
   const {
-    preferences,
-    isLoaded,
-    setProvider,
+    preferences: imagePreferences,
+    isLoaded: isImageLoaded,
+    setProvider: setImageProvider,
     setMode,
     setFalModel,
-    setOpenaiModel,
+    setOpenaiModel: setImageOpenaiModel,
   } = useImagePreferences();
+
+  const {
+    preferences: llmPreferences,
+    isLoaded: isLLMLoaded,
+    setProvider: setLLMProvider,
+    setClaudeModel,
+    setOpenaiModel: setLLMOpenaiModel,
+  } = useLLMPreferences();
 
   const [providerStatus, setProviderStatus] = useState<ProviderStatus>({
     openai: false,
     fal: false,
     comfyui: false,
+  });
+
+  const [llmProviderStatus, setLLMProviderStatus] = useState<LLMProviderStatus>({
+    claude: false,
+    openai: false,
   });
 
   // Voice profile state
@@ -58,11 +77,22 @@ export default function SettingsPage() {
 
   // Fetch provider status on mount
   useEffect(() => {
+    // Fetch image provider status
     fetch("/api/images/generate")
       .then((res) => res.json())
       .then((data) => {
         if (data.providers) {
           setProviderStatus(data.providers);
+        }
+      })
+      .catch(console.error);
+
+    // Fetch LLM provider status
+    fetch("/api/llm/status")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.providers) {
+          setLLMProviderStatus(data.providers);
         }
       })
       .catch(console.error);
@@ -135,6 +165,8 @@ export default function SettingsPage() {
     }
   };
 
+  const isLoaded = isImageLoaded && isLLMLoaded;
+
   if (!isLoaded) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -153,9 +185,100 @@ export default function SettingsPage() {
           <div className="mb-8">
             <h1 className="text-2xl font-bold">Settings</h1>
             <p className="text-neutral-600 dark:text-neutral-400 mt-1">
-              Configure your image generation preferences.
+              Configure your generation preferences.
             </p>
           </div>
+
+        {/* Text Generation Section */}
+        <section className="bg-white dark:bg-neutral-800 rounded-xl border border-neutral-200 dark:border-neutral-700 p-6 mb-6">
+          <h2 className="text-lg font-semibold mb-4">Text Generation</h2>
+          <p className="text-sm text-neutral-500 mb-4">
+            Choose the LLM provider for generating posts and articles.
+          </p>
+
+          {/* LLM Provider Selection */}
+          <div className="mb-6">
+            <label className="block text-sm font-medium mb-2">
+              Provider
+            </label>
+            <div className="flex gap-3">
+              <LLMProviderButton
+                provider="openai"
+                currentProvider={llmPreferences.provider}
+                onClick={() => setLLMProvider("openai")}
+                label="OpenAI"
+                description="GPT-4o - Reliable"
+                available={llmProviderStatus.openai}
+              />
+              <LLMProviderButton
+                provider="claude"
+                currentProvider={llmPreferences.provider}
+                onClick={() => setLLMProvider("claude")}
+                label="Claude"
+                description="Better writing quality"
+                available={llmProviderStatus.claude}
+              />
+            </div>
+          </div>
+
+          {/* Claude Model Selection */}
+          {llmPreferences.provider === "claude" && (
+            <div className="mb-6">
+              <label className="block text-sm font-medium mb-2">
+                Claude Model
+              </label>
+              <div className="grid grid-cols-2 gap-3">
+                <ModelButton
+                  model="claude-sonnet-4-20250514"
+                  currentModel={llmPreferences.claudeModel}
+                  onClick={() => setClaudeModel("claude-sonnet-4-20250514")}
+                  label="Claude Sonnet 4"
+                  description="Latest (default)"
+                />
+                <ModelButton
+                  model="claude-3-5-sonnet-20241022"
+                  currentModel={llmPreferences.claudeModel}
+                  onClick={() => setClaudeModel("claude-3-5-sonnet-20241022")}
+                  label="Claude 3.5 Sonnet"
+                  description="Previous gen"
+                />
+              </div>
+            </div>
+          )}
+
+          {/* OpenAI Model Selection */}
+          {llmPreferences.provider === "openai" && (
+            <div className="mb-6">
+              <label className="block text-sm font-medium mb-2">
+                OpenAI Model
+              </label>
+              <div className="grid grid-cols-2 gap-3">
+                <ModelButton
+                  model="gpt-4o"
+                  currentModel={llmPreferences.openaiModel}
+                  onClick={() => setLLMOpenaiModel("gpt-4o")}
+                  label="GPT-4o"
+                  description="Best quality"
+                />
+                <ModelButton
+                  model="gpt-4o-mini"
+                  currentModel={llmPreferences.openaiModel}
+                  onClick={() => setLLMOpenaiModel("gpt-4o-mini")}
+                  label="GPT-4o Mini"
+                  description="Faster, cheaper"
+                />
+              </div>
+            </div>
+          )}
+
+          {/* Note about server-side preference */}
+          <div className="p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg">
+            <p className="text-sm text-amber-800 dark:text-amber-200">
+              <strong>Note:</strong> Provider preference is sent with each generation request.
+              The server&apos;s <code className="bg-amber-100 dark:bg-amber-900/50 px-1 rounded">LLM_PROVIDER</code> env var takes precedence if set.
+            </p>
+          </div>
+        </section>
 
         {/* Image Generation Section */}
         <section className="bg-white dark:bg-neutral-800 rounded-xl border border-neutral-200 dark:border-neutral-700 p-6 mb-6">
@@ -169,14 +292,14 @@ export default function SettingsPage() {
             <div className="flex gap-3">
               <ModeButton
                 mode="cloud"
-                currentMode={preferences.mode}
+                currentMode={imagePreferences.mode}
                 onClick={() => setMode("cloud")}
                 label="Cloud"
                 description="Use cloud APIs (FAL.ai, OpenAI)"
               />
               <ModeButton
                 mode="local"
-                currentMode={preferences.mode}
+                currentMode={imagePreferences.mode}
                 onClick={() => setMode("local")}
                 label="Local"
                 description="Use local ComfyUI server"
@@ -186,7 +309,7 @@ export default function SettingsPage() {
           </div>
 
           {/* Cloud Provider Selection */}
-          {preferences.mode === "cloud" && (
+          {imagePreferences.mode === "cloud" && (
             <div className="mb-6">
               <label className="block text-sm font-medium mb-2">
                 Cloud Provider
@@ -194,16 +317,16 @@ export default function SettingsPage() {
               <div className="flex gap-3">
                 <ProviderButton
                   provider="fal"
-                  currentProvider={preferences.provider}
-                  onClick={() => setProvider("fal")}
+                  currentProvider={imagePreferences.provider}
+                  onClick={() => setImageProvider("fal")}
                   label="FAL.ai"
                   description="FLUX models"
                   available={providerStatus.fal}
                 />
                 <ProviderButton
                   provider="openai"
-                  currentProvider={preferences.provider}
-                  onClick={() => setProvider("openai")}
+                  currentProvider={imagePreferences.provider}
+                  onClick={() => setImageProvider("openai")}
                   label="OpenAI"
                   description="GPT Image"
                   available={providerStatus.openai}
@@ -213,7 +336,7 @@ export default function SettingsPage() {
           )}
 
           {/* FAL Model Selection */}
-          {preferences.mode === "cloud" && preferences.provider === "fal" && (
+          {imagePreferences.mode === "cloud" && imagePreferences.provider === "fal" && (
             <div className="mb-6">
               <label className="block text-sm font-medium mb-2">
                 FAL Model
@@ -221,21 +344,21 @@ export default function SettingsPage() {
               <div className="grid grid-cols-3 gap-3">
                 <ModelButton
                   model="flux-dev"
-                  currentModel={preferences.falModel}
+                  currentModel={imagePreferences.falModel}
                   onClick={() => setFalModel("flux-dev")}
                   label="FLUX.1 Dev"
                   description="Best quality"
                 />
                 <ModelButton
                   model="flux-pro"
-                  currentModel={preferences.falModel}
+                  currentModel={imagePreferences.falModel}
                   onClick={() => setFalModel("flux-pro")}
                   label="FLUX Pro"
                   description="Faster"
                 />
                 <ModelButton
                   model="recraft-v3"
-                  currentModel={preferences.falModel}
+                  currentModel={imagePreferences.falModel}
                   onClick={() => setFalModel("recraft-v3")}
                   label="Recraft V3"
                   description="Best for text"
@@ -245,7 +368,7 @@ export default function SettingsPage() {
           )}
 
           {/* OpenAI Model Selection */}
-          {preferences.mode === "cloud" && preferences.provider === "openai" && (
+          {imagePreferences.mode === "cloud" && imagePreferences.provider === "openai" && (
             <div className="mb-6">
               <label className="block text-sm font-medium mb-2">
                 OpenAI Model
@@ -253,22 +376,22 @@ export default function SettingsPage() {
               <div className="grid grid-cols-3 gap-3">
                 <ModelButton
                   model="gpt-image-1"
-                  currentModel={preferences.openaiModel}
-                  onClick={() => setOpenaiModel("gpt-image-1")}
+                  currentModel={imagePreferences.openaiModel}
+                  onClick={() => setImageOpenaiModel("gpt-image-1")}
                   label="GPT Image 1"
                   description="Default"
                 />
                 <ModelButton
                   model="gpt-image-1.5"
-                  currentModel={preferences.openaiModel}
-                  onClick={() => setOpenaiModel("gpt-image-1.5")}
+                  currentModel={imagePreferences.openaiModel}
+                  onClick={() => setImageOpenaiModel("gpt-image-1.5")}
                   label="GPT Image 1.5"
                   description="Improved"
                 />
                 <ModelButton
                   model="dall-e-3"
-                  currentModel={preferences.openaiModel}
-                  onClick={() => setOpenaiModel("dall-e-3")}
+                  currentModel={imagePreferences.openaiModel}
+                  onClick={() => setImageOpenaiModel("dall-e-3")}
                   label="DALL-E 3"
                   description="Legacy"
                 />
@@ -277,7 +400,7 @@ export default function SettingsPage() {
           )}
 
           {/* Local Mode Info */}
-          {preferences.mode === "local" && (
+          {imagePreferences.mode === "local" && (
             <div className="p-4 bg-neutral-50 dark:bg-neutral-700/50 rounded-lg">
               <p className="text-sm text-neutral-600 dark:text-neutral-400">
                 {providerStatus.comfyui ? (
@@ -457,10 +580,22 @@ export default function SettingsPage() {
         {/* Provider Status */}
         <section className="bg-white dark:bg-neutral-800 rounded-xl border border-neutral-200 dark:border-neutral-700 p-6 mb-6">
           <h2 className="text-lg font-semibold mb-4">Provider Status</h2>
-          <div className="space-y-3">
-            <StatusRow label="OpenAI" available={providerStatus.openai} envVar="OPENAI_API_KEY" />
-            <StatusRow label="FAL.ai" available={providerStatus.fal} envVar="FAL_KEY" />
-            <StatusRow label="ComfyUI" available={providerStatus.comfyui} envVar="COMFYUI_SERVER_URL" />
+          <div className="space-y-4">
+            <div>
+              <h3 className="text-sm font-medium text-neutral-500 mb-2">Text (LLM)</h3>
+              <div className="space-y-2">
+                <StatusRow label="OpenAI" available={llmProviderStatus.openai} envVar="OPENAI_API_KEY" />
+                <StatusRow label="Claude" available={llmProviderStatus.claude} envVar="ANTHROPIC_API_KEY" />
+              </div>
+            </div>
+            <div>
+              <h3 className="text-sm font-medium text-neutral-500 mb-2">Image (T2I)</h3>
+              <div className="space-y-2">
+                <StatusRow label="OpenAI" available={providerStatus.openai} envVar="OPENAI_API_KEY" />
+                <StatusRow label="FAL.ai" available={providerStatus.fal} envVar="FAL_KEY" />
+                <StatusRow label="ComfyUI" available={providerStatus.comfyui} envVar="COMFYUI_SERVER_URL" />
+              </div>
+            </div>
           </div>
         </section>
 
@@ -476,7 +611,7 @@ export default function SettingsPage() {
         <div className="mt-8 p-4 bg-neutral-100 dark:bg-neutral-900 rounded-lg">
           <p className="text-xs text-neutral-500 mb-2">Current Configuration:</p>
           <pre className="text-xs text-neutral-600 dark:text-neutral-400">
-            {JSON.stringify(preferences, null, 2)}
+            {JSON.stringify({ llm: llmPreferences, image: imagePreferences }, null, 2)}
           </pre>
         </div>
         </div>
@@ -486,6 +621,47 @@ export default function SettingsPage() {
 }
 
 // Helper Components
+
+function LLMProviderButton({
+  provider,
+  currentProvider,
+  onClick,
+  label,
+  description,
+  available,
+}: {
+  provider: LLMProvider;
+  currentProvider: LLMProvider;
+  onClick: () => void;
+  label: string;
+  description: string;
+  available: boolean;
+}) {
+  const isActive = provider === currentProvider;
+  return (
+    <button
+      onClick={onClick}
+      disabled={!available}
+      className={`flex-1 p-4 rounded-lg border-2 text-left transition-all ${
+        isActive
+          ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20"
+          : !available
+          ? "border-neutral-200 dark:border-neutral-700 opacity-50 cursor-not-allowed"
+          : "border-neutral-200 dark:border-neutral-700 hover:border-neutral-300 dark:hover:border-neutral-600"
+      }`}
+    >
+      <div className="flex items-center gap-2">
+        <span className="font-medium">{label}</span>
+        <span
+          className={`w-2 h-2 rounded-full ${
+            available ? "bg-green-500" : "bg-red-500"
+          }`}
+        />
+      </div>
+      <div className="text-xs text-neutral-500 mt-1">{description}</div>
+    </button>
+  );
+}
 
 function ModeButton({
   mode,

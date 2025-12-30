@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { AppHeader } from "@/components/app-header";
+import { getStoredLLMPreferences } from "@/hooks/use-llm-preferences";
 
 // Post angle configuration
 const POST_ANGLES = [
@@ -86,6 +87,9 @@ export default function GeneratePage() {
     setError(null);
 
     try {
+      // Get LLM preferences from localStorage
+      const llmPrefs = getStoredLLMPreferences();
+
       const response = await fetch("/api/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -94,6 +98,7 @@ export default function GeneratePage() {
           sourceLabel: sourceLabel || "Untitled",
           selectedAngles,
           selectedArticleAngles,
+          llmProvider: llmPrefs.provider,
         }),
       });
 

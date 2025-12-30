@@ -7,6 +7,7 @@ import {
 } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { runPipeline } from "@/lib/generate";
+import { setLLMProvider, clearLLMProvider, type LLMProvider } from "@/lib/llm";
 import { randomUUID } from "crypto";
 
 /**
@@ -17,9 +18,15 @@ async function processGeneration(
   runId: string,
   transcript: string,
   selectedAngles: PostAngle[],
-  selectedArticleAngles: ArticleAngle[] = []
+  selectedArticleAngles: ArticleAngle[] = [],
+  llmProvider?: LLMProvider
 ) {
   try {
+    // Set LLM provider for this request
+    if (llmProvider) {
+      console.log(`[Generate] Using client-requested provider: ${llmProvider}`);
+      setLLMProvider(llmProvider);
+    }
     // Update status to processing
     await db
       .update(generationRuns)
@@ -179,6 +186,9 @@ async function processGeneration(
         error: pipelineError instanceof Error ? pipelineError.message : "Unknown error",
       })
       .where(eq(generationRuns.id, runId));
+  } finally {
+    // Clear the provider override for next request
+    clearLLMProvider();
   }
 }
 
@@ -190,6 +200,7 @@ export async function POST(request: NextRequest) {
       sourceLabel,
       selectedAngles: rawSelectedAngles,
       selectedArticleAngles: rawSelectedArticleAngles,
+      llmProvider: rawLLMProvider,
     } = body;
 
     if (!transcript || typeof transcript !== "string") {
@@ -209,6 +220,10 @@ export async function POST(request: NextRequest) {
       ? rawSelectedArticleAngles.filter((a): a is ArticleAngle => ARTICLE_ANGLES.includes(a))
       : [];
 
+    // Validate LLM provider preference
+    const llmProvider: LLMProvider | undefined =
+      rawLLMProvider === "claude" || rawLLMProvider === "openai" ? rawLLMProvider : undefined;
+
     // Create run record with pending status
     const runId = randomUUID();
     await db.insert(generationRuns).values({
@@ -224,7 +239,7 @@ export async function POST(request: NextRequest) {
     // Use Next.js after() to keep serverless function alive after response
     after(async () => {
       try {
-        await processGeneration(runId, transcript, selectedAngles, selectedArticleAngles);
+        await processGeneration(runId, transcript, selectedAngles, selectedArticleAngles, llmProvider);
       } catch (err) {
         const errorMsg = err instanceof Error ? err.message : String(err);
         const errorStack = err instanceof Error ? err.stack : undefined;

@@ -1,6 +1,5 @@
 import { generateStructured, z } from "./llm";
 import {
-  CHUNK_TRANSCRIPT_PROMPT,
   EXTRACT_INSIGHTS_PROMPT,
 } from "./prompts";
 import { GENERATE_IMAGE_INTENT_PROMPT } from "./prompts/image-intent";
@@ -11,16 +10,6 @@ import { POST_ANGLES, ARTICLE_ANGLES, type PostAngle, type ArticleAngle } from "
 
 // Zod Schemas for structured output
 // Note: OpenAI structured output requires top-level to be an object, not array
-const TranscriptChunkSchema = z.object({
-  index: z.number(),
-  text: z.string(),
-  topic_hint: z.string(),
-});
-
-const TranscriptChunksResponseSchema = z.object({
-  chunks: z.array(TranscriptChunkSchema),
-});
-
 const ExtractedInsightSchema = z.object({
   topic: z.string(),
   claim: z.string(),
@@ -55,21 +44,82 @@ const GeneratedImageIntentSchema = z.object({
   ]),
 });
 
+// Local chunk type (no LLM needed)
+export interface TranscriptChunk {
+  index: number;
+  text: string;
+  topic_hint: string;
+}
+
 // Inferred types from schemas
-export type TranscriptChunk = z.infer<typeof TranscriptChunkSchema>;
 export type ExtractedInsight = z.infer<typeof ExtractedInsightSchema>;
 export type GeneratedPost = z.infer<typeof GeneratedPostSchema>;
 export type GeneratedImageIntent = z.infer<typeof GeneratedImageIntentSchema>;
 
-// Step 1: Chunk transcript
-export async function chunkTranscript(transcript: string): Promise<TranscriptChunk[]> {
-  const result = await generateStructured(
-    CHUNK_TRANSCRIPT_PROMPT,
-    transcript,
-    TranscriptChunksResponseSchema,
-    0.3 // Lower temperature for deterministic chunking
-  );
-  return result.data.chunks;
+// Chunk size configuration
+const CHUNK_SIZE = 4000; // ~4k chars per chunk (fits well in context)
+const CHUNK_OVERLAP = 200; // Overlap to avoid cutting mid-sentence
+
+/**
+ * Step 1: Chunk transcript locally (no LLM call needed)
+ * Splits on sentence boundaries with overlap
+ */
+export function chunkTranscript(transcript: string): TranscriptChunk[] {
+  const text = transcript.trim();
+
+  // For short transcripts, return as single chunk
+  if (text.length <= CHUNK_SIZE) {
+    return [{
+      index: 0,
+      text,
+      topic_hint: "Full transcript",
+    }];
+  }
+
+  const chunks: TranscriptChunk[] = [];
+  let position = 0;
+  let chunkIndex = 0;
+
+  while (position < text.length) {
+    // Calculate end position
+    let endPos = Math.min(position + CHUNK_SIZE, text.length);
+
+    // If not at the end, try to break at sentence boundary
+    if (endPos < text.length) {
+      // Look for sentence ending punctuation within the last 200 chars
+      const searchStart = Math.max(endPos - 200, position);
+      const searchText = text.slice(searchStart, endPos);
+
+      // Find last sentence boundary (. ! ? followed by space or newline)
+      const sentenceEnd = searchText.search(/[.!?]\s+[A-Z]|\n\n/g);
+      if (sentenceEnd !== -1) {
+        // Adjust to include the punctuation
+        const boundaryMatch = searchText.slice(sentenceEnd).match(/[.!?]/);
+        if (boundaryMatch) {
+          endPos = searchStart + sentenceEnd + 1;
+        }
+      }
+    }
+
+    const chunkText = text.slice(position, endPos).trim();
+
+    if (chunkText.length > 0) {
+      chunks.push({
+        index: chunkIndex,
+        text: chunkText,
+        topic_hint: `Section ${chunkIndex + 1} of transcript`,
+      });
+      chunkIndex++;
+    }
+
+    // Move position, accounting for overlap
+    position = endPos - CHUNK_OVERLAP;
+    if (position <= 0 || endPos >= text.length) {
+      position = endPos;
+    }
+  }
+
+  return chunks;
 }
 
 // Step 2: Extract insights from chunks
@@ -186,19 +236,22 @@ export async function runPipeline(
     articleVersionsPerAngle = 1,
   } = config;
 
-  // Step 1: Chunk
-  console.log("Chunking transcript...");
-  const chunks = await chunkTranscript(transcript);
-  console.log(`Created ${chunks.length} chunks`);
+  // Step 1: Chunk locally (no LLM call)
+  console.log(`Chunking transcript (${transcript.length} chars)...`);
+  const chunks = chunkTranscript(transcript);
+  console.log(`Created ${chunks.length} chunks (local split, no LLM call)`);
 
-  // Step 2: Extract insights from all chunks
-  console.log("Extracting insights...");
+  // Step 2: Extract insights from all chunks (sequential to avoid rate limits)
+  console.log(`Extracting insights from ${chunks.length} chunks...`);
   const allInsights: ExtractedInsight[] = [];
-  for (const chunk of chunks) {
+  for (let i = 0; i < chunks.length; i++) {
+    const chunk = chunks[i];
+    console.log(`[Insight] Processing chunk ${i + 1}/${chunks.length} (${chunk.text.length} chars)`);
     const insights = await extractInsights(chunk);
+    console.log(`[Insight] Chunk ${i + 1} yielded ${insights.length} insights`);
     allInsights.push(...insights);
   }
-  console.log(`Extracted ${allInsights.length} raw insights`);
+  console.log(`Extracted ${allInsights.length} raw insights total`);
 
   // Deduplicate and select top insights
   const uniqueInsights = deduplicateInsights(allInsights);
