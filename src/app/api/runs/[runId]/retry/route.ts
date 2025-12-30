@@ -132,9 +132,14 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       return NextResponse.json({ error: "Run not found" }, { status: 404 });
     }
 
-    if (run.status !== "failed") {
+    // Allow retry for failed runs OR stale processing runs (> 5 min old)
+    const isStale = run.status === "processing" &&
+      run.createdAt &&
+      (Date.now() - new Date(run.createdAt).getTime()) > 5 * 60 * 1000;
+
+    if (run.status !== "failed" && !isStale) {
       return NextResponse.json(
-        { error: "Can only retry failed runs" },
+        { error: "Can only retry failed or stale runs" },
         { status: 400 }
       );
     }
