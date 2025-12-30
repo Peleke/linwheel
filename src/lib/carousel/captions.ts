@@ -24,7 +24,7 @@ const SlideContentSchema = z.object({
       slideNumber: s.slideNumber ?? 0, // Will be overridden by index
       slideType: s.slideType ?? "content" as const,
       headline: s.headline.substring(0, 60),
-      imagePrompt: (s.imagePrompt || s.image_prompt || "abstract professional gradient").substring(0, 150),
+      imagePrompt: (s.imagePrompt || s.image_prompt || "Abstract professional gradient with soft blue tones and minimal geometric shapes, editorial magazine photography, soft studio lighting, calm sophisticated mood").substring(0, 350),
     }))
   ),
 });
@@ -55,22 +55,26 @@ RULES FOR HEADLINES:
 6. NO generic phrases like "Key Insight" or "Important Point"
 7. Each headline should SUMMARIZE the actual section content
 
-RULES FOR IMAGE PROMPTS:
-1. Create ComfyUI-optimized prompts (max 150 chars)
-2. Use weighted keywords: (important concept:1.2)
-3. Abstract, professional visuals - NO text, NO people
-4. Think: editorial, magazine quality, modern
-5. Vary the compositions across slides
-6. AVOID: lightbulbs, gears, brains, generic tech
+RULES FOR IMAGE PROMPTS (FLUX MODEL):
+Use this structure: SUBJECT + STYLE + CONTEXT + ATMOSPHERE
+
+1. Front-load important elements - FLUX pays more attention to what comes first
+2. Aim for 30-60 words (medium length is ideal for FLUX)
+3. Write natural English descriptions - NO weighted syntax like (thing:1.2)
+4. Describe what you WANT, never what you don't want (no negatives)
+5. Add layers: visual (lighting, color), technical (photography style), atmospheric (mood)
+6. Abstract professional visuals only - describe empty scenes, geometric shapes, gradients
+7. Think: editorial photography, magazine covers, modern design campaigns
 
 GOOD HEADLINE SEQUENCES:
 - "Why 90% of AI Projects Fail" → "The Data Quality Trap" → "Your Team's Hidden Blind Spot" → "The Fix Is Simpler Than You Think" → "Start Here Today"
 - "Enterprise AI Is Broken" → "Legacy Systems Are The Problem" → "Integration Over Innovation" → "The Hybrid Architecture Solution" → "Ready to Transform?"
 
-GOOD PROMPT EXAMPLES:
-- "(abstract data flow:1.2), geometric patterns, deep blue gradients, minimal tech aesthetic"
-- "(enterprise architecture:1.3), layered systems diagram, dark mode aesthetic, sophisticated"
-- "(transformation journey:1.2), path through landscape, warm sunset tones, inspirational"`;
+GOOD FLUX PROMPT EXAMPLES:
+- "Flowing geometric data streams converging in abstract space, deep blue and violet gradients, editorial magazine photography, soft diffused studio lighting, minimal tech aesthetic, contemplative mood"
+- "Layered translucent architectural panels floating in dark void, subtle cyan edge glow, f/2.8 shallow depth of field, sophisticated corporate aesthetic, mysterious atmosphere"
+- "Winding golden pathway ascending through soft clouds at golden hour, warm amber and rose tones, inspirational landscape photography, cinematic wide angle, hopeful aspirational mood"
+- "Intersecting minimal geometric planes in coral and teal, smooth gradient transitions, high-end product photography lighting, clean editorial style, calm professional atmosphere"`;
 
 /**
  * Generate slide content using LangChain
@@ -159,12 +163,20 @@ function generateFallbackCaptions(article: Article): SlideCaption[] {
       ? JSON.parse(article.sections)
       : article.sections || [];
 
+  const fallbackPrompts = [
+    "Bold abstract geometric forms radiating from center, deep purple flowing into electric blue gradient, editorial magazine cover photography, soft diffused studio lighting, modern professional aesthetic, confident powerful mood",
+    "Elegant flowing abstract shapes in motion, teal and warm coral accents against dark backdrop, high-end product photography lighting, clean editorial style, sophisticated contemplative atmosphere",
+    "Layered translucent geometric panels floating in deep space, subtle blue gradients with cyan edge glow, f/2.8 depth of field, professional magazine quality, mysterious yet inviting mood",
+    "Dynamic intersecting geometric planes creating depth, warm amber contrasting cool blue tones, editorial photography composition, soft rim lighting, energetic forward-moving atmosphere",
+    "Ascending abstract shapes reaching upward, golden light rays through soft clouds, inspirational landscape photography style, warm optimistic tones, hopeful aspirational mood",
+  ];
+
   const captions: SlideCaption[] = [
     {
       slideNumber: 1,
       slideType: "title",
       headline: sanitizeHeadline(article.title),
-      imagePrompt: "(editorial header:1.3), abstract geometric forms, professional gradient, modern aesthetic",
+      imagePrompt: fallbackPrompts[0],
     },
   ];
 
@@ -177,7 +189,7 @@ function generateFallbackCaptions(article: Article): SlideCaption[] {
       slideNumber: i + 2,
       slideType: "content",
       headline: sanitizeHeadline(heading || firstPhrase || `Key Insight ${i + 1}`),
-      imagePrompt: "(abstract concept:1.2), minimal geometric shapes, deep gradients, professional",
+      imagePrompt: fallbackPrompts[i + 1],
     });
   }
 
@@ -185,7 +197,7 @@ function generateFallbackCaptions(article: Article): SlideCaption[] {
     slideNumber: 5,
     slideType: "cta",
     headline: "Ready to learn more?",
-    imagePrompt: "(call to action:1.2), forward momentum, bright optimistic tones, inspirational",
+    imagePrompt: fallbackPrompts[4],
   });
 
   return captions;
