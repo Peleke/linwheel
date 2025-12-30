@@ -3,9 +3,52 @@
  *
  * Overlays headline text on T2I backgrounds with a subtle gradient scrim
  * for readability - NO white boxes.
+ *
+ * Uses embedded Inter font for Vercel serverless compatibility (no fontconfig).
  */
 
 import sharp from "sharp";
+import fs from "fs";
+import path from "path";
+
+// Cache the embedded font to avoid reading file on every request
+let embeddedFontBase64: string | null = null;
+
+/**
+ * Get the embedded font as base64 for SVG @font-face
+ * Falls back to system fonts if font file not found
+ */
+function getEmbeddedFont(): string | null {
+  if (embeddedFontBase64 !== null) {
+    return embeddedFontBase64;
+  }
+
+  try {
+    // Try multiple paths for the font file (local dev vs Vercel)
+    const possiblePaths = [
+      path.join(process.cwd(), "public", "fonts", "Inter-Bold.woff2"),
+      path.join(__dirname, "..", "..", "..", "public", "fonts", "Inter-Bold.woff2"),
+      "/var/task/public/fonts/Inter-Bold.woff2", // Vercel serverless path
+    ];
+
+    for (const fontPath of possiblePaths) {
+      if (fs.existsSync(fontPath)) {
+        const fontBuffer = fs.readFileSync(fontPath);
+        embeddedFontBase64 = fontBuffer.toString("base64");
+        console.log(`[TextOverlay] Loaded embedded font from: ${fontPath}`);
+        return embeddedFontBase64;
+      }
+    }
+
+    console.warn("[TextOverlay] Font file not found, will use system fonts");
+    embeddedFontBase64 = ""; // Empty string means not found, don't retry
+    return null;
+  } catch (error) {
+    console.warn("[TextOverlay] Failed to load font:", error);
+    embeddedFontBase64 = "";
+    return null;
+  }
+}
 
 interface TextOverlayOptions {
   /** The headline text to render */
@@ -20,6 +63,7 @@ interface TextOverlayOptions {
 
 /**
  * Create headline overlay with gradient scrim (NO white box)
+ * Embeds font as base64 for serverless compatibility
  */
 function createHeadlineOverlay(options: TextOverlayOptions): string {
   const { headline, slideType, size = 1080 } = options;
@@ -58,9 +102,31 @@ function createHeadlineOverlay(options: TextOverlayOptions): string {
   // Gradient scrim height (covers bottom portion)
   const scrimHeight = textBlockHeight + padding * 2.5;
 
+  // Get embedded font (or null if not available)
+  const fontBase64 = getEmbeddedFont();
+
+  // Font face definition - only include if we have the embedded font
+  const fontFaceStyle = fontBase64
+    ? `
+        <style type="text/css">
+          @font-face {
+            font-family: 'Inter';
+            font-weight: 700;
+            src: url('data:font/woff2;base64,${fontBase64}') format('woff2');
+          }
+        </style>
+      `
+    : "";
+
+  // Use Inter if embedded, fallback to system fonts
+  const fontFamily = fontBase64
+    ? "Inter, sans-serif"
+    : "system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif";
+
   return `
     <svg width="${size}" height="${size}" xmlns="http://www.w3.org/2000/svg">
       <defs>
+        ${fontFaceStyle}
         <!-- Gradient scrim for readability -->
         <linearGradient id="scrim" x1="0%" y1="0%" x2="0%" y2="100%">
           <stop offset="0%" stop-color="black" stop-opacity="0"/>
@@ -87,9 +153,9 @@ function createHeadlineOverlay(options: TextOverlayOptions): string {
       <text
         x="${padding}"
         y="${startY}"
-        font-family="system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif"
+        font-family="${fontFamily}"
         font-size="${fontSize}"
-        font-weight="800"
+        font-weight="700"
         fill="white"
         text-anchor="start"
         filter="url(#textShadow)"
