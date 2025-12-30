@@ -1,4 +1,4 @@
-import { generateStructured, z } from "../llm";
+import { generateStructured, z, type LLMProvider } from "../llm";
 import { ARTICLE_ANGLE_PROMPTS } from "../prompts/article-angles";
 import { injectVoiceIntoPrompt } from "../voice";
 import type { ArticleAngle } from "@/db/schema";
@@ -32,7 +32,8 @@ const ARTICLE_SUBWRITER_TEMPERATURE = 0.75;
 export async function generateArticleForAngle(
   insight: ExtractedInsight,
   angle: ArticleAngle,
-  versionNumber: number
+  versionNumber: number,
+  llmProvider?: LLMProvider
 ): Promise<SubwriterArticle> {
   console.log(`[Article] Starting ${angle} v${versionNumber}...`);
   const startTime = Date.now();
@@ -46,7 +47,8 @@ export async function generateArticleForAngle(
     systemPrompt,
     userContent,
     GeneratedArticleSchema,
-    ARTICLE_SUBWRITER_TEMPERATURE
+    ARTICLE_SUBWRITER_TEMPERATURE,
+    llmProvider
   );
 
   const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
@@ -66,11 +68,12 @@ export async function generateArticleForAngle(
 export async function generateArticleVersionsForAngle(
   insight: ExtractedInsight,
   angle: ArticleAngle,
-  versionsCount: number = 1
+  versionsCount: number = 1,
+  llmProvider?: LLMProvider
 ): Promise<SubwriterArticle[]> {
   // Generate all versions in parallel
   const versionPromises = Array.from({ length: versionsCount }, (_, i) =>
-    generateArticleForAngle(insight, angle, i + 1)
+    generateArticleForAngle(insight, angle, i + 1, llmProvider)
   );
 
   return Promise.all(versionPromises);

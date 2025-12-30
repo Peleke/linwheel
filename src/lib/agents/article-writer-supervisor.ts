@@ -1,10 +1,12 @@
 import { generateArticleVersionsForAngle, type SubwriterArticle } from "./article-subwriters";
 import { ARTICLE_ANGLES, type ArticleAngle } from "@/db/schema";
 import type { ExtractedInsight } from "../generate";
+import type { LLMProvider } from "../llm";
 
 export interface ArticleSupervisorConfig {
   selectedAngles?: ArticleAngle[];
   versionsPerAngle?: number;
+  llmProvider?: LLMProvider;
 }
 
 export interface ArticleSupervisorResult {
@@ -29,6 +31,7 @@ export async function runArticleWriterSupervisor(
   const {
     selectedAngles = [...ARTICLE_ANGLES], // Default: all 4 angles
     versionsPerAngle = 1, // Default: 1 version per angle for articles
+    llmProvider,
   } = config;
 
   console.log(`Article Supervisor: Generating ${selectedAngles.length} angles × ${versionsPerAngle} versions = ${selectedAngles.length * versionsPerAngle} total articles`);
@@ -38,7 +41,7 @@ export async function runArticleWriterSupervisor(
   const results: SubwriterArticle[][] = [];
   for (const angle of selectedAngles) {
     console.log(`  → Starting ${angle} article writer...`);
-    const articles = await generateArticleVersionsForAngle(insight, angle, versionsPerAngle);
+    const articles = await generateArticleVersionsForAngle(insight, angle, versionsPerAngle, llmProvider);
     console.log(`  ✓ ${angle}: ${articles.length} articles generated`);
     results.push(articles);
   }

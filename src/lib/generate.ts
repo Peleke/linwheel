@@ -1,4 +1,4 @@
-import { generateStructured, z } from "./llm";
+import { generateStructured, z, type LLMProvider } from "./llm";
 import {
   EXTRACT_INSIGHTS_PROMPT,
 } from "./prompts";
@@ -123,12 +123,16 @@ export function chunkTranscript(transcript: string): TranscriptChunk[] {
 }
 
 // Step 2: Extract insights from chunks
-export async function extractInsights(chunk: TranscriptChunk): Promise<ExtractedInsight[]> {
+export async function extractInsights(
+  chunk: TranscriptChunk,
+  llmProvider?: LLMProvider
+): Promise<ExtractedInsight[]> {
   const result = await generateStructured(
     EXTRACT_INSIGHTS_PROMPT,
     `Topic hint: ${chunk.topic_hint}\n\nContent:\n${chunk.text}`,
     ExtractedInsightsResponseSchema,
-    0.5
+    0.5,
+    llmProvider
   );
   return result.data.insights;
 }
@@ -139,26 +143,30 @@ export type { SubwriterArticle } from "./agents/article-subwriters";
 
 // Step 3: Generate image intent from post
 export async function generateImageIntent(
-  post: { hook: string; body_beats: string[]; full_text: string }
+  post: { hook: string; body_beats: string[]; full_text: string },
+  llmProvider?: LLMProvider
 ): Promise<GeneratedImageIntent> {
   const result = await generateStructured(
     GENERATE_IMAGE_INTENT_PROMPT,
     JSON.stringify(post, null, 2),
     GeneratedImageIntentSchema,
-    0.6
+    0.6,
+    llmProvider
   );
   return result.data;
 }
 
 // Step 3b: Generate image intent from article
 export async function generateArticleImageIntent(
-  article: { title: string; subtitle?: string | null; introduction: string; sections: string[] }
+  article: { title: string; subtitle?: string | null; introduction: string; sections: string[] },
+  llmProvider?: LLMProvider
 ): Promise<GeneratedImageIntent> {
   const result = await generateStructured(
     GENERATE_ARTICLE_IMAGE_INTENT_PROMPT,
     JSON.stringify(article, null, 2),
     GeneratedImageIntentSchema,
-    0.6
+    0.6,
+    llmProvider
   );
   return result.data;
 }
@@ -171,6 +179,8 @@ export interface PipelineConfig {
   // Article options
   selectedArticleAngles?: ArticleAngle[];
   articleVersionsPerAngle?: number;
+  // LLM provider (passed through to avoid race conditions)
+  llmProvider?: LLMProvider;
 }
 
 // Post with all metadata
@@ -230,10 +240,11 @@ export async function runPipeline(
   const {
     maxInsights = 3, // Fewer insights since each generates many posts
     selectedAngles = [...POST_ANGLES],
-    versionsPerAngle = 5,
+    versionsPerAngle = 1, // Default to 1 version per angle (7 angles × 3 insights = 21 posts)
     // Article config - empty array means no articles
     selectedArticleAngles = [],
     articleVersionsPerAngle = 1,
+    llmProvider,
   } = config;
 
   // Step 1: Chunk locally (no LLM call)
@@ -247,7 +258,7 @@ export async function runPipeline(
   for (let i = 0; i < chunks.length; i++) {
     const chunk = chunks[i];
     console.log(`[Insight] Processing chunk ${i + 1}/${chunks.length} (${chunk.text.length} chars)`);
-    const insights = await extractInsights(chunk);
+    const insights = await extractInsights(chunk, llmProvider);
     console.log(`[Insight] Chunk ${i + 1} yielded ${insights.length} insights`);
     allInsights.push(...insights);
   }
@@ -271,12 +282,13 @@ export async function runPipeline(
       const result = await runWriterSupervisor(insight, {
         selectedAngles,
         versionsPerAngle,
+        llmProvider,
       });
 
       // Generate image intents for each post
       console.log(`Generating image intents for ${result.posts.length} posts...`);
       for (const post of result.posts) {
-        const imageIntent = await generateImageIntent(post);
+        const imageIntent = await generateImageIntent(post, llmProvider);
         allPosts.push({
           ...post,
           insight,
@@ -291,12 +303,13 @@ export async function runPipeline(
       const articleResult = await runArticleWriterSupervisor(insight, {
         selectedAngles: selectedArticleAngles,
         versionsPerAngle: articleVersionsPerAngle,
+        llmProvider,
       });
 
       // Generate image intents for each article
       console.log(`Generating image intents for ${articleResult.articles.length} articles...`);
       for (const article of articleResult.articles) {
-        const imageIntent = await generateArticleImageIntent(article);
+        const imageIntent = await generateArticleImageIntent(article, llmProvider);
         allArticles.push({
           ...article,
           insight,

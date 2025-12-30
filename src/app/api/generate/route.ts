@@ -7,7 +7,7 @@ import {
 } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { runPipeline } from "@/lib/generate";
-import { setLLMProvider, clearLLMProvider, type LLMProvider } from "@/lib/llm";
+import type { LLMProvider } from "@/lib/llm";
 import { randomUUID } from "crypto";
 
 /**
@@ -22,10 +22,8 @@ async function processGeneration(
   llmProvider?: LLMProvider
 ) {
   try {
-    // Set LLM provider for this request
     if (llmProvider) {
       console.log(`[Generate] Using client-requested provider: ${llmProvider}`);
-      setLLMProvider(llmProvider);
     }
     // Update status to processing
     await db
@@ -36,9 +34,10 @@ async function processGeneration(
     const result = await runPipeline(transcript, {
       maxInsights: 3,
       selectedAngles,
-      versionsPerAngle: 2, // Reduced from 5 to avoid rate limits
+      versionsPerAngle: 1, // 1 version per angle (7 angles × 3 insights = 21 posts)
       selectedArticleAngles,
-      articleVersionsPerAngle: 1, // 1 version per article angle
+      articleVersionsPerAngle: 1,
+      llmProvider, // Pass through to avoid race conditions
     });
 
     // Check if run still exists (could be deleted by "Clear all")
@@ -191,9 +190,6 @@ async function processGeneration(
     } catch (dbError) {
       console.error("Failed to update run status to failed:", dbError);
     }
-  } finally {
-    // Clear the provider override for next request
-    clearLLMProvider();
   }
 }
 

@@ -1,10 +1,12 @@
 import { generateVersionsForAngle, type SubwriterPost } from "./subwriters";
 import { POST_ANGLES, type PostAngle } from "@/db/schema";
 import type { ExtractedInsight } from "../generate";
+import type { LLMProvider } from "../llm";
 
 export interface SupervisorConfig {
   selectedAngles?: PostAngle[];
   versionsPerAngle?: number;
+  llmProvider?: LLMProvider;
 }
 
 export interface SupervisorResult {
@@ -27,8 +29,9 @@ export async function runWriterSupervisor(
   config: SupervisorConfig = {}
 ): Promise<SupervisorResult> {
   const {
-    selectedAngles = [...POST_ANGLES], // Default: all 6 angles
-    versionsPerAngle = 5,
+    selectedAngles = [...POST_ANGLES], // Default: all 7 angles
+    versionsPerAngle = 1, // Default to 1 version per angle
+    llmProvider,
   } = config;
 
   console.log(`Writer Supervisor: Generating ${selectedAngles.length} angles × ${versionsPerAngle} versions = ${selectedAngles.length * versionsPerAngle} total posts`);
@@ -36,7 +39,7 @@ export async function runWriterSupervisor(
   // Fan out to all subwriters in parallel
   const anglePromises = selectedAngles.map(async (angle) => {
     console.log(`  → Starting ${angle} subwriter...`);
-    const posts = await generateVersionsForAngle(insight, angle, versionsPerAngle);
+    const posts = await generateVersionsForAngle(insight, angle, versionsPerAngle, llmProvider);
     console.log(`  ✓ ${angle}: ${posts.length} posts generated`);
     return posts;
   });

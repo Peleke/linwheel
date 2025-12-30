@@ -16,35 +16,20 @@ export interface LLMResponse<T> {
  */
 export type LLMProvider = "claude" | "openai";
 
-// Runtime override (set per-request)
-let runtimeProviderOverride: LLMProvider | null = null;
-
 /**
- * Set the LLM provider for the current request.
- * Call this at the start of API handlers to use client preferences.
+ * Resolve the provider to use, validating availability.
+ * Priority: explicit override > env var > default (openai)
  */
-export function setLLMProvider(provider: LLMProvider | null) {
-  runtimeProviderOverride = provider;
-}
-
-/**
- * Clear the runtime provider override.
- * Call this after processing to reset to default.
- */
-export function clearLLMProvider() {
-  runtimeProviderOverride = null;
-}
-
-function getProvider(): LLMProvider {
-  // 1. Client preference (from request/localStorage) - takes precedence
-  if (runtimeProviderOverride) {
-    if (runtimeProviderOverride === "claude" && process.env.ANTHROPIC_API_KEY) {
+function resolveProvider(override?: LLMProvider | null): LLMProvider {
+  // 1. Explicit override from request
+  if (override) {
+    if (override === "claude" && process.env.ANTHROPIC_API_KEY) {
       return "claude";
     }
-    if (runtimeProviderOverride === "openai" && process.env.OPENAI_API_KEY) {
+    if (override === "openai" && process.env.OPENAI_API_KEY) {
       return "openai";
     }
-    console.warn(`[LLM] Requested provider ${runtimeProviderOverride} not available, falling back`);
+    console.warn(`[LLM] Requested provider ${override} not available, falling back`);
   }
 
   // 2. Environment variable fallback
@@ -171,14 +156,17 @@ async function generateStructuredOpenAI<T>(
 /**
  * Generate structured JSON output
  * Uses Claude (direct SDK) or OpenAI (LangChain) based on config
+ *
+ * @param providerOverride - Optional provider to use (passed through pipeline to avoid race conditions)
  */
 export async function generateStructured<T>(
   systemPrompt: string,
   userContent: string,
   schema: ZodType<T>,
-  temperature: number = 0.5
+  temperature: number = 0.5,
+  providerOverride?: LLMProvider | null
 ): Promise<LLMResponse<T>> {
-  const provider = getProvider();
+  const provider = resolveProvider(providerOverride);
   console.log(`[LLM] Using provider: ${provider}`);
 
   let data: T;

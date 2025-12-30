@@ -1,4 +1,4 @@
-import { generateStructured, z } from "../llm";
+import { generateStructured, z, type LLMProvider } from "../llm";
 import { ANGLE_PROMPTS } from "../prompts/angles";
 import { injectVoiceIntoPrompt } from "../voice";
 import type { PostAngle } from "@/db/schema";
@@ -29,7 +29,8 @@ const SUBWRITER_TEMPERATURE = 0.85;
 export async function generatePostForAngle(
   insight: ExtractedInsight,
   angle: PostAngle,
-  versionNumber: number
+  versionNumber: number,
+  llmProvider?: LLMProvider
 ): Promise<SubwriterPost> {
   // Inject voice profile into the system prompt
   const basePrompt = ANGLE_PROMPTS[angle];
@@ -40,7 +41,8 @@ export async function generatePostForAngle(
     systemPrompt,
     userContent,
     GeneratedPostSchema,
-    SUBWRITER_TEMPERATURE
+    SUBWRITER_TEMPERATURE,
+    llmProvider
   );
 
   return {
@@ -52,16 +54,17 @@ export async function generatePostForAngle(
 
 /**
  * Generate multiple versions for a single angle
- * Returns 5 variations of the same angle
+ * Default: 1 version per angle
  */
 export async function generateVersionsForAngle(
   insight: ExtractedInsight,
   angle: PostAngle,
-  versionsCount: number = 5
+  versionsCount: number = 1,
+  llmProvider?: LLMProvider
 ): Promise<SubwriterPost[]> {
   // Generate all versions in parallel
   const versionPromises = Array.from({ length: versionsCount }, (_, i) =>
-    generatePostForAngle(insight, angle, i + 1)
+    generatePostForAngle(insight, angle, i + 1, llmProvider)
   );
 
   return Promise.all(versionPromises);
