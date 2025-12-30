@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse, after } from "next/server";
 import { db } from "@/db";
 import {
   generationRuns, insights, linkedinPosts, imageIntents,
@@ -211,10 +211,18 @@ export async function POST(request: NextRequest) {
       selectedArticleAngles: selectedArticleAngles.length > 0 ? selectedArticleAngles : null,
     });
 
-    // Fire-and-forget: start processing without awaiting
-    // In serverless (Vercel), would use waitUntil() here
-    processGeneration(runId, transcript, selectedAngles, selectedArticleAngles).catch((err) => {
-      console.error("Background processing error:", err);
+    // Use Next.js after() to keep serverless function alive after response
+    after(async () => {
+      try {
+        await processGeneration(runId, transcript, selectedAngles, selectedArticleAngles);
+      } catch (err) {
+        console.error("Background processing error:", err);
+        // Ensure status is updated even if processGeneration's catch fails
+        await db
+          .update(generationRuns)
+          .set({ status: "failed", error: "Background processing crashed" })
+          .where(eq(generationRuns.id, runId));
+      }
     });
 
     // Return immediately with runId

@@ -217,6 +217,7 @@ export default async function ResultsDashboardPage({ params }: Props) {
               status={run.status}
               postCount={posts.length}
               articleCount={articleRecords.length}
+              createdAt={run.createdAt}
             />
 
             {(run.status === "pending" || run.status === "processing") && (

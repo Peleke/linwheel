@@ -11,6 +11,34 @@ interface RouteParams {
 }
 
 /**
+ * PATCH /api/runs/[runId] - Update run status (used for timeout/staleness marking)
+ */
+export async function PATCH(request: NextRequest, { params }: RouteParams) {
+  try {
+    const { runId } = await params;
+    const body = await request.json();
+    const { status, error } = body;
+
+    if (!status || !["failed", "complete"].includes(status)) {
+      return NextResponse.json({ error: "Invalid status" }, { status: 400 });
+    }
+
+    await db
+      .update(generationRuns)
+      .set({ status, error: error || null })
+      .where(eq(generationRuns.id, runId));
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error("Error updating run:", error);
+    return NextResponse.json(
+      { error: "Failed to update run" },
+      { status: 500 }
+    );
+  }
+}
+
+/**
  * DELETE /api/runs/[runId] - Delete a single generation run and related data
  */
 export async function DELETE(request: NextRequest, { params }: RouteParams) {

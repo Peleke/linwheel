@@ -11,6 +11,8 @@ interface StatusPollerProps {
   /** Current article count (for progressive refresh) */
   articleCount?: number;
   pollInterval?: number;
+  /** Run creation time for staleness detection */
+  createdAt?: Date | string;
 }
 
 /**
@@ -19,18 +21,38 @@ interface StatusPollerProps {
  * - Status changes to complete or failed
  * - New posts or articles are generated (progressive rendering)
  */
+// Max time a run can stay in "processing" before we consider it stale (5 minutes)
+const STALE_THRESHOLD_MS = 5 * 60 * 1000;
+
 export function StatusPoller({
   runId,
   status,
   postCount = 0,
   articleCount = 0,
   pollInterval = 3000,
+  createdAt,
 }: StatusPollerProps) {
   const router = useRouter();
   const lastCountRef = useRef({ posts: postCount, articles: articleCount });
 
   const checkStatus = useCallback(async () => {
     try {
+      // Check for staleness first
+      if (createdAt && (status === "pending" || status === "processing")) {
+        const createdTime = new Date(createdAt).getTime();
+        const elapsed = Date.now() - createdTime;
+        if (elapsed > STALE_THRESHOLD_MS) {
+          // Mark as failed via API
+          await fetch(`/api/runs/${runId}`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ status: "failed", error: "Generation timed out" }),
+          });
+          router.refresh();
+          return;
+        }
+      }
+
       const response = await fetch(`/api/results/${runId}`);
       if (!response.ok) return;
 
@@ -53,7 +75,7 @@ export function StatusPoller({
     } catch (error) {
       console.error("Status poll error:", error);
     }
-  }, [runId, status, router]);
+  }, [runId, status, router, createdAt]);
 
   useEffect(() => {
     // Only poll if status is pending or processing
