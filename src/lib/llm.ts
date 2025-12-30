@@ -1,9 +1,9 @@
 import Anthropic from "@anthropic-ai/sdk";
-import { betaZodTool } from "@anthropic-ai/sdk/helpers/beta/zod";
 import { ChatOpenAI } from "@langchain/openai";
 import { HumanMessage, SystemMessage } from "@langchain/core/messages";
 import { z } from "zod";
 import type { ZodType } from "zod";
+import { zodToJsonSchema } from "zod-to-json-schema";
 
 export interface LLMResponse<T> {
   data: T;
@@ -60,7 +60,7 @@ function getProvider(): LLMProvider {
 const LLM_TIMEOUT_MS = 120000;
 
 /**
- * Generate structured output using Claude's native tool use (via Anthropic SDK)
+ * Generate structured output using Claude (simple JSON approach, more reliable than beta toolRunner)
  */
 async function generateStructuredClaude<T>(
   systemPrompt: string,
@@ -74,42 +74,64 @@ async function generateStructuredClaude<T>(
   console.log(`[Claude] Starting request (input: ${userContent.length} chars, model: ${model})`);
   const startTime = Date.now();
 
-  // Create a tool that extracts structured data
-  let extractedData: T | null = null;
-  const extractionTool = betaZodTool({
-    name: "extract_structured_data",
-    description: "Extract and return the structured data based on the system instructions",
-    inputSchema: schema as z.ZodType<T>,
-    run: (input: T) => {
-      extractedData = input;
-      return "Data extracted successfully";
-    },
-  });
+  // Convert Zod schema to JSON schema for the prompt
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const jsonSchema = zodToJsonSchema(schema as any, "response");
 
-  // Run with tool and timeout
-  const runPromise = anthropic.beta.messages.toolRunner({
+  // Create a prompt that asks for JSON output
+  const structuredPrompt = `${systemPrompt}
+
+IMPORTANT: You must respond with ONLY valid JSON that matches this schema:
+${JSON.stringify(jsonSchema, null, 2)}
+
+Do not include any text before or after the JSON. Do not wrap in markdown code blocks.`;
+
+  // Make the API call with timeout
+  const messagePromise = anthropic.messages.create({
     model,
     max_tokens: 8192,
-    system: systemPrompt,
-    messages: [{ role: "user", content: userContent }],
-    tools: [extractionTool],
-    tool_choice: { type: "tool", name: "extract_structured_data" },
+    messages: [
+      { role: "user", content: userContent },
+    ],
+    system: structuredPrompt,
   });
 
   const timeoutPromise = new Promise<never>((_, reject) => {
     setTimeout(() => reject(new Error(`Claude request timed out after ${LLM_TIMEOUT_MS / 1000}s`)), LLM_TIMEOUT_MS);
   });
 
-  await Promise.race([runPromise, timeoutPromise]);
+  const response = await Promise.race([messagePromise, timeoutPromise]);
 
   const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
   console.log(`[Claude] Completed in ${elapsed}s`);
 
-  if (!extractedData) {
-    throw new Error("Claude did not return structured data");
+  // Extract text content
+  const textContent = response.content.find(block => block.type === "text");
+  if (!textContent || textContent.type !== "text") {
+    throw new Error("Claude did not return text content");
   }
 
-  return extractedData;
+  // Parse JSON - handle potential markdown code blocks
+  let jsonText = textContent.text.trim();
+  if (jsonText.startsWith("```json")) {
+    jsonText = jsonText.slice(7);
+  } else if (jsonText.startsWith("```")) {
+    jsonText = jsonText.slice(3);
+  }
+  if (jsonText.endsWith("```")) {
+    jsonText = jsonText.slice(0, -3);
+  }
+  jsonText = jsonText.trim();
+
+  try {
+    const parsed = JSON.parse(jsonText);
+    // Validate against schema
+    const validated = schema.parse(parsed);
+    return validated;
+  } catch (parseError) {
+    console.error("[Claude] Failed to parse JSON response:", jsonText.substring(0, 500));
+    throw new Error(`Claude returned invalid JSON: ${parseError instanceof Error ? parseError.message : "Parse error"}`);
+  }
 }
 
 /**
