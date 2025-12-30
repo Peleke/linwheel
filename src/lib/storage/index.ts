@@ -2,28 +2,50 @@
  * Storage Module
  *
  * Provides file storage abstraction for images and assets.
- * Currently uses local storage (public folder).
- * Ready for GCP/Supabase extension.
+ * Priority: Supabase (configured) > Local (dev) > Base64 (fallback)
  */
 
 export type { StorageProvider, StorageConfig } from "./types";
 export { createLocalStorageProvider } from "./local";
+export { createBase64StorageProvider } from "./base64";
+export { createSupabaseStorageProvider, isSupabaseStorageConfigured } from "./supabase";
 
 import { createLocalStorageProvider } from "./local";
+import { createBase64StorageProvider } from "./base64";
+import { createSupabaseStorageProvider, isSupabaseStorageConfigured } from "./supabase";
 import type { StorageProvider } from "./types";
 
 // Singleton storage provider
 let storageProvider: StorageProvider | null = null;
 
 /**
+ * Detect if we're running on Vercel (read-only filesystem)
+ */
+function isVercel(): boolean {
+  return !!process.env.VERCEL || !!process.env.VERCEL_ENV;
+}
+
+/**
  * Get the configured storage provider
- * TODO: Add GCP/Supabase selection based on env vars
+ * Priority:
+ * 1. Supabase (if configured) - CDN-backed, works everywhere
+ * 2. Local (if not Vercel) - dev only
+ * 3. Base64 (fallback) - works everywhere but large URLs
  */
 export function getStorageProvider(): StorageProvider {
   if (!storageProvider) {
-    // For now, always use local storage
-    // In production, check for GCP/Supabase credentials
-    storageProvider = createLocalStorageProvider();
+    if (isSupabaseStorageConfigured()) {
+      console.log("[Storage] Using Supabase Storage");
+      storageProvider = createSupabaseStorageProvider();
+    } else if (!isVercel()) {
+      // Local development - use public folder
+      console.log("[Storage] Using local storage (dev)");
+      storageProvider = createLocalStorageProvider();
+    } else {
+      // Vercel without Supabase - use base64 data URLs
+      console.log("[Storage] Using base64 provider (Vercel, no Supabase)");
+      storageProvider = createBase64StorageProvider();
+    }
   }
   return storageProvider;
 }

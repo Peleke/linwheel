@@ -8,15 +8,24 @@
 import { generateStructured, z } from "@/lib/llm";
 import type { Article } from "@/db/schema";
 
-// Zod schema for slide content
+// Zod schema for slide content - flexible to handle LLM variations
 const SlideContentSchema = z.object({
   slides: z.array(
     z.object({
-      slideNumber: z.number(),
-      slideType: z.enum(["title", "content", "cta"]),
-      headline: z.string().max(60),
-      imagePrompt: z.string().max(150),
-    })
+      // Optional fields that LLM might omit
+      slideNumber: z.number().optional(),
+      slideType: z.enum(["title", "content", "cta"]).optional(),
+      // Required content - accept both camelCase and snake_case
+      headline: z.string(),
+      imagePrompt: z.string().optional(),
+      image_prompt: z.string().optional(), // Claude sometimes uses snake_case
+    }).transform((s) => ({
+      // Normalize to consistent format - slideNumber will be set later
+      slideNumber: s.slideNumber ?? 0, // Will be overridden by index
+      slideType: s.slideType ?? "content" as const,
+      headline: s.headline.substring(0, 60),
+      imagePrompt: (s.imagePrompt || s.image_prompt || "abstract professional gradient").substring(0, 150),
+    }))
   ),
 });
 
