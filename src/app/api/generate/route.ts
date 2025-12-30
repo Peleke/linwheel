@@ -60,7 +60,8 @@ async function processGeneration(
       insightRecords.push({ id: insightId, claim: insight.claim });
     }
 
-    // Save posts and image intents
+    // Save posts and image intents - update count after each for progressive rendering
+    let savedPostCount = 0;
     for (const post of result.posts) {
       // Skip posts with missing required data
       if (!post.full_text && !post.hook) {
@@ -106,6 +107,15 @@ async function processGeneration(
           headlineText: post.imageIntent.headline_text,
           stylePreset: post.imageIntent.style_preset || "typographic_minimal",
         });
+      }
+
+      // Update post count for progressive rendering (every 5 posts to reduce DB writes)
+      savedPostCount++;
+      if (savedPostCount % 5 === 0) {
+        await db
+          .update(generationRuns)
+          .set({ postCount: savedPostCount })
+          .where(eq(generationRuns.id, runId));
       }
     }
 
