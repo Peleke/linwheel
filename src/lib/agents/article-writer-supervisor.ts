@@ -33,16 +33,15 @@ export async function runArticleWriterSupervisor(
 
   console.log(`Article Supervisor: Generating ${selectedAngles.length} angles × ${versionsPerAngle} versions = ${selectedAngles.length * versionsPerAngle} total articles`);
 
-  // Fan out to all article subwriters in parallel
-  const anglePromises = selectedAngles.map(async (angle) => {
+  // Run article subwriters sequentially to avoid rate limits/timeouts
+  // (Articles are 500-750 words each, much longer than posts)
+  const results: SubwriterArticle[][] = [];
+  for (const angle of selectedAngles) {
     console.log(`  → Starting ${angle} article writer...`);
     const articles = await generateArticleVersionsForAngle(insight, angle, versionsPerAngle);
     console.log(`  ✓ ${angle}: ${articles.length} articles generated`);
-    return articles;
-  });
-
-  // Wait for all article writers to complete
-  const results = await Promise.all(anglePromises);
+    results.push(articles);
+  }
 
   // Flatten results
   const allArticles = results.flat();
