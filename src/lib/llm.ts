@@ -36,9 +36,8 @@ export function clearLLMProvider() {
 }
 
 function getProvider(): LLMProvider {
-  // 1. Runtime override (from request)
+  // 1. Client preference (from request/localStorage) - takes precedence
   if (runtimeProviderOverride) {
-    // Validate the provider is available
     if (runtimeProviderOverride === "claude" && process.env.ANTHROPIC_API_KEY) {
       return "claude";
     }
@@ -48,7 +47,7 @@ function getProvider(): LLMProvider {
     console.warn(`[LLM] Requested provider ${runtimeProviderOverride} not available, falling back`);
   }
 
-  // 2. Environment variable
+  // 2. Environment variable fallback
   const envProvider = process.env.LLM_PROVIDER?.toLowerCase();
   if (envProvider === "claude" && process.env.ANTHROPIC_API_KEY) return "claude";
   if (envProvider === "openai" && process.env.OPENAI_API_KEY) return "openai";

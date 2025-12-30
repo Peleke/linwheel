@@ -5,9 +5,10 @@ import type { ArticleAngle } from "@/db/schema";
 import type { ExtractedInsight } from "../generate";
 
 // Schema for generated article
+// Note: Use .nullable() instead of .optional() for OpenAI structured output compatibility
 const GeneratedArticleSchema = z.object({
   title: z.string(),
-  subtitle: z.string().optional(),
+  subtitle: z.string().nullable(),
   introduction: z.string(),
   sections: z.array(z.string()),
   conclusion: z.string(),

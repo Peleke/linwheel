@@ -152,7 +152,7 @@ export async function generateImageIntent(
 
 // Step 3b: Generate image intent from article
 export async function generateArticleImageIntent(
-  article: { title: string; subtitle?: string; introduction: string; sections: string[] }
+  article: { title: string; subtitle?: string | null; introduction: string; sections: string[] }
 ): Promise<GeneratedImageIntent> {
   const result = await generateStructured(
     GENERATE_ARTICLE_IMAGE_INTENT_PROMPT,
@@ -188,7 +188,7 @@ export interface EnrichedPost {
 // Article with all metadata
 export interface EnrichedArticle {
   title: string;
-  subtitle?: string;
+  subtitle?: string | null;
   introduction: string;
   sections: string[];
   conclusion: string;
