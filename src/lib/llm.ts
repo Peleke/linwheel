@@ -56,6 +56,9 @@ function getProvider(): LLMProvider {
   return "openai";
 }
 
+// Timeout for individual LLM requests (2 minutes)
+const LLM_TIMEOUT_MS = 120000;
+
 /**
  * Generate structured output using Claude's native tool use (via Anthropic SDK)
  */
@@ -83,8 +86,8 @@ async function generateStructuredClaude<T>(
     },
   });
 
-  // Run with tool - Claude will call our extraction tool with structured data
-  await anthropic.beta.messages.toolRunner({
+  // Run with tool and timeout
+  const runPromise = anthropic.beta.messages.toolRunner({
     model,
     max_tokens: 8192,
     system: systemPrompt,
@@ -92,6 +95,12 @@ async function generateStructuredClaude<T>(
     tools: [extractionTool],
     tool_choice: { type: "tool", name: "extract_structured_data" },
   });
+
+  const timeoutPromise = new Promise<never>((_, reject) => {
+    setTimeout(() => reject(new Error(`Claude request timed out after ${LLM_TIMEOUT_MS / 1000}s`)), LLM_TIMEOUT_MS);
+  });
+
+  await Promise.race([runPromise, timeoutPromise]);
 
   const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
   console.log(`[Claude] Completed in ${elapsed}s`);

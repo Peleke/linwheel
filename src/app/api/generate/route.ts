@@ -179,13 +179,18 @@ async function processGeneration(
 
   } catch (pipelineError) {
     console.error("Pipeline error:", pipelineError);
-    await db
-      .update(generationRuns)
-      .set({
-        status: "failed",
-        error: pipelineError instanceof Error ? pipelineError.message : "Unknown error",
-      })
-      .where(eq(generationRuns.id, runId));
+    try {
+      await db
+        .update(generationRuns)
+        .set({
+          status: "failed",
+          error: pipelineError instanceof Error ? pipelineError.message : "Unknown error",
+        })
+        .where(eq(generationRuns.id, runId));
+      console.log(`[Generate] Marked run ${runId} as failed`);
+    } catch (dbError) {
+      console.error("Failed to update run status to failed:", dbError);
+    }
   } finally {
     // Clear the provider override for next request
     clearLLMProvider();
