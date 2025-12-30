@@ -1,9 +1,8 @@
-import { createAgent, providerStrategy } from "langchain";
 import { ChatAnthropic } from "@langchain/anthropic";
 import { ChatOpenAI } from "@langchain/openai";
+import { HumanMessage, SystemMessage } from "@langchain/core/messages";
 import { z } from "zod";
 import type { ZodType } from "zod";
-import type { BaseChatModel } from "@langchain/core/language_models/chat_models";
 
 export interface LLMResponse<T> {
   data: T;
@@ -28,26 +27,9 @@ function getProvider(): LLMProvider {
   return "openai";
 }
 
-function createModel(temperature: number): BaseChatModel {
-  const provider = getProvider();
-
-  if (provider === "claude") {
-    return new ChatAnthropic({
-      model: process.env.ANTHROPIC_MODEL || "claude-sonnet-4-20250514",
-      temperature,
-      maxTokens: 4096,
-    });
-  }
-
-  return new ChatOpenAI({
-    model: process.env.OPENAI_MODEL || "gpt-4o-mini",
-    temperature,
-  });
-}
-
 /**
- * Generate structured JSON output using LangChain createAgent
- * Uses providerStrategy with Zod schema for type-safe responses
+ * Generate structured JSON output using LangChain withStructuredOutput
+ * Works with both Claude and OpenAI via tool calling
  *
  * Provider priority: Claude > OpenAI
  */
@@ -57,23 +39,32 @@ export async function generateStructured<T>(
   schema: ZodType<T>,
   temperature: number = 0.5
 ): Promise<LLMResponse<T>> {
-  const model = createModel(temperature);
+  const provider = getProvider();
 
-  const agent = createAgent({
-    model,
-    tools: [],
-    responseFormat: providerStrategy(schema),
-  });
+  let model;
+  if (provider === "claude") {
+    model = new ChatAnthropic({
+      model: process.env.ANTHROPIC_MODEL || "claude-sonnet-4-20250514",
+      temperature,
+      maxTokens: 4096,
+    });
+  } else {
+    model = new ChatOpenAI({
+      model: process.env.OPENAI_MODEL || "gpt-4o-mini",
+      temperature,
+    });
+  }
 
-  const result = await agent.invoke({
-    messages: [
-      { role: "system", content: systemPrompt },
-      { role: "user", content: userContent },
-    ],
-  });
+  // Use withStructuredOutput for reliable JSON extraction
+  const structuredModel = model.withStructuredOutput(schema);
+
+  const result = await structuredModel.invoke([
+    new SystemMessage(systemPrompt),
+    new HumanMessage(userContent),
+  ]);
 
   return {
-    data: result.structuredResponse as T,
+    data: result as T,
   };
 }
 
