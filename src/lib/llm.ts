@@ -18,12 +18,11 @@ type LLMProvider = "claude" | "openai";
 
 function getProvider(): LLMProvider {
   const envProvider = process.env.LLM_PROVIDER?.toLowerCase();
-  if (envProvider === "openai") return "openai";
 
-  // Default to Claude if ANTHROPIC_API_KEY is set
-  if (process.env.ANTHROPIC_API_KEY) return "claude";
+  // Explicit provider selection
+  if (envProvider === "claude" && process.env.ANTHROPIC_API_KEY) return "claude";
 
-  // Fallback to OpenAI
+  // Default to OpenAI (more reliable structured output via LangChain)
   return "openai";
 }
 
