@@ -33,6 +33,9 @@ export async function generateArticleForAngle(
   angle: ArticleAngle,
   versionNumber: number
 ): Promise<SubwriterArticle> {
+  console.log(`[Article] Starting ${angle} v${versionNumber}...`);
+  const startTime = Date.now();
+
   // Inject voice profile into the system prompt
   const basePrompt = ARTICLE_ANGLE_PROMPTS[angle];
   const systemPrompt = await injectVoiceIntoPrompt(basePrompt);
@@ -44,6 +47,9 @@ export async function generateArticleForAngle(
     GeneratedArticleSchema,
     ARTICLE_SUBWRITER_TEMPERATURE
   );
+
+  const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
+  console.log(`[Article] Completed ${angle} v${versionNumber} in ${elapsed}s`);
 
   return {
     ...result.data,
