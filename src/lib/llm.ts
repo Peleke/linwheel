@@ -20,13 +20,10 @@ type LLMProvider = "claude" | "openai";
 function getProvider(): LLMProvider {
   const envProvider = process.env.LLM_PROVIDER?.toLowerCase();
 
-  // Explicit provider selection
+  // Explicit provider selection only
   if (envProvider === "claude" && process.env.ANTHROPIC_API_KEY) return "claude";
-  if (envProvider === "openai") return "openai";
 
-  // Default to Claude if available (better writing quality)
-  if (process.env.ANTHROPIC_API_KEY) return "claude";
-
+  // Default to OpenAI gpt-4o (most reliable for structured output)
   return "openai";
 }
 
