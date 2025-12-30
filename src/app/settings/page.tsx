@@ -1,15 +1,23 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useImagePreferences, type ImagePreferences } from "@/hooks/use-image-preferences";
 import { AppHeader } from "@/components/app-header";
 import type { T2IProviderType } from "@/lib/t2i/types";
-import Link from "next/link";
 
 interface ProviderStatus {
   openai: boolean;
   fal: boolean;
   comfyui: boolean;
+}
+
+interface VoiceProfile {
+  id: string;
+  name: string;
+  description: string | null;
+  samples: string[];
+  isActive: boolean;
+  createdAt: string;
 }
 
 export default function SettingsPage() {
@@ -28,6 +36,26 @@ export default function SettingsPage() {
     comfyui: false,
   });
 
+  // Voice profile state
+  const [voiceProfiles, setVoiceProfiles] = useState<VoiceProfile[]>([]);
+  const [activeProfileId, setActiveProfileId] = useState<string | null>(null);
+  const [isCreatingProfile, setIsCreatingProfile] = useState(false);
+  const [newProfileName, setNewProfileName] = useState("");
+  const [newProfileDescription, setNewProfileDescription] = useState("");
+  const [newProfileSamples, setNewProfileSamples] = useState<string[]>([""]);
+
+  // Fetch voice profiles
+  const fetchVoiceProfiles = useCallback(async () => {
+    try {
+      const res = await fetch("/api/voice-profiles");
+      const data = await res.json();
+      setVoiceProfiles(data.profiles || []);
+      setActiveProfileId(data.activeProfileId);
+    } catch (error) {
+      console.error("Failed to fetch voice profiles:", error);
+    }
+  }, []);
+
   // Fetch provider status on mount
   useEffect(() => {
     fetch("/api/images/generate")
@@ -38,7 +66,74 @@ export default function SettingsPage() {
         }
       })
       .catch(console.error);
-  }, []);
+
+    fetchVoiceProfiles();
+  }, [fetchVoiceProfiles]);
+
+  // Voice profile actions
+  const createVoiceProfile = async () => {
+    if (!newProfileName.trim() || newProfileSamples.every(s => !s.trim())) return;
+
+    try {
+      const res = await fetch("/api/voice-profiles", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: newProfileName,
+          description: newProfileDescription || null,
+          samples: newProfileSamples.filter(s => s.trim()),
+          isActive: voiceProfiles.length === 0, // First profile is active by default
+        }),
+      });
+
+      if (res.ok) {
+        setNewProfileName("");
+        setNewProfileDescription("");
+        setNewProfileSamples([""]);
+        setIsCreatingProfile(false);
+        fetchVoiceProfiles();
+      }
+    } catch (error) {
+      console.error("Failed to create voice profile:", error);
+    }
+  };
+
+  const activateProfile = async (id: string) => {
+    try {
+      await fetch(`/api/voice-profiles/${id}/activate`, { method: "POST" });
+      fetchVoiceProfiles();
+    } catch (error) {
+      console.error("Failed to activate profile:", error);
+    }
+  };
+
+  const deleteProfile = async (id: string) => {
+    if (!confirm("Delete this voice profile?")) return;
+    try {
+      await fetch(`/api/voice-profiles/${id}`, { method: "DELETE" });
+      fetchVoiceProfiles();
+    } catch (error) {
+      console.error("Failed to delete profile:", error);
+    }
+  };
+
+  const addSampleField = () => {
+    if (newProfileSamples.length < 5) {
+      setNewProfileSamples([...newProfileSamples, ""]);
+    }
+  };
+
+  const updateSample = (index: number, value: string) => {
+    const updated = [...newProfileSamples];
+    updated[index] = value;
+    setNewProfileSamples(updated);
+  };
+
+  const removeSample = (index: number) => {
+    if (newProfileSamples.length > 1) {
+      setNewProfileSamples(newProfileSamples.filter((_, i) => i !== index));
+    }
+  };
 
   if (!isLoaded) {
     return (
@@ -195,6 +290,168 @@ export default function SettingsPage() {
               </p>
             </div>
           )}
+        </section>
+
+        {/* Voice Profile Section */}
+        <section className="bg-white dark:bg-neutral-800 rounded-xl border border-neutral-200 dark:border-neutral-700 p-6 mb-6">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h2 className="text-lg font-semibold">Writing Voice</h2>
+              <p className="text-sm text-neutral-500 mt-1">
+                Add writing samples to match your style
+              </p>
+            </div>
+            {!isCreatingProfile && (
+              <button
+                onClick={() => setIsCreatingProfile(true)}
+                className="px-3 py-1.5 text-sm font-medium bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                + New Profile
+              </button>
+            )}
+          </div>
+
+          {/* Create Profile Form */}
+          {isCreatingProfile && (
+            <div className="mb-6 p-4 bg-neutral-50 dark:bg-neutral-700/50 rounded-lg border border-neutral-200 dark:border-neutral-600">
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium mb-1">Profile Name</label>
+                  <input
+                    type="text"
+                    value={newProfileName}
+                    onChange={(e) => setNewProfileName(e.target.value)}
+                    placeholder="e.g., My LinkedIn Voice"
+                    className="w-full px-3 py-2 rounded-lg border border-neutral-300 dark:border-neutral-600 bg-white dark:bg-neutral-800 text-sm"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium mb-1">Style Notes (optional)</label>
+                  <input
+                    type="text"
+                    value={newProfileDescription}
+                    onChange={(e) => setNewProfileDescription(e.target.value)}
+                    placeholder="e.g., Conversational, uses short sentences, avoids jargon"
+                    className="w-full px-3 py-2 rounded-lg border border-neutral-300 dark:border-neutral-600 bg-white dark:bg-neutral-800 text-sm"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium mb-2">
+                    Writing Samples ({newProfileSamples.length}/5)
+                  </label>
+                  <p className="text-xs text-neutral-500 mb-2">
+                    Paste 2-3 examples of your writing. LinkedIn posts, paragraphs from articles, etc.
+                  </p>
+                  {newProfileSamples.map((sample, i) => (
+                    <div key={i} className="flex gap-2 mb-2">
+                      <textarea
+                        value={sample}
+                        onChange={(e) => updateSample(i, e.target.value)}
+                        placeholder={`Writing sample ${i + 1}...`}
+                        rows={3}
+                        className="flex-1 px-3 py-2 rounded-lg border border-neutral-300 dark:border-neutral-600 bg-white dark:bg-neutral-800 text-sm resize-none"
+                      />
+                      {newProfileSamples.length > 1 && (
+                        <button
+                          onClick={() => removeSample(i)}
+                          className="px-2 text-neutral-400 hover:text-red-500"
+                        >
+                          ×
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                  {newProfileSamples.length < 5 && (
+                    <button
+                      onClick={addSampleField}
+                      className="text-sm text-blue-600 hover:text-blue-700"
+                    >
+                      + Add another sample
+                    </button>
+                  )}
+                </div>
+
+                <div className="flex gap-2 pt-2">
+                  <button
+                    onClick={createVoiceProfile}
+                    disabled={!newProfileName.trim() || newProfileSamples.every(s => !s.trim())}
+                    className="px-4 py-2 text-sm font-medium bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  >
+                    Create Profile
+                  </button>
+                  <button
+                    onClick={() => {
+                      setIsCreatingProfile(false);
+                      setNewProfileName("");
+                      setNewProfileDescription("");
+                      setNewProfileSamples([""]);
+                    }}
+                    className="px-4 py-2 text-sm font-medium text-neutral-600 hover:text-neutral-800 dark:text-neutral-400 dark:hover:text-neutral-200"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Existing Profiles */}
+          {voiceProfiles.length > 0 ? (
+            <div className="space-y-3">
+              {voiceProfiles.map((profile) => (
+                <div
+                  key={profile.id}
+                  className={`p-4 rounded-lg border-2 transition-all ${
+                    profile.id === activeProfileId
+                      ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20"
+                      : "border-neutral-200 dark:border-neutral-700"
+                  }`}
+                >
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium">{profile.name}</span>
+                        {profile.id === activeProfileId && (
+                          <span className="px-2 py-0.5 text-xs font-medium bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300 rounded-full">
+                            Active
+                          </span>
+                        )}
+                      </div>
+                      {profile.description && (
+                        <p className="text-sm text-neutral-500 mt-1">{profile.description}</p>
+                      )}
+                      <p className="text-xs text-neutral-400 mt-2">
+                        {profile.samples.length} sample{profile.samples.length !== 1 ? "s" : ""}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {profile.id !== activeProfileId && (
+                        <button
+                          onClick={() => activateProfile(profile.id)}
+                          className="px-3 py-1 text-xs font-medium text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded transition-colors"
+                        >
+                          Use
+                        </button>
+                      )}
+                      <button
+                        onClick={() => deleteProfile(profile.id)}
+                        className="px-2 py-1 text-xs text-neutral-400 hover:text-red-500 transition-colors"
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : !isCreatingProfile ? (
+            <div className="text-center py-8 text-neutral-500">
+              <p className="mb-2">No voice profiles yet</p>
+              <p className="text-sm">Create a profile with your writing samples to match your style</p>
+            </div>
+          ) : null}
         </section>
 
         {/* Provider Status */}

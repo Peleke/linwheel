@@ -1,5 +1,6 @@
 import { generateStructured, z } from "../llm";
 import { ARTICLE_ANGLE_PROMPTS } from "../prompts/article-angles";
+import { injectVoiceIntoPrompt } from "../voice";
 import type { ArticleAngle } from "@/db/schema";
 import type { ExtractedInsight } from "../generate";
 
@@ -32,7 +33,9 @@ export async function generateArticleForAngle(
   angle: ArticleAngle,
   versionNumber: number
 ): Promise<SubwriterArticle> {
-  const systemPrompt = ARTICLE_ANGLE_PROMPTS[angle];
+  // Inject voice profile into the system prompt
+  const basePrompt = ARTICLE_ANGLE_PROMPTS[angle];
+  const systemPrompt = await injectVoiceIntoPrompt(basePrompt);
   const userContent = JSON.stringify(insight, null, 2);
 
   const result = await generateStructured(

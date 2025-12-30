@@ -157,7 +157,22 @@ export const articleCarouselIntents = sqliteTable("article_carousel_intents", {
   createdAt: integer("created_at", { mode: "timestamp" }).$defaultFn(() => new Date()),
 });
 
+// Voice profiles table - for style matching
+export const voiceProfiles = sqliteTable("voice_profiles", {
+  id: text("id").primaryKey(),
+  name: text("name").notNull(),
+  description: text("description"),
+  // Array of writing samples for few-shot style matching
+  samples: text("samples", { mode: "json" }).$type<string[]>().notNull(),
+  // Only one profile can be active at a time
+  isActive: integer("is_active", { mode: "boolean" }).default(false),
+  createdAt: integer("created_at", { mode: "timestamp" }).$defaultFn(() => new Date()),
+  updatedAt: integer("updated_at", { mode: "timestamp" }).$defaultFn(() => new Date()),
+});
+
 // Types
+export type VoiceProfile = typeof voiceProfiles.$inferSelect;
+export type NewVoiceProfile = typeof voiceProfiles.$inferInsert;
 export type GenerationRun = typeof generationRuns.$inferSelect;
 export type NewGenerationRun = typeof generationRuns.$inferInsert;
 export type Insight = typeof insights.$inferSelect;
