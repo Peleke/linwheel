@@ -216,12 +216,19 @@ export async function POST(request: NextRequest) {
       try {
         await processGeneration(runId, transcript, selectedAngles, selectedArticleAngles);
       } catch (err) {
-        console.error("Background processing error:", err);
+        const errorMsg = err instanceof Error ? err.message : String(err);
+        const errorStack = err instanceof Error ? err.stack : undefined;
+        console.error("Background processing error:", errorMsg);
+        console.error("Stack:", errorStack);
         // Ensure status is updated even if processGeneration's catch fails
-        await db
-          .update(generationRuns)
-          .set({ status: "failed", error: "Background processing crashed" })
-          .where(eq(generationRuns.id, runId));
+        try {
+          await db
+            .update(generationRuns)
+            .set({ status: "failed", error: `Crash: ${errorMsg.slice(0, 500)}` })
+            .where(eq(generationRuns.id, runId));
+        } catch (dbErr) {
+          console.error("Failed to update run status:", dbErr);
+        }
       }
     });
 
