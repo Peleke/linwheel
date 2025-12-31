@@ -96,10 +96,11 @@ export async function generateCarousel(
     // 5. Build pages using LLM-generated content
     const pages = generateCarouselPages(article, format, stylePreset);
 
-    // Override headlines AND prompts with LLM-generated content
+    // Override headlines, captions, AND prompts with LLM-generated content
     pages.forEach((page, i) => {
       if (captions[i]) {
         page.headlineText = captions[i].headline;
+        page.caption = captions[i].caption; // Optional caption for some slides
         // Use LLM-generated prompts (topic-specific, weighted keywords)
         page.prompt = captions[i].imagePrompt;
       }
@@ -160,6 +161,7 @@ export async function generateCarousel(
             // Apply text overlay to the background image using Satori (works on Vercel)
             const overlaidBuffer = await overlayCarouselTextFromUrl(result.imageUrl, {
               headline: page.headlineText,
+              caption: page.caption,
               slideType: page.slideType,
               size: 1080,
             });
@@ -173,6 +175,7 @@ export async function generateCarousel(
             console.log(`[Carousel] Page ${page.pageNumber}: T2I failed (${result.error}), generating fallback...`);
             const fallbackBuffer = await generateFallbackSlide({
               headline: page.headlineText,
+              caption: page.caption,
               slideType: page.slideType,
               size: 1080,
             });
@@ -188,6 +191,7 @@ export async function generateCarousel(
           try {
             const fallbackBuffer = await generateFallbackSlide({
               headline: page.headlineText,
+              caption: page.caption,
               slideType: page.slideType,
               size: 1080,
             });

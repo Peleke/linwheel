@@ -77,6 +77,7 @@ function getFontData(): Buffer {
 
 interface CarouselOverlayOptions {
   headline: string;
+  caption?: string;
   slideType: "title" | "content" | "cta";
   size?: number;
 }
@@ -132,10 +133,11 @@ async function renderToPng(
 export async function renderCarouselTextOverlay(
   options: CarouselOverlayOptions
 ): Promise<Buffer> {
-  const { headline, slideType, size = 1080 } = options;
+  const { headline, caption, slideType, size = 1080 } = options;
 
   const fontSizes = { title: 72, content: 60, cta: 64 };
   const fontSize = fontSizes[slideType];
+  const captionFontSize = Math.round(fontSize * 0.5); // Caption is smaller
 
   const element = (
     <div
@@ -148,13 +150,38 @@ export async function renderCarouselTextOverlay(
         padding: 80,
         background: "linear-gradient(to top, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.3) 40%, transparent 100%)",
         fontFamily: "Inter",
-        fontSize,
-        fontWeight: 700,
         color: "white",
-        lineHeight: 1.3,
       }}
     >
-      {headline}
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "column",
+        }}
+      >
+        <span
+          style={{
+            fontSize,
+            fontWeight: 700,
+            lineHeight: 1.3,
+          }}
+        >
+          {headline}
+        </span>
+        {caption && (
+          <span
+            style={{
+              fontSize: captionFontSize,
+              fontWeight: 400,
+              lineHeight: 1.4,
+              marginTop: 16,
+              opacity: 0.9,
+            }}
+          >
+            {caption}
+          </span>
+        )}
+      </div>
     </div>
   );
 
@@ -273,10 +300,11 @@ export async function overlayCoverTextFromUrl(
 export async function generateFallbackSlide(
   options: CarouselOverlayOptions
 ): Promise<Buffer> {
-  const { headline, slideType, size = 1080 } = options;
+  const { headline, caption, slideType, size = 1080 } = options;
 
   const fontSizes = { title: 72, content: 60, cta: 64 };
   const fontSize = fontSizes[slideType];
+  const captionFontSize = Math.round(fontSize * 0.5);
 
   // Pick a random gradient
   const gradients = [
@@ -299,13 +327,38 @@ export async function generateFallbackSlide(
         padding: 80,
         background: gradient,
         fontFamily: "Inter",
-        fontSize,
-        fontWeight: 700,
         color: "white",
-        lineHeight: 1.3,
       }}
     >
-      {headline}
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "column",
+        }}
+      >
+        <span
+          style={{
+            fontSize,
+            fontWeight: 700,
+            lineHeight: 1.3,
+          }}
+        >
+          {headline}
+        </span>
+        {caption && (
+          <span
+            style={{
+              fontSize: captionFontSize,
+              fontWeight: 400,
+              lineHeight: 1.4,
+              marginTop: 16,
+              opacity: 0.9,
+            }}
+          >
+            {caption}
+          </span>
+        )}
+      </div>
     </div>
   );
 

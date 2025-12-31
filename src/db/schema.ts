@@ -132,6 +132,7 @@ export interface CarouselPage {
   slideType: "title" | "content" | "cta";
   prompt: string;
   headlineText: string;
+  caption?: string;
   bodyText?: string;
   imageUrl?: string;
   generatedAt?: Date;

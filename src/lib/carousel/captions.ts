@@ -17,13 +17,15 @@ const SlideContentSchema = z.object({
       slideType: z.enum(["title", "content", "cta"]).optional(),
       // Required content - accept both camelCase and snake_case
       headline: z.string(),
+      caption: z.string().optional(), // Optional supporting text
       imagePrompt: z.string().optional(),
       image_prompt: z.string().optional(), // Claude sometimes uses snake_case
     }).transform((s) => ({
       // Normalize to consistent format - slideNumber will be set later
       slideNumber: s.slideNumber ?? 0, // Will be overridden by index
       slideType: s.slideType ?? "content" as const,
-      headline: s.headline.substring(0, 60),
+      headline: s.headline.substring(0, 50), // Shorter for punchy feel
+      caption: s.caption?.substring(0, 80), // Optional caption
       imagePrompt: (s.imagePrompt || s.image_prompt || "Abstract professional gradient with soft blue tones and minimal geometric shapes, editorial magazine photography, soft studio lighting, calm sophisticated mood").substring(0, 350),
     }))
   ),
@@ -35,6 +37,7 @@ interface SlideCaption {
   slideNumber: number;
   slideType: "title" | "content" | "cta";
   headline: string;
+  caption?: string;
   imagePrompt: string;
 }
 
@@ -47,13 +50,34 @@ interface CaptionGenerationResult {
 const CAPTION_SYSTEM_PROMPT = `You are a LinkedIn carousel expert. Create slide content for a 5-slide carousel that tells a coherent story.
 
 RULES FOR HEADLINES:
-1. Each headline must be SHORT (max 60 characters)
+1. Each headline must be SHORT (max 50 characters)
 2. Headlines should READ AS A STORY when viewed in sequence
-3. Slide 1 (title): Hook question or bold statement
-4. Slides 2-4 (content): Key insights that BUILD on each other
-5. Slide 5 (cta): Action-inspiring conclusion
-6. NO generic phrases like "Key Insight" or "Important Point"
-7. Each headline should SUMMARIZE the actual section content
+3. Write PUNCHY STANDALONE STATEMENTS - not "The X that..." phrases
+4. Use IMPERATIVES or BOLD DECLARATIONS
+5. Slide 1 (title): Hook question or bold statement
+6. Slides 2-4 (content): Key insights that BUILD on each other
+7. Slide 5 (cta): Action-inspiring conclusion
+8. NO generic phrases like "Key Insight" or "Important Point"
+9. Each headline should SUMMARIZE the actual section content
+
+HEADLINE STYLE GUIDE:
+❌ BAD: "The shift from replacement to partnership"
+✅ GOOD: "Shift from replacement to partnership"
+
+❌ BAD: "The importance of data quality"
+✅ GOOD: "Data quality makes or breaks AI"
+
+❌ BAD: "Understanding the challenges"
+✅ GOOD: "Face the real challenges"
+
+❌ BAD: "The future of work is changing"
+✅ GOOD: "Work is changing. Adapt now."
+
+RULES FOR CAPTIONS:
+1. Add a short caption (max 80 chars) ONLY to slides 2 and 4
+2. Captions provide supporting context for the headline
+3. Captions should be conversational and add value
+4. Leave caption empty/null for slides 1, 3, and 5
 
 RULES FOR IMAGE PROMPTS (FLUX MODEL):
 Use this structure: SUBJECT + STYLE + CONTEXT + ATMOSPHERE
@@ -67,8 +91,8 @@ Use this structure: SUBJECT + STYLE + CONTEXT + ATMOSPHERE
 7. Think: editorial photography, magazine covers, modern design campaigns
 
 GOOD HEADLINE SEQUENCES:
-- "Why 90% of AI Projects Fail" → "The Data Quality Trap" → "Your Team's Hidden Blind Spot" → "The Fix Is Simpler Than You Think" → "Start Here Today"
-- "Enterprise AI Is Broken" → "Legacy Systems Are The Problem" → "Integration Over Innovation" → "The Hybrid Architecture Solution" → "Ready to Transform?"
+- "Why 90% of AI Projects Fail" → "Data quality is the trap" (caption: "Most teams overlook this critical step") → "Spot your blind spots" → "Fix it simply" (caption: "One small change makes all the difference") → "Start here today"
+- "Enterprise AI Is Broken" → "Legacy systems hold you back" (caption: "That old infrastructure is costing you") → "Integrate, don't innovate" → "Go hybrid" (caption: "The architecture that actually works") → "Ready to transform?"
 
 GOOD FLUX PROMPT EXAMPLES:
 - "Flowing geometric data streams converging in abstract space, deep blue and violet gradients, editorial magazine photography, soft diffused studio lighting, minimal tech aesthetic, contemplative mood"
