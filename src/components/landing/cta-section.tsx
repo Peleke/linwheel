@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { WaitlistForm } from "../waitlist-form";
 
 export function CTASection() {
   return (
@@ -23,7 +22,7 @@ export function CTASection() {
           One transcript. 90+ posts. Free to try.
         </p>
 
-        <div className="flex flex-col sm:flex-row gap-4 justify-center mb-16">
+        <div className="flex flex-col sm:flex-row gap-4 justify-center">
           <Link
             href="/login"
             className="glow-button px-8 py-4 rounded-xl text-lg font-medium text-white inline-flex items-center justify-center gap-2"
@@ -33,15 +32,6 @@ export function CTASection() {
             </svg>
             Create Free Account
           </Link>
-        </div>
-
-        {/* Waitlist section */}
-        <div className="glass-card rounded-2xl p-8 max-w-md mx-auto">
-          <h3 className="font-semibold mb-2">Join the waitlist</h3>
-          <p className="text-sm text-neutral-400 mb-6">
-            Get early access to new features: carousel export, image generation, and more.
-          </p>
-          <WaitlistForm />
         </div>
       </div>
     </section>
