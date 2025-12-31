@@ -32,7 +32,7 @@ export function CTASection() {
         </h2>
 
         <p className="text-xl text-neutral-400 mb-10">
-          One transcript. 90+ posts with AI images. Free to try.
+          One piece of content. 90+ posts with AI images. Free to try.
         </p>
 
         <div className="flex flex-col sm:flex-row gap-4 justify-center">

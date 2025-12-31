@@ -1,10 +1,36 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { ParticleBackground } from "./particle-background";
 
+const contentTypes = [
+  "podcast transcripts",
+  "book chapters",
+  "research papers",
+  "meeting notes",
+  "conference talks",
+  "white papers",
+  "interview recordings",
+];
+
 export function Hero() {
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [isAnimating, setIsAnimating] = useState(false);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setIsAnimating(true);
+      setTimeout(() => {
+        setCurrentIndex((prev) => (prev + 1) % contentTypes.length);
+        setIsAnimating(false);
+      }, 200);
+    }, 2500);
+
+    return () => clearInterval(interval);
+  }, []);
+
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
       {/* Background effects */}
@@ -35,23 +61,34 @@ export function Hero() {
           <span className="text-sm text-neutral-300">Now in public beta</span>
         </div>
 
-        {/* Headline */}
+        {/* Headline with rotating text */}
         <h1 className="animate-fade-up-delay-1 text-5xl md:text-7xl font-bold tracking-tight mb-6 leading-tight">
-          Turn podcast noise into
+          Turn{" "}
+          <span className="relative inline-block">
+            <span
+              className={`inline-block transition-all duration-200 ${
+                isAnimating
+                  ? "opacity-0 translate-y-2"
+                  : "opacity-100 translate-y-0"
+              }`}
+            >
+              <span className="text-indigo-400">{contentTypes[currentIndex]}</span>
+            </span>
+          </span>
           <br />
-          <span className="gradient-text">LinkedIn gold.</span>
+          into <span className="gradient-text">LinkedIn gold.</span>
         </h1>
 
         {/* Subheadline */}
         <p className="animate-fade-up-delay-2 text-xl md:text-2xl text-neutral-400 mb-4 max-w-3xl mx-auto leading-relaxed">
-          Paste a transcript. Get <span className="text-white font-medium">90+ ready-to-post</span> content pieces
+          Paste any content. Get <span className="text-white font-medium">90+ ready-to-post</span> pieces
           <br className="hidden md:block" />
           in <span className="text-white font-medium">6 distinct voices</span>—with <span className="text-emerald-400 font-medium">AI cover images</span>.
         </p>
 
         {/* Social proof line */}
         <p className="animate-fade-up-delay-2 text-neutral-500 mb-10">
-          One transcript = a month of scroll-stopping LinkedIn content
+          One piece of content = a month of scroll-stopping LinkedIn posts
         </p>
 
         {/* CTAs */}
@@ -80,7 +117,7 @@ export function Hero() {
         <div className="animate-fade-up-delay-3 flex flex-wrap justify-center gap-6 md:gap-12 pb-20 md:pb-0">
           <div className="text-center">
             <div className="text-3xl md:text-4xl font-bold gradient-text">90+</div>
-            <div className="text-sm text-neutral-500">Posts per transcript</div>
+            <div className="text-sm text-neutral-500">Posts per source</div>
           </div>
           <div className="text-center">
             <div className="text-3xl md:text-4xl font-bold gradient-text">6</div>

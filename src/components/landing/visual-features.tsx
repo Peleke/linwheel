@@ -157,7 +157,7 @@ export function VisualFeatures() {
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
               <div className="absolute bottom-4 left-4 right-4">
-                <p className="text-white text-sm font-medium">Raw transcript → Polished content</p>
+                <p className="text-white text-sm font-medium">Raw content → Polished posts</p>
                 <p className="text-neutral-400 text-xs">AI transforms chaos into engagement</p>
               </div>
             </div>
@@ -237,9 +237,9 @@ export function VisualFeatures() {
           ))}
         </div>
 
-        {/* Visual preview hint */}
+        {/* Visual preview hint - ensure proper spacing on mobile */}
         <div
-          className={`mt-12 text-center transition-all duration-700 delay-700 ${
+          className={`mt-16 md:mt-12 pt-4 text-center transition-all duration-700 delay-700 ${
             visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
           }`}
         >

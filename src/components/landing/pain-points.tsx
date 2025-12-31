@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 
 const painPoints = [
-  "2 hours formatting one podcast into posts",
+  "Hours reformatting content into posts",
   "Staring at blank screens for hooks",
   "Same voice, same angle, every time",
   "Great insights dying in your notes app",

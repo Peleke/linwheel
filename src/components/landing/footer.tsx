@@ -18,7 +18,7 @@ export function Footer() {
             </div>
             <div>
               <span className="font-semibold">LinWheel</span>
-              <p className="text-xs text-neutral-500">Turn one podcast into a month of content.</p>
+              <p className="text-xs text-neutral-500">Turn any content into a month of LinkedIn posts.</p>
             </div>
           </div>
 

@@ -7,7 +7,7 @@ const steps = [
   {
     number: "01",
     title: "Paste",
-    description: "Drop your podcast transcript from Podscribe, Descript, or any source. We clean timestamps, speaker labels, all of it.",
+    description: "Drop any content—transcripts, book chapters, research papers, meeting notes. We clean it and prep it for extraction.",
     image: "/promo/step-01-paste.png",
   },
   {

@@ -15,7 +15,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "LinWheel - Turn AI Noise into LinkedIn Posts",
-  description: "Transform podcast transcripts into ready-to-publish LinkedIn content",
+  description: "Transform any content into ready-to-publish LinkedIn posts with AI",
   manifest: "/manifest.json",
   icons: {
     icon: [
