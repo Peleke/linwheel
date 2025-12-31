@@ -7,6 +7,7 @@ import ReactMarkdown from "react-markdown";
 import { CopyButton } from "@/components/copy-button";
 import { ApprovalButtons } from "@/components/approval-buttons";
 import { ImagePreview } from "./image-preview";
+import { RegeneratePromptButton } from "./regenerate-prompt-button";
 
 interface PostWithIntent {
   id: string;
@@ -164,21 +165,28 @@ export function PostCard({ post, runId }: PostCardProps) {
                   {/* Image details (collapsible) */}
                   {post.imageIntent && (
                     <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800">
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setShowImageDetails(!showImageDetails);
-                        }}
-                        className="text-xs text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300 flex items-center gap-1"
-                      >
-                        <motion.span
-                          animate={{ rotate: showImageDetails ? 90 : 0 }}
-                          transition={{ duration: 0.15 }}
+                      <div className="flex items-center justify-between">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setShowImageDetails(!showImageDetails);
+                          }}
+                          className="text-xs text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300 flex items-center gap-1"
                         >
-                          ›
-                        </motion.span>
-                        Image prompt details
-                      </button>
+                          <motion.span
+                            animate={{ rotate: showImageDetails ? 90 : 0 }}
+                            transition={{ duration: 0.15 }}
+                          >
+                            ›
+                          </motion.span>
+                          Image prompt details
+                        </button>
+                        <RegeneratePromptButton
+                          id={post.id}
+                          isArticle={false}
+                          hasIntent={!!post.imageIntent}
+                        />
+                      </div>
 
                       <AnimatePresence>
                         {showImageDetails && (

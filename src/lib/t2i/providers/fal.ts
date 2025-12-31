@@ -14,18 +14,18 @@ import type {
   StylePreset,
 } from "../types";
 
-// Style preset to prompt modifier mapping
+// Style preset to prompt modifier mapping (FLUX-optimized plain English)
 const STYLE_PROMPTS: Record<StylePreset, string> = {
   typographic_minimal:
-    "Clean, minimalist design with bold typography. White space, simple geometric shapes. Professional LinkedIn cover image style.",
+    "Clean minimalist editorial design on solid warm cream or soft white background, bold professional typography with thoughtful spacing, magazine cover quality, soft natural lighting, calm sophisticated atmosphere, high-end design campaign aesthetic.",
   gradient_text:
-    "Modern gradient background transitioning between purple, blue, and pink. Large text with gradient overlay. Tech-forward aesthetic.",
+    "Modern gradient background flowing from deep purple through electric blue to soft pink, sleek tech-forward aesthetic, contemporary design with smooth color transitions, soft ambient glow, professional futuristic mood, editorial quality.",
   dark_mode:
-    "Dark background (#1a1a2e or #16213e). Bright accent colors for contrast. Sleek, modern professional appearance.",
+    "Rich dark navy or deep charcoal background with subtle depth, bright accent colors providing elegant contrast, sleek modern professional appearance, soft ambient lighting from edges, sophisticated corporate tech mood, premium editorial quality.",
   accent_bar:
     "Clean design with a bold colored accent bar (orange, teal, or purple). Corporate but creative feel.",
   abstract_shapes:
-    "Abstract geometric shapes in the background. Soft gradients. Professional yet creative LinkedIn style.",
+    "Flowing abstract geometric shapes with soft gradient transitions, layered translucent forms in complementary colors, professional editorial photography style, modern design campaign aesthetic, creative yet sophisticated mood, premium quality.",
 };
 
 // FAL.ai image size options

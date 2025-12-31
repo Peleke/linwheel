@@ -225,3 +225,112 @@ function escapeXml(text: string): string {
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&apos;");
 }
+
+/**
+ * Cover image overlay options (for posts/articles with landscape aspect ratio)
+ */
+interface CoverOverlayOptions {
+  /** The headline text to render */
+  headline: string;
+  /** Width of the image (default 1200 for LinkedIn) */
+  width?: number;
+  /** Height of the image (default 628 for LinkedIn 1.91:1) */
+  height?: number;
+}
+
+/**
+ * Create cover image headline overlay (landscape format)
+ */
+function createCoverOverlay(options: CoverOverlayOptions): string {
+  const { headline, width = 1200, height = 628 } = options;
+
+  const fontSize = 56;
+  const padding = 60;
+  const maxWidth = width - padding * 2;
+
+  // Calculate max chars per line
+  const charsPerLine = Math.floor(maxWidth / (fontSize * 0.52));
+  const lines = wrapText(headline, charsPerLine);
+
+  // Limit to 3 lines for landscape
+  const displayLines = lines.slice(0, 3);
+  if (lines.length > 3) {
+    displayLines[2] = displayLines[2].substring(0, displayLines[2].length - 3) + "...";
+  }
+
+  const lineHeight = fontSize * 1.25;
+  const textBlockHeight = displayLines.length * lineHeight;
+
+  // Position text in lower portion of image
+  const startY = height - padding - textBlockHeight + fontSize;
+
+  // Build tspans for each line
+  const tspans = displayLines.map((line, i) =>
+    `<tspan x="${padding}" dy="${i === 0 ? 0 : lineHeight}">${escapeXml(line)}</tspan>`
+  ).join("");
+
+  // Gradient scrim height
+  const scrimHeight = textBlockHeight + padding * 2;
+
+  return `
+    <svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="coverScrim" x1="0%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%" stop-color="black" stop-opacity="0"/>
+          <stop offset="30%" stop-color="black" stop-opacity="0.2"/>
+          <stop offset="100%" stop-color="black" stop-opacity="0.75"/>
+        </linearGradient>
+        <filter id="coverShadow" x="-20%" y="-20%" width="140%" height="140%">
+          <feDropShadow dx="0" dy="2" stdDeviation="4" flood-color="black" flood-opacity="0.9"/>
+        </filter>
+      </defs>
+
+      <rect x="0" y="${height - scrimHeight}" width="${width}" height="${scrimHeight}" fill="url(#coverScrim)" />
+
+      <text
+        x="${padding}"
+        y="${startY}"
+        font-family="system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif"
+        font-size="${fontSize}"
+        font-weight="700"
+        fill="white"
+        text-anchor="start"
+        filter="url(#coverShadow)"
+      >
+        ${tspans}
+      </text>
+    </svg>
+  `;
+}
+
+/**
+ * Overlay headline text on a cover image (landscape format for posts/articles)
+ */
+export async function overlayCoverText(
+  imageUrl: string,
+  headline: string,
+  width = 1200,
+  height = 628
+): Promise<Buffer> {
+  console.log(`[CoverOverlay] Fetching image from: ${imageUrl.substring(0, 80)}...`);
+
+  const response = await fetch(imageUrl);
+  if (!response.ok) {
+    throw new Error(`Failed to fetch image: ${response.status} ${response.statusText}`);
+  }
+
+  const imageBuffer = Buffer.from(await response.arrayBuffer());
+  console.log(`[CoverOverlay] Image buffer size: ${imageBuffer.length} bytes`);
+
+  const overlaySvg = createCoverOverlay({ headline, width, height });
+  const overlayBuffer = Buffer.from(overlaySvg);
+
+  const result = await sharp(imageBuffer)
+    .resize(width, height, { fit: "cover" })
+    .composite([{ input: overlayBuffer, top: 0, left: 0 }])
+    .png()
+    .toBuffer();
+
+  console.log(`[CoverOverlay] Composited image size: ${result.length} bytes`);
+  return result;
+}

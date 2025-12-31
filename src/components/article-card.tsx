@@ -8,6 +8,7 @@ import { ApprovalButtons } from "./approval-buttons";
 import { CopyButton } from "./copy-button";
 import { ImagePreview } from "./image-preview";
 import { CarouselButton } from "./carousel-button";
+import { RegeneratePromptButton } from "./regenerate-prompt-button";
 
 /**
  * Fix markdown formatting issues in sections
@@ -241,21 +242,28 @@ export function ArticleCard({
                 {/* Image details (tucked away) */}
                 {article.imageIntent && (
                   <div className="pt-3 border-t border-slate-100 dark:border-slate-800">
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setShowImageDetails(!showImageDetails);
-                      }}
-                      className="text-xs text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300 flex items-center gap-1"
-                    >
-                      <motion.span
-                        animate={{ rotate: showImageDetails ? 90 : 0 }}
-                        transition={{ duration: 0.15 }}
+                    <div className="flex items-center justify-between">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setShowImageDetails(!showImageDetails);
+                        }}
+                        className="text-xs text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300 flex items-center gap-1"
                       >
-                        ›
-                      </motion.span>
-                      Cover image prompt
-                    </button>
+                        <motion.span
+                          animate={{ rotate: showImageDetails ? 90 : 0 }}
+                          transition={{ duration: 0.15 }}
+                        >
+                          ›
+                        </motion.span>
+                        Cover image prompt
+                      </button>
+                      <RegeneratePromptButton
+                        id={article.id}
+                        isArticle={true}
+                        hasIntent={!!article.imageIntent}
+                      />
+                    </div>
 
                     <AnimatePresence>
                       {showImageDetails && (
