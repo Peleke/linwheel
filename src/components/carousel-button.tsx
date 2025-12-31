@@ -4,6 +4,7 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { getStoredPreferences } from "@/hooks/use-image-preferences";
 import { CarouselPreview } from "./carousel-preview";
+import { SlideVersionHistory } from "./slide-version-history";
 
 interface CarouselButtonProps {
   articleId: string;
@@ -17,6 +18,8 @@ interface CarouselPage {
   headlineText: string;
   bodyText?: string;
   imageUrl?: string;
+  activeVersionId?: string;
+  versionCount?: number;
 }
 
 interface CarouselStatus {
@@ -37,6 +40,7 @@ export function CarouselButton({ articleId, isApproved }: CarouselButtonProps) {
   const [error, setError] = useState<string | null>(null);
   const [isExpanded, setIsExpanded] = useState(false);
   const [regeneratingSlide, setRegeneratingSlide] = useState<number | null>(null);
+  const [versionHistorySlide, setVersionHistorySlide] = useState<number | null>(null);
 
   // Fetch carousel status
   const fetchStatus = async () => {
@@ -282,6 +286,7 @@ export function CarouselButton({ articleId, isApproved }: CarouselButtonProps) {
                     articleId={articleId}
                     onRegenerateSlide={handleRegenerateSlide}
                     regeneratingSlide={regeneratingSlide}
+                    onViewVersions={(slideNumber) => setVersionHistorySlide(slideNumber)}
                   />
                 </div>
               ) : !isLoading && isApproved ? (
@@ -326,6 +331,15 @@ export function CarouselButton({ articleId, isApproved }: CarouselButtonProps) {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Slide Version History Modal */}
+      <SlideVersionHistory
+        articleId={articleId}
+        slideNumber={versionHistorySlide || 1}
+        isOpen={versionHistorySlide !== null}
+        onClose={() => setVersionHistorySlide(null)}
+        onVersionActivated={fetchStatus}
+      />
     </div>
   );
 }

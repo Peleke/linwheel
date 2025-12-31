@@ -139,6 +139,9 @@ export interface CarouselPage {
   imageUrl?: string;
   generatedAt?: Date;
   generationError?: string;
+  // Version tracking
+  activeVersionId?: string;
+  versionCount?: number;
 }
 
 // Article carousel intents table
@@ -152,6 +155,27 @@ export const articleCarouselIntents = sqliteTable("article_carousel_intents", {
   }).notNull(),
   // Generated PDF data
   generatedPdfUrl: text("generated_pdf_url"),
+  generatedAt: integer("generated_at", { mode: "timestamp" }),
+  generationProvider: text("generation_provider", {
+    enum: ["openai", "comfyui", "fal"],
+  }),
+  generationError: text("generation_error"),
+  createdAt: integer("created_at", { mode: "timestamp" }).$defaultFn(() => new Date()),
+});
+
+// Carousel slide versions table - tracks version history for each slide
+export const carouselSlideVersions = sqliteTable("carousel_slide_versions", {
+  id: text("id").primaryKey(),
+  carouselIntentId: text("carousel_intent_id").notNull().references(() => articleCarouselIntents.id, { onDelete: "cascade" }),
+  slideNumber: integer("slide_number").notNull(), // 1-5
+  versionNumber: integer("version_number").notNull(), // 1, 2, 3...
+  // Content
+  prompt: text("prompt").notNull(),
+  headlineText: text("headline_text").notNull(),
+  caption: text("caption"),
+  imageUrl: text("image_url"),
+  // Metadata
+  isActive: integer("is_active", { mode: "boolean" }).default(false),
   generatedAt: integer("generated_at", { mode: "timestamp" }),
   generationProvider: text("generation_provider", {
     enum: ["openai", "comfyui", "fal"],
@@ -190,3 +214,5 @@ export type ArticleImageIntent = typeof articleImageIntents.$inferSelect;
 export type NewArticleImageIntent = typeof articleImageIntents.$inferInsert;
 export type ArticleCarouselIntent = typeof articleCarouselIntents.$inferSelect;
 export type NewArticleCarouselIntent = typeof articleCarouselIntents.$inferInsert;
+export type CarouselSlideVersion = typeof carouselSlideVersions.$inferSelect;
+export type NewCarouselSlideVersion = typeof carouselSlideVersions.$inferInsert;

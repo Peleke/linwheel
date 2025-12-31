@@ -11,6 +11,8 @@ interface CarouselPage {
   headlineText: string;
   bodyText?: string;
   imageUrl?: string;
+  activeVersionId?: string;
+  versionCount?: number;
 }
 
 interface CarouselPreviewProps {
@@ -19,9 +21,10 @@ interface CarouselPreviewProps {
   articleId: string;
   onRegenerateSlide?: (slideNumber: number) => Promise<void>;
   regeneratingSlide?: number | null;
+  onViewVersions?: (slideNumber: number) => void;
 }
 
-export function CarouselPreview({ pages, pdfUrl, articleId, onRegenerateSlide, regeneratingSlide }: CarouselPreviewProps) {
+export function CarouselPreview({ pages, pdfUrl, articleId, onRegenerateSlide, regeneratingSlide, onViewVersions }: CarouselPreviewProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [direction, setDirection] = useState(0);
 
@@ -219,11 +222,29 @@ export function CarouselPreview({ pages, pdfUrl, articleId, onRegenerateSlide, r
             </svg>
           </button>
 
-          {/* Slide Counter */}
-          <div className="absolute top-3 right-3 px-2.5 py-1 bg-black/60 backdrop-blur-sm rounded-full">
-            <span className="text-white text-xs font-medium">
-              {currentIndex + 1} / {totalPages}
-            </span>
+          {/* Slide Counter & Version Badge */}
+          <div className="absolute top-3 right-3 flex items-center gap-2">
+            {/* Version Badge - clickable when multiple versions exist */}
+            {currentPage.versionCount && currentPage.versionCount > 1 && onViewVersions && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onViewVersions(currentPage.pageNumber);
+                }}
+                className="px-2 py-1 bg-indigo-500/90 hover:bg-indigo-600 backdrop-blur-sm rounded-full transition-all hover:scale-105"
+                title={`View ${currentPage.versionCount} versions`}
+              >
+                <span className="text-white text-xs font-medium">
+                  v{currentPage.versionCount}
+                </span>
+              </button>
+            )}
+            {/* Slide Counter */}
+            <div className="px-2.5 py-1 bg-black/60 backdrop-blur-sm rounded-full">
+              <span className="text-white text-xs font-medium">
+                {currentIndex + 1} / {totalPages}
+              </span>
+            </div>
           </div>
         </div>
 

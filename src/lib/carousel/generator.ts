@@ -13,8 +13,8 @@ import { PDFDocument, rgb } from "pdf-lib";
 import fs from "fs/promises";
 import path from "path";
 import { db } from "@/db";
-import { articles, articleCarouselIntents, type CarouselPage } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import { articles, articleCarouselIntents, carouselSlideVersions, type CarouselPage, type CarouselSlideVersion } from "@/db/schema";
+import { eq, and, desc } from "drizzle-orm";
 import { generateImages } from "@/lib/t2i";
 import type { T2IProviderType, StylePreset, ImageGenerationRequest } from "@/lib/t2i/types";
 import { uploadImage } from "@/lib/storage";
@@ -252,19 +252,44 @@ export async function generateCarousel(
       }
     }
 
-    // 8. Update carousel intent with results
+    // 8. Create version 1 for each successfully generated slide
+    const usedProvider = provider || imageResults[0]?.provider;
+    for (const page of updatedPages) {
+      if (page.imageUrl) {
+        const versionId = crypto.randomUUID();
+        await db.insert(carouselSlideVersions).values({
+          id: versionId,
+          carouselIntentId: carouselId,
+          slideNumber: page.pageNumber,
+          versionNumber: 1,
+          prompt: page.prompt,
+          headlineText: page.headlineText,
+          caption: page.caption,
+          imageUrl: page.imageUrl,
+          isActive: true,
+          generatedAt: new Date(),
+          generationProvider: usedProvider,
+          generationError: page.generationError,
+        });
+        // Update page with version info
+        page.activeVersionId = versionId;
+        page.versionCount = 1;
+      }
+    }
+
+    // 9. Update carousel intent with results
     await db
       .update(articleCarouselIntents)
       .set({
         pages: updatedPages,
         generatedPdfUrl: pdfUrl,
         generatedAt: new Date(),
-        generationProvider: provider || imageResults[0]?.provider,
+        generationProvider: usedProvider,
         generationError: failedCount > 0 ? `${failedCount} images failed` : null,
       })
       .where(eq(articleCarouselIntents.id, carouselId));
 
-    console.log(`[Carousel] Generated carousel for article ${articleId}: ${updatedPages.length} pages`);
+    console.log(`[Carousel] Generated carousel for article ${articleId}: ${updatedPages.length} pages (with v1 for each slide)`);
 
     return {
       success: true,
@@ -505,14 +530,58 @@ export async function regenerateCarouselSlide(
       }
     }
 
-    // 6. Update the page in the array
+    // 6. Version management: deactivate old versions and create new one
+    const usedProvider = provider || imageResult.provider;
+
+    // Deactivate all existing versions for this slide
+    await db
+      .update(carouselSlideVersions)
+      .set({ isActive: false })
+      .where(
+        and(
+          eq(carouselSlideVersions.carouselIntentId, carouselIntent.id),
+          eq(carouselSlideVersions.slideNumber, slideNumber)
+        )
+      );
+
+    // Get next version number
+    const existingVersions = await db.query.carouselSlideVersions.findMany({
+      where: and(
+        eq(carouselSlideVersions.carouselIntentId, carouselIntent.id),
+        eq(carouselSlideVersions.slideNumber, slideNumber)
+      ),
+      orderBy: [desc(carouselSlideVersions.versionNumber)],
+      limit: 1,
+    });
+    const nextVersionNumber = (existingVersions[0]?.versionNumber ?? 0) + 1;
+
+    // Insert new version as active
+    const versionId = crypto.randomUUID();
+    await db.insert(carouselSlideVersions).values({
+      id: versionId,
+      carouselIntentId: carouselIntent.id,
+      slideNumber,
+      versionNumber: nextVersionNumber,
+      prompt: targetPage.prompt,
+      headlineText: targetPage.headlineText,
+      caption: targetPage.caption,
+      imageUrl: finalImageUrl,
+      isActive: true,
+      generatedAt: new Date(),
+      generationProvider: usedProvider,
+      generationError: error || imageResult.error,
+    });
+
+    // 7. Update the page in the array with version info
     targetPage.imageUrl = finalImageUrl;
     targetPage.generatedAt = new Date();
     targetPage.generationError = error || imageResult.error;
+    targetPage.activeVersionId = versionId;
+    targetPage.versionCount = nextVersionNumber;
 
     pages[slideIndex] = targetPage;
 
-    // 7. Regenerate PDF with updated pages
+    // 8. Regenerate PDF with updated pages
     let pdfUrl: string | undefined;
     const successfulPages = pages.filter((p) => p.imageUrl);
     if (successfulPages.length > 0) {
@@ -523,18 +592,18 @@ export async function regenerateCarouselSlide(
       }
     }
 
-    // 8. Update carousel intent
+    // 9. Update carousel intent
     await db
       .update(articleCarouselIntents)
       .set({
         pages,
         generatedPdfUrl: pdfUrl || carouselIntent.generatedPdfUrl,
         generatedAt: new Date(),
-        generationProvider: provider || imageResult.provider,
+        generationProvider: usedProvider,
       })
       .where(eq(articleCarouselIntents.id, carouselIntent.id));
 
-    console.log(`[Carousel] Successfully regenerated slide ${slideNumber}`);
+    console.log(`[Carousel] Successfully regenerated slide ${slideNumber} (now v${nextVersionNumber})`);
 
     return {
       success: true,
@@ -589,6 +658,8 @@ export async function deleteCarousel(articleId: string): Promise<{ success: bool
       return { success: false, error: "Carousel not found" };
     }
 
+    // Versions are deleted via CASCADE, but let's be explicit
+    await db.delete(carouselSlideVersions).where(eq(carouselSlideVersions.carouselIntentId, intent.id));
     await db.delete(articleCarouselIntents).where(eq(articleCarouselIntents.id, intent.id));
 
     console.log(`[Carousel] Deleted carousel for article ${articleId}`);
@@ -598,6 +669,138 @@ export async function deleteCarousel(articleId: string): Promise<{ success: bool
     return {
       success: false,
       error: error instanceof Error ? error.message : "Delete failed",
+    };
+  }
+}
+
+/**
+ * Get all versions for a specific slide
+ */
+export async function getSlideVersions(
+  carouselIntentId: string,
+  slideNumber: number
+): Promise<CarouselSlideVersion[]> {
+  const versions = await db.query.carouselSlideVersions.findMany({
+    where: and(
+      eq(carouselSlideVersions.carouselIntentId, carouselIntentId),
+      eq(carouselSlideVersions.slideNumber, slideNumber)
+    ),
+    orderBy: [desc(carouselSlideVersions.versionNumber)],
+  });
+  return versions;
+}
+
+/**
+ * Activate a specific version for a slide
+ */
+export async function activateSlideVersion(
+  carouselIntentId: string,
+  slideNumber: number,
+  versionId: string
+): Promise<CarouselGenerationResult> {
+  try {
+    // 1. Verify version exists and belongs to this carousel/slide
+    const version = await db.query.carouselSlideVersions.findFirst({
+      where: and(
+        eq(carouselSlideVersions.id, versionId),
+        eq(carouselSlideVersions.carouselIntentId, carouselIntentId),
+        eq(carouselSlideVersions.slideNumber, slideNumber)
+      ),
+    });
+
+    if (!version) {
+      return { success: false, error: "Version not found" };
+    }
+
+    // 2. Deactivate all versions for this slide
+    await db
+      .update(carouselSlideVersions)
+      .set({ isActive: false })
+      .where(
+        and(
+          eq(carouselSlideVersions.carouselIntentId, carouselIntentId),
+          eq(carouselSlideVersions.slideNumber, slideNumber)
+        )
+      );
+
+    // 3. Activate the selected version
+    await db
+      .update(carouselSlideVersions)
+      .set({ isActive: true })
+      .where(eq(carouselSlideVersions.id, versionId));
+
+    // 4. Get version count for this slide
+    const allVersions = await db.query.carouselSlideVersions.findMany({
+      where: and(
+        eq(carouselSlideVersions.carouselIntentId, carouselIntentId),
+        eq(carouselSlideVersions.slideNumber, slideNumber)
+      ),
+    });
+    const versionCount = allVersions.length;
+
+    // 5. Update the pages array in carousel intent
+    const carouselIntent = await db.query.articleCarouselIntents.findFirst({
+      where: eq(articleCarouselIntents.id, carouselIntentId),
+    });
+
+    if (!carouselIntent?.pages) {
+      return { success: false, error: "Carousel not found" };
+    }
+
+    const pages = carouselIntent.pages as CarouselPage[];
+    const slideIndex = slideNumber - 1;
+
+    if (slideIndex < 0 || slideIndex >= pages.length) {
+      return { success: false, error: "Invalid slide number" };
+    }
+
+    // Update the page with the selected version's content
+    pages[slideIndex] = {
+      ...pages[slideIndex],
+      prompt: version.prompt,
+      headlineText: version.headlineText,
+      caption: version.caption ?? undefined,
+      imageUrl: version.imageUrl ?? undefined,
+      generatedAt: version.generatedAt ?? undefined,
+      generationError: version.generationError ?? undefined,
+      activeVersionId: version.id,
+      versionCount,
+    };
+
+    // 6. Regenerate PDF with updated pages
+    let pdfUrl: string | undefined;
+    const successfulPages = pages.filter((p) => p.imageUrl);
+    if (successfulPages.length > 0) {
+      try {
+        pdfUrl = await generatePdf(successfulPages);
+      } catch (pdfError) {
+        console.error("[Carousel] PDF regeneration failed:", pdfError);
+      }
+    }
+
+    // 7. Update carousel intent
+    await db
+      .update(articleCarouselIntents)
+      .set({
+        pages,
+        generatedPdfUrl: pdfUrl || carouselIntent.generatedPdfUrl,
+        generatedAt: new Date(),
+      })
+      .where(eq(articleCarouselIntents.id, carouselIntentId));
+
+    console.log(`[Carousel] Activated version ${version.versionNumber} for slide ${slideNumber}`);
+
+    return {
+      success: true,
+      carouselId: carouselIntentId,
+      pdfUrl: pdfUrl || carouselIntent.generatedPdfUrl || undefined,
+      pages,
+    };
+  } catch (error) {
+    console.error("[Carousel] Version activation failed:", error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Version activation failed",
     };
   }
 }
