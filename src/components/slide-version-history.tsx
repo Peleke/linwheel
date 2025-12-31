@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { createPortal } from "react-dom";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -104,6 +105,12 @@ export function SlideVersionHistory({
     }
   };
 
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   // Close on escape key
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
@@ -111,13 +118,18 @@ export function SlideVersionHistory({
     };
     if (isOpen) {
       window.addEventListener("keydown", handleEscape);
-      return () => window.removeEventListener("keydown", handleEscape);
+      // Prevent body scroll when modal is open
+      document.body.style.overflow = "hidden";
+      return () => {
+        window.removeEventListener("keydown", handleEscape);
+        document.body.style.overflow = "";
+      };
     }
   }, [isOpen, onClose]);
 
-  if (!isOpen) return null;
+  if (!isOpen || !mounted) return null;
 
-  return (
+  const modalContent = (
     <AnimatePresence>
       {isOpen && (
         <>
@@ -127,7 +139,7 @@ export function SlideVersionHistory({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50"
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[9999]"
           />
 
           {/* Modal */}
@@ -136,7 +148,7 @@ export function SlideVersionHistory({
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
             transition={{ type: "spring", damping: 25, stiffness: 300 }}
-            className="fixed inset-4 md:inset-auto md:left-1/2 md:top-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-[700px] md:max-h-[85vh] bg-white dark:bg-slate-900 rounded-2xl shadow-2xl z-50 overflow-hidden flex flex-col"
+            className="fixed left-4 right-4 top-[10%] bottom-[10%] md:left-1/2 md:top-1/2 md:bottom-auto md:right-auto md:-translate-x-1/2 md:-translate-y-1/2 md:w-[700px] md:max-h-[80vh] bg-white dark:bg-slate-900 rounded-2xl shadow-2xl z-[10000] overflow-hidden flex flex-col"
           >
             {/* Header */}
             <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 dark:border-slate-700">
@@ -315,7 +327,7 @@ export function SlideVersionHistory({
             </div>
 
             {/* Footer */}
-            <div className="px-6 py-4 border-t border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50">
+            <div className="px-6 py-4 border-t border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 flex-shrink-0">
               <p className="text-xs text-slate-500 dark:text-slate-400 text-center">
                 Click a version to select it for your carousel. The PDF will automatically update.
               </p>
@@ -325,4 +337,7 @@ export function SlideVersionHistory({
       )}
     </AnimatePresence>
   );
+
+  // Render modal in a portal to escape any overflow:hidden containers
+  return createPortal(modalContent, document.body);
 }
