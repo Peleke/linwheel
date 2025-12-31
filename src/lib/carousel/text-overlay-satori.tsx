@@ -1,16 +1,56 @@
 /**
- * Text Overlay using Satori (@vercel/og)
+ * Text Overlay using Satori + Resvg
  *
- * Renders text overlays as PNG images using Vercel's Satori engine.
- * Works on Vercel serverless - no fontconfig dependency.
+ * Renders text overlays as PNG images using Satori (JSX to SVG)
+ * and Resvg (SVG to PNG). Works on Vercel serverless.
  *
- * Replaces the broken librsvg/SVG approach.
+ * Uses the low-level libraries directly instead of @vercel/og's
+ * ImageResponse wrapper which has native module bundling issues.
  */
 
-import { ImageResponse } from "@vercel/og";
+import satori from "satori";
+import { Resvg, initWasm } from "@resvg/resvg-wasm";
 import fs from "fs";
 import path from "path";
 import sharp from "sharp";
+import type { ReactNode } from "react";
+
+// WASM initialization state
+let wasmInitialized = false;
+
+async function ensureWasmInitialized(): Promise<void> {
+  if (wasmInitialized) return;
+
+  try {
+    // Try to load WASM from node_modules
+    const wasmPath = path.join(
+      process.cwd(),
+      "node_modules/@resvg/resvg-wasm/index_bg.wasm"
+    );
+
+    if (fs.existsSync(wasmPath)) {
+      const wasmBuffer = fs.readFileSync(wasmPath);
+      await initWasm(wasmBuffer);
+    } else {
+      // Fallback: fetch from CDN (for edge runtime)
+      const wasmResponse = await fetch(
+        "https://unpkg.com/@resvg/resvg-wasm@2.6.2/index_bg.wasm"
+      );
+      const wasmBuffer = await wasmResponse.arrayBuffer();
+      await initWasm(wasmBuffer);
+    }
+
+    wasmInitialized = true;
+    console.log("[TextOverlay] WASM initialized");
+  } catch (error) {
+    // Already initialized is fine
+    if (error instanceof Error && error.message.includes("Already initialized")) {
+      wasmInitialized = true;
+      return;
+    }
+    throw error;
+  }
+}
 
 // Load font once at module level
 let fontData: Buffer | null = null;
@@ -48,54 +88,77 @@ interface CoverOverlayOptions {
 }
 
 /**
+ * Render JSX to PNG buffer using Satori + Resvg
+ */
+async function renderToPng(
+  element: ReactNode,
+  width: number,
+  height: number
+): Promise<Buffer> {
+  // Ensure WASM is initialized
+  await ensureWasmInitialized();
+
+  const font = getFontData();
+
+  // Convert JSX to SVG using Satori
+  const svg = await satori(element, {
+    width,
+    height,
+    fonts: [
+      {
+        name: "Inter",
+        data: font,
+        weight: 700,
+        style: "normal",
+      },
+    ],
+  });
+
+  // Convert SVG to PNG using Resvg
+  const resvg = new Resvg(svg, {
+    fitTo: {
+      mode: "width",
+      value: width,
+    },
+  });
+
+  const pngData = resvg.render();
+  return Buffer.from(pngData.asPng());
+}
+
+/**
  * Generate text overlay for carousel slides (1080x1080 square)
  */
 export async function renderCarouselTextOverlay(
   options: CarouselOverlayOptions
 ): Promise<Buffer> {
   const { headline, slideType, size = 1080 } = options;
-  const font = getFontData();
 
   const fontSizes = { title: 72, content: 60, cta: 64 };
   const fontSize = fontSizes[slideType];
 
-  const response = new ImageResponse(
-    (
-      <div
-        style={{
-          width: size,
-          height: size,
-          display: "flex",
-          flexDirection: "column",
-          justifyContent: "flex-end",
-          padding: 80,
-          background: "linear-gradient(to top, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.3) 40%, transparent 100%)",
-          fontFamily: "Inter",
-          fontSize,
-          fontWeight: 700,
-          color: "white",
-          lineHeight: 1.3,
-          textShadow: "0px 2px 12px rgba(0,0,0,0.8)",
-        }}
-      >
-        {headline}
-      </div>
-    ),
-    {
-      width: size,
-      height: size,
-      fonts: [
-        {
-          name: "Inter",
-          data: font,
-          weight: 700,
-          style: "normal",
-        },
-      ],
-    }
+  const element = (
+    <div
+      style={{
+        width: size,
+        height: size,
+        display: "flex",
+        flexDirection: "column",
+        justifyContent: "flex-end",
+        padding: 80,
+        background: "linear-gradient(to top, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.3) 40%, transparent 100%)",
+        fontFamily: "Inter",
+        fontSize,
+        fontWeight: 700,
+        color: "white",
+        lineHeight: 1.3,
+      }}
+    >
+      {headline}
+    </div>
   );
 
-  return Buffer.from(await response.arrayBuffer());
+  return renderToPng(element, size, size);
 }
 
 /**
@@ -105,45 +168,29 @@ export async function renderCoverTextOverlay(
   options: CoverOverlayOptions
 ): Promise<Buffer> {
   const { headline, width = 1200, height = 628 } = options;
-  const font = getFontData();
 
-  const response = new ImageResponse(
-    (
-      <div
-        style={{
-          width,
-          height,
-          display: "flex",
-          flexDirection: "column",
-          justifyContent: "flex-end",
-          padding: 60,
-          background: "linear-gradient(to top, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.3) 50%, transparent 100%)",
-          fontFamily: "Inter",
-          fontSize: 48,
-          fontWeight: 700,
-          color: "white",
-          lineHeight: 1.3,
-          textShadow: "0px 2px 12px rgba(0,0,0,0.8)",
-        }}
-      >
-        {headline}
-      </div>
-    ),
-    {
-      width,
-      height,
-      fonts: [
-        {
-          name: "Inter",
-          data: font,
-          weight: 700,
-          style: "normal",
-        },
-      ],
-    }
+  const element = (
+    <div
+      style={{
+        width,
+        height,
+        display: "flex",
+        flexDirection: "column",
+        justifyContent: "flex-end",
+        padding: 60,
+        background: "linear-gradient(to top, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.3) 50%, transparent 100%)",
+        fontFamily: "Inter",
+        fontSize: 48,
+        fontWeight: 700,
+        color: "white",
+        lineHeight: 1.3,
+      }}
+    >
+      {headline}
+    </div>
   );
 
-  return Buffer.from(await response.arrayBuffer());
+  return renderToPng(element, width, height);
 }
 
 /**
@@ -227,7 +274,6 @@ export async function generateFallbackSlide(
   options: CarouselOverlayOptions
 ): Promise<Buffer> {
   const { headline, slideType, size = 1080 } = options;
-  const font = getFontData();
 
   const fontSizes = { title: 72, content: 60, cta: 64 };
   const fontSize = fontSizes[slideType];
@@ -242,41 +288,26 @@ export async function generateFallbackSlide(
   ];
   const gradient = gradients[Math.floor(Math.random() * gradients.length)];
 
-  const response = new ImageResponse(
-    (
-      <div
-        style={{
-          width: size,
-          height: size,
-          display: "flex",
-          flexDirection: "column",
-          justifyContent: "flex-end",
-          padding: 80,
-          background: gradient,
-          fontFamily: "Inter",
-          fontSize,
-          fontWeight: 700,
-          color: "white",
-          lineHeight: 1.3,
-          textShadow: "0px 2px 12px rgba(0,0,0,0.4)",
-        }}
-      >
-        {headline}
-      </div>
-    ),
-    {
-      width: size,
-      height: size,
-      fonts: [
-        {
-          name: "Inter",
-          data: font,
-          weight: 700,
-          style: "normal",
-        },
-      ],
-    }
+  const element = (
+    <div
+      style={{
+        width: size,
+        height: size,
+        display: "flex",
+        flexDirection: "column",
+        justifyContent: "flex-end",
+        padding: 80,
+        background: gradient,
+        fontFamily: "Inter",
+        fontSize,
+        fontWeight: 700,
+        color: "white",
+        lineHeight: 1.3,
+      }}
+    >
+      {headline}
+    </div>
   );
 
-  return Buffer.from(await response.arrayBuffer());
+  return renderToPng(element, size, size);
 }
