@@ -64,7 +64,7 @@ export function Hero() {
         </div>
 
         {/* Stats preview */}
-        <div className="animate-fade-up-delay-3 flex flex-wrap justify-center gap-8 md:gap-16">
+        <div className="animate-fade-up-delay-3 flex flex-wrap justify-center gap-8 md:gap-16 pb-20 md:pb-0">
           <div className="text-center">
             <div className="text-3xl md:text-4xl font-bold gradient-text">90+</div>
             <div className="text-sm text-neutral-500">Posts per transcript</div>
@@ -80,8 +80,8 @@ export function Hero() {
         </div>
       </div>
 
-      {/* Scroll indicator */}
-      <div className="absolute bottom-8 left-1/2 -translate-x-1/2 animate-bounce">
+      {/* Scroll indicator - hidden on mobile to avoid overlap */}
+      <div className="hidden md:block absolute bottom-8 left-1/2 -translate-x-1/2 animate-bounce">
         <svg className="w-6 h-6 text-neutral-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
         </svg>
