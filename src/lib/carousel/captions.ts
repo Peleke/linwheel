@@ -125,10 +125,11 @@ Generate headlines that tell a coherent story and image prompts that match each 
       slideNumber: i + 1,
       slideType: s.slideType,
       headline: sanitizeHeadline(s.headline),
+      caption: s.caption, // Include caption for slides 2 and 4
       imagePrompt: s.imagePrompt,
     }));
 
-    console.log("[Captions] Generated:", captions.map((c) => c.headline));
+    console.log("[Captions] Generated:", captions.map((c) => ({ h: c.headline, c: c.caption })));
 
     return {
       success: true,
