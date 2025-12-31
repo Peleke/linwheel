@@ -4,6 +4,8 @@ import { articleImageIntents } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { generateImage } from "@/lib/t2i";
 import type { StylePreset, T2IProviderType } from "@/lib/t2i";
+import { overlayCoverText } from "@/lib/carousel/text-overlay";
+import { createSupabaseStorageProvider, isSupabaseStorageConfigured } from "@/lib/storage/supabase";
 
 interface RouteParams {
   params: Promise<{ intentId: string }>;
@@ -141,12 +143,13 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       );
     }
 
-    // Generate the image
+    // Generate the background image (T2I)
+    console.log(`[ArticleImage] Generating T2I background for intent ${intentId}`);
     const result = await generateImage(
       {
         prompt: intent.prompt,
         negativePrompt: intent.negativePrompt,
-        headlineText: intent.headlineText,
+        headlineText: "", // Don't include text in T2I prompt - we'll overlay it
         stylePreset: intent.stylePreset as StylePreset,
         aspectRatio: "1.91:1",
         quality: "hd",
@@ -155,26 +158,16 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       model
     );
 
-    // Update the database with the result
-    const updateData = result.success
-      ? {
-          generatedImageUrl: result.imageUrl,
-          generatedAt: new Date(),
-          generationProvider: result.provider,
-          generationError: null,
-        }
-      : {
+    if (!result.success || !result.imageUrl) {
+      await db
+        .update(articleImageIntents)
+        .set({
           generationError: result.error,
           generatedAt: new Date(),
           generationProvider: result.provider,
-        };
+        })
+        .where(eq(articleImageIntents.id, intentId));
 
-    await db
-      .update(articleImageIntents)
-      .set(updateData)
-      .where(eq(articleImageIntents.id, intentId));
-
-    if (!result.success) {
       return NextResponse.json(
         {
           success: false,
@@ -185,9 +178,51 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       );
     }
 
+    // Overlay headline text on the T2I background
+    console.log(`[ArticleImage] Overlaying text: "${intent.headlineText}"`);
+    let finalImageUrl = result.imageUrl;
+
+    try {
+      const compositedBuffer = await overlayCoverText(
+        result.imageUrl,
+        intent.headlineText,
+        1200,
+        628
+      );
+
+      // Upload composited image to storage
+      if (isSupabaseStorageConfigured()) {
+        const storage = createSupabaseStorageProvider();
+        finalImageUrl = await storage.upload(
+          compositedBuffer,
+          `article-${intent.articleId}-cover.png`,
+          "image/png"
+        );
+        console.log(`[ArticleImage] Uploaded to Supabase: ${finalImageUrl}`);
+      } else {
+        // Fallback to base64 data URL
+        finalImageUrl = `data:image/png;base64,${compositedBuffer.toString("base64")}`;
+        console.log(`[ArticleImage] Using base64 (no Supabase configured)`);
+      }
+    } catch (overlayError) {
+      console.error("[ArticleImage] Text overlay failed, using raw T2I:", overlayError);
+      // Fall back to raw T2I image if overlay fails
+    }
+
+    // Update the database with the final result
+    await db
+      .update(articleImageIntents)
+      .set({
+        generatedImageUrl: finalImageUrl,
+        generatedAt: new Date(),
+        generationProvider: result.provider,
+        generationError: null,
+      })
+      .where(eq(articleImageIntents.id, intentId));
+
     return NextResponse.json({
       success: true,
-      imageUrl: result.imageUrl,
+      imageUrl: finalImageUrl,
       provider: result.provider,
       metadata: result.metadata,
     });
