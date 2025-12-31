@@ -163,6 +163,7 @@ export async function generateCarousel(
               headline: page.headlineText,
               caption: page.caption,
               slideType: page.slideType,
+              slideNumber: page.pageNumber,
               size: 1080,
             });
             console.log(`[Carousel] Page ${page.pageNumber}: Overlay successful, buffer size: ${overlaidBuffer.length}`);
@@ -177,6 +178,7 @@ export async function generateCarousel(
               headline: page.headlineText,
               caption: page.caption,
               slideType: page.slideType,
+              slideNumber: page.pageNumber,
               size: 1080,
             });
             // Save fallback to storage too
@@ -193,6 +195,7 @@ export async function generateCarousel(
               headline: page.headlineText,
               caption: page.caption,
               slideType: page.slideType,
+              slideNumber: page.pageNumber,
               size: 1080,
             });
             const filename = `carousel-${carouselId}-page-${page.pageNumber}-fallback.png`;

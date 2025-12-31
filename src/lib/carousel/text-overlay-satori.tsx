@@ -17,42 +17,70 @@ import type { ReactNode } from "react";
 
 // WASM initialization state
 let wasmInitialized = false;
+let wasmInitializing: Promise<void> | null = null;
 
-// Mutex to prevent concurrent Resvg rendering (WASM is not thread-safe)
-let renderLock: Promise<void> = Promise.resolve();
+// Semaphore to serialize Resvg rendering (WASM is not thread-safe)
+class RenderQueue {
+  private queue: Promise<void> = Promise.resolve();
+
+  async run<T>(fn: () => Promise<T>): Promise<T> {
+    let resolve: () => void;
+    const myTurn = this.queue;
+    this.queue = new Promise<void>((r) => { resolve = r; });
+
+    await myTurn;
+    try {
+      return await fn();
+    } finally {
+      resolve!();
+    }
+  }
+}
+
+const renderQueue = new RenderQueue();
 
 async function ensureWasmInitialized(): Promise<void> {
   if (wasmInitialized) return;
 
-  try {
-    // Try to load WASM from node_modules
-    const wasmPath = path.join(
-      process.cwd(),
-      "node_modules/@resvg/resvg-wasm/index_bg.wasm"
-    );
-
-    if (fs.existsSync(wasmPath)) {
-      const wasmBuffer = fs.readFileSync(wasmPath);
-      await initWasm(wasmBuffer);
-    } else {
-      // Fallback: fetch from CDN (for edge runtime)
-      const wasmResponse = await fetch(
-        "https://unpkg.com/@resvg/resvg-wasm@2.6.2/index_bg.wasm"
-      );
-      const wasmBuffer = await wasmResponse.arrayBuffer();
-      await initWasm(wasmBuffer);
-    }
-
-    wasmInitialized = true;
-    console.log("[TextOverlay] WASM initialized");
-  } catch (error) {
-    // Already initialized is fine
-    if (error instanceof Error && error.message.includes("Already initialized")) {
-      wasmInitialized = true;
-      return;
-    }
-    throw error;
+  // Prevent multiple concurrent initializations
+  if (wasmInitializing) {
+    await wasmInitializing;
+    return;
   }
+
+  wasmInitializing = (async () => {
+    try {
+      // Try to load WASM from node_modules
+      const wasmPath = path.join(
+        process.cwd(),
+        "node_modules/@resvg/resvg-wasm/index_bg.wasm"
+      );
+
+      if (fs.existsSync(wasmPath)) {
+        const wasmBuffer = fs.readFileSync(wasmPath);
+        await initWasm(wasmBuffer);
+      } else {
+        // Fallback: fetch from CDN (for edge runtime)
+        const wasmResponse = await fetch(
+          "https://unpkg.com/@resvg/resvg-wasm@2.6.2/index_bg.wasm"
+        );
+        const wasmBuffer = await wasmResponse.arrayBuffer();
+        await initWasm(wasmBuffer);
+      }
+
+      wasmInitialized = true;
+      console.log("[TextOverlay] WASM initialized");
+    } catch (error) {
+      // Already initialized is fine
+      if (error instanceof Error && error.message.includes("Already initialized")) {
+        wasmInitialized = true;
+        return;
+      }
+      throw error;
+    }
+  })();
+
+  await wasmInitializing;
 }
 
 // Load font once at module level
@@ -82,6 +110,7 @@ interface CarouselOverlayOptions {
   headline: string;
   caption?: string;
   slideType: "title" | "content" | "cta";
+  slideNumber?: number; // 1-5, used to determine layout
   size?: number;
 }
 
@@ -93,14 +122,14 @@ interface CoverOverlayOptions {
 
 /**
  * Render JSX to PNG buffer using Satori + Resvg
- * Uses a mutex lock to prevent concurrent WASM access (not thread-safe)
+ * Uses a queue to serialize WASM access (not thread-safe)
  */
 async function renderToPng(
   element: ReactNode,
   width: number,
   height: number
 ): Promise<Buffer> {
-  // Ensure WASM is initialized
+  // Ensure WASM is initialized (with deduplication)
   await ensureWasmInitialized();
 
   const font = getFontData();
@@ -119,16 +148,8 @@ async function renderToPng(
     ],
   });
 
-  // Use mutex lock for Resvg rendering (WASM is not thread-safe)
-  let resolve: () => void;
-  const currentLock = renderLock;
-  renderLock = new Promise<void>((r) => { resolve = r; });
-
-  try {
-    // Wait for previous render to complete
-    await currentLock;
-
-    // Convert SVG to PNG using Resvg
+  // Queue Resvg rendering (WASM is not thread-safe)
+  return renderQueue.run(async () => {
     const resvg = new Resvg(svg, {
       fitTo: {
         mode: "width",
@@ -138,25 +159,67 @@ async function renderToPng(
 
     const pngData = resvg.render();
     return Buffer.from(pngData.asPng());
-  } finally {
-    // Release the lock
-    resolve!();
-  }
+  });
 }
 
 /**
  * Generate text overlay for carousel slides (1080x1080 square)
+ *
+ * Layout varies by slide:
+ * - Slides 1, 3, 5: Headline at BOTTOM (gradient from bottom)
+ * - Slides 2, 4: Headline at TOP, caption at BOTTOM (split layout)
  */
 export async function renderCarouselTextOverlay(
   options: CarouselOverlayOptions
 ): Promise<Buffer> {
-  const { headline, caption, slideType, size = 1080 } = options;
+  const { headline, caption, slideType, slideNumber, size = 1080 } = options;
 
   const fontSizes = { title: 72, content: 60, cta: 64 };
   const fontSize = fontSizes[slideType];
-  const captionFontSize = Math.round(fontSize * 0.5); // Caption is smaller
+  const captionFontSize = Math.round(fontSize * 0.5);
 
-  const element = (
+  // Slides 2 and 4 get split layout (headline top, caption bottom)
+  const isSplitLayout = slideNumber === 2 || slideNumber === 4;
+
+  const element = isSplitLayout ? (
+    // SPLIT LAYOUT: headline at top, caption at bottom
+    <div
+      style={{
+        width: size,
+        height: size,
+        display: "flex",
+        flexDirection: "column",
+        justifyContent: "space-between",
+        padding: 80,
+        background: "linear-gradient(to bottom, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.2) 30%, rgba(0,0,0,0.2) 70%, rgba(0,0,0,0.7) 100%)",
+        fontFamily: "Inter",
+        color: "white",
+      }}
+    >
+      {/* Headline at TOP */}
+      <span
+        style={{
+          fontSize,
+          fontWeight: 700,
+          lineHeight: 1.3,
+        }}
+      >
+        {headline}
+      </span>
+      {/* Caption at BOTTOM (or empty space) */}
+      <span
+        style={{
+          fontSize: captionFontSize,
+          fontWeight: 400,
+          lineHeight: 1.4,
+          opacity: caption ? 0.9 : 0,
+        }}
+      >
+        {caption || " "}
+      </span>
+    </div>
+  ) : (
+    // STANDARD LAYOUT: headline at bottom
     <div
       style={{
         width: size,
@@ -170,35 +233,15 @@ export async function renderCarouselTextOverlay(
         color: "white",
       }}
     >
-      <div
+      <span
         style={{
-          display: "flex",
-          flexDirection: "column",
+          fontSize,
+          fontWeight: 700,
+          lineHeight: 1.3,
         }}
       >
-        <span
-          style={{
-            fontSize,
-            fontWeight: 700,
-            lineHeight: 1.3,
-          }}
-        >
-          {headline}
-        </span>
-        {caption && (
-          <span
-            style={{
-              fontSize: captionFontSize,
-              fontWeight: 400,
-              lineHeight: 1.4,
-              marginTop: 16,
-              opacity: 0.9,
-            }}
-          >
-            {caption}
-          </span>
-        )}
-      </div>
+        {headline}
+      </span>
     </div>
   );
 
@@ -317,7 +360,7 @@ export async function overlayCoverTextFromUrl(
 export async function generateFallbackSlide(
   options: CarouselOverlayOptions
 ): Promise<Buffer> {
-  const { headline, caption, slideType, size = 1080 } = options;
+  const { headline, caption, slideType, slideNumber, size = 1080 } = options;
 
   const fontSizes = { title: 72, content: 60, cta: 64 };
   const fontSize = fontSizes[slideType];
@@ -333,7 +376,44 @@ export async function generateFallbackSlide(
   ];
   const gradient = gradients[Math.floor(Math.random() * gradients.length)];
 
-  const element = (
+  // Slides 2 and 4 get split layout (headline top, caption bottom)
+  const isSplitLayout = slideNumber === 2 || slideNumber === 4;
+
+  const element = isSplitLayout ? (
+    <div
+      style={{
+        width: size,
+        height: size,
+        display: "flex",
+        flexDirection: "column",
+        justifyContent: "space-between",
+        padding: 80,
+        background: gradient,
+        fontFamily: "Inter",
+        color: "white",
+      }}
+    >
+      <span
+        style={{
+          fontSize,
+          fontWeight: 700,
+          lineHeight: 1.3,
+        }}
+      >
+        {headline}
+      </span>
+      <span
+        style={{
+          fontSize: captionFontSize,
+          fontWeight: 400,
+          lineHeight: 1.4,
+          opacity: caption ? 0.9 : 0,
+        }}
+      >
+        {caption || " "}
+      </span>
+    </div>
+  ) : (
     <div
       style={{
         width: size,
@@ -347,35 +427,15 @@ export async function generateFallbackSlide(
         color: "white",
       }}
     >
-      <div
+      <span
         style={{
-          display: "flex",
-          flexDirection: "column",
+          fontSize,
+          fontWeight: 700,
+          lineHeight: 1.3,
         }}
       >
-        <span
-          style={{
-            fontSize,
-            fontWeight: 700,
-            lineHeight: 1.3,
-          }}
-        >
-          {headline}
-        </span>
-        {caption && (
-          <span
-            style={{
-              fontSize: captionFontSize,
-              fontWeight: 400,
-              lineHeight: 1.4,
-              marginTop: 16,
-              opacity: 0.9,
-            }}
-          >
-            {caption}
-          </span>
-        )}
-      </div>
+        {headline}
+      </span>
     </div>
   );
 

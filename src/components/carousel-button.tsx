@@ -33,17 +33,21 @@ export function CarouselButton({ articleId, isApproved }: CarouselButtonProps) {
   const [status, setStatus] = useState<CarouselStatus | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isExpanded, setIsExpanded] = useState(false);
 
   // Fetch carousel status
   const fetchStatus = async () => {
+    setIsLoading(true);
     try {
       const res = await fetch(`/api/articles/${articleId}/carousel`);
       const data = await res.json();
       setStatus(data);
     } catch (err) {
       console.error("Failed to fetch carousel status:", err);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -163,12 +167,24 @@ export function CarouselButton({ articleId, isApproved }: CarouselButtonProps) {
                 </div>
               )}
 
+              {/* Loading state */}
+              {isLoading && (
+                <div className="flex items-center justify-center py-8">
+                  <div className="flex flex-col items-center gap-3">
+                    <div className="animate-spin h-8 w-8 border-3 border-amber-500 border-t-transparent rounded-full" />
+                    <p className="text-sm text-slate-500 dark:text-slate-400">
+                      Loading carousel...
+                    </p>
+                  </div>
+                </div>
+              )}
+
               {/* Not approved state */}
-              {!isApproved ? (
+              {!isLoading && !isApproved ? (
                 <div className="p-3 bg-amber-50 dark:bg-amber-900/20 rounded-lg text-sm text-amber-700 dark:text-amber-300">
                   Approve the article to generate a carousel.
                 </div>
-              ) : hasCarousel ? (
+              ) : !isLoading && hasCarousel ? (
                 <div className="space-y-4 relative">
                   {/* Generating overlay */}
                   {isGenerating && (
@@ -225,7 +241,7 @@ export function CarouselButton({ articleId, isApproved }: CarouselButtonProps) {
                     articleId={articleId}
                   />
                 </div>
-              ) : (
+              ) : !isLoading && isApproved ? (
                 /* No carousel - show generate button */
                 <div className="space-y-3">
                   <button
@@ -262,7 +278,7 @@ export function CarouselButton({ articleId, isApproved }: CarouselButtonProps) {
                     </div>
                   )}
                 </div>
-              )}
+              ) : null}
             </div>
           </motion.div>
         )}

@@ -51,56 +51,47 @@ interface CaptionGenerationResult {
 
 const CAPTION_SYSTEM_PROMPT = `You are a LinkedIn carousel expert. Create slide content for a 5-slide carousel that tells a coherent story.
 
-RULES FOR HEADLINES:
-1. Each headline must be SHORT (max 50 characters)
-2. Headlines should READ AS A STORY when viewed in sequence
-3. Write PUNCHY STANDALONE STATEMENTS - not "The X that..." phrases
+CRITICAL HEADLINE RULES:
+1. NEVER start with "The", "Why", "How", "What", or "A/An"
+2. Each headline must be SHORT (max 50 characters)
+3. Start with VERBS or NOUNS - action words or direct statements
 4. Use IMPERATIVES or BOLD DECLARATIONS
-5. Slide 1 (title): Hook question or bold statement
-6. Slides 2-4 (content): Key insights that BUILD on each other
-7. Slide 5 (cta): Action-inspiring conclusion
-8. NO generic phrases like "Key Insight" or "Important Point"
-9. Each headline should SUMMARIZE the actual section content
+5. Headlines should READ AS A STORY when viewed in sequence
 
-HEADLINE STYLE GUIDE:
-❌ BAD: "The shift from replacement to partnership"
-✅ GOOD: "Shift from replacement to partnership"
+HEADLINE STRUCTURE BY SLIDE:
+- Slide 1 (title): Bold statement that grabs attention (verb or noun first)
+- Slides 2-4 (content): Key insights using action verbs
+- Slide 5 (cta): Imperative call to action
 
-❌ BAD: "The importance of data quality"
-✅ GOOD: "Data quality makes or breaks AI"
-
-❌ BAD: "Understanding the challenges"
-✅ GOOD: "Face the real challenges"
-
-❌ BAD: "The future of work is changing"
-✅ GOOD: "Work is changing. Adapt now."
+HEADLINE STYLE - MANDATORY:
+❌ NEVER: "The shift from X to Y" → ✅ USE: "Shift from X to Y"
+❌ NEVER: "Why teams fail at AI" → ✅ USE: "Teams fail at AI because..."
+❌ NEVER: "The importance of data" → ✅ USE: "Data quality decides everything"
+❌ NEVER: "How to improve results" → ✅ USE: "Improve results fast"
+❌ NEVER: "What successful teams do" → ✅ USE: "Successful teams do this"
+❌ NEVER: "The big bet that failed" → ✅ USE: "Big bets crush small teams"
+❌ NEVER: "Understanding the problem" → ✅ USE: "Face the real problem"
 
 RULES FOR CAPTIONS:
 1. Add a short caption (max 80 chars) ONLY to slides 2 and 4
 2. Captions provide supporting context for the headline
 3. Captions should be conversational and add value
-4. Leave caption empty/null for slides 1, 3, and 5
+4. Set caption to null for slides 1, 3, and 5
 
 RULES FOR IMAGE PROMPTS (FLUX MODEL):
-Use this structure: SUBJECT + STYLE + CONTEXT + ATMOSPHERE
+1. Front-load important elements
+2. Aim for 30-60 words
+3. Abstract professional visuals only - geometric shapes, gradients, no people
+4. Think: editorial photography, magazine covers
 
-1. Front-load important elements - FLUX pays more attention to what comes first
-2. Aim for 30-60 words (medium length is ideal for FLUX)
-3. Write natural English descriptions - NO weighted syntax like (thing:1.2)
-4. Describe what you WANT, never what you don't want (no negatives)
-5. Add layers: visual (lighting, color), technical (photography style), atmospheric (mood)
-6. Abstract professional visuals only - describe empty scenes, geometric shapes, gradients
-7. Think: editorial photography, magazine covers, modern design campaigns
+GOOD HEADLINE SEQUENCE EXAMPLE:
+1. "90% of AI projects fail" (no caption)
+2. "Data quality kills dreams" (caption: "Most teams overlook this critical step")
+3. "Spot your blind spots now" (no caption)
+4. "Small fixes compound fast" (caption: "One change makes all the difference")
+5. "Start building today" (no caption)
 
-GOOD HEADLINE SEQUENCES:
-- "Why 90% of AI Projects Fail" → "Data quality is the trap" (caption: "Most teams overlook this critical step") → "Spot your blind spots" → "Fix it simply" (caption: "One small change makes all the difference") → "Start here today"
-- "Enterprise AI Is Broken" → "Legacy systems hold you back" (caption: "That old infrastructure is costing you") → "Integrate, don't innovate" → "Go hybrid" (caption: "The architecture that actually works") → "Ready to transform?"
-
-GOOD FLUX PROMPT EXAMPLES:
-- "Flowing geometric data streams converging in abstract space, deep blue and violet gradients, editorial magazine photography, soft diffused studio lighting, minimal tech aesthetic, contemplative mood"
-- "Layered translucent architectural panels floating in dark void, subtle cyan edge glow, f/2.8 shallow depth of field, sophisticated corporate aesthetic, mysterious atmosphere"
-- "Winding golden pathway ascending through soft clouds at golden hour, warm amber and rose tones, inspirational landscape photography, cinematic wide angle, hopeful aspirational mood"
-- "Intersecting minimal geometric planes in coral and teal, smooth gradient transitions, high-end product photography lighting, clean editorial style, calm professional atmosphere"`;
+Notice: Every headline starts with a noun, verb, or number - NEVER "The/Why/How/What".`;
 
 /**
  * Generate slide content using LangChain
