@@ -4,6 +4,35 @@ import { useState, useCallback, useEffect } from "react";
 import Image from "next/image";
 import { motion, AnimatePresence, PanInfo } from "framer-motion";
 
+// Download a single image
+async function downloadImage(url: string, filename: string) {
+  const response = await fetch(url);
+  const blob = await response.blob();
+  const objectUrl = window.URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = objectUrl;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  window.URL.revokeObjectURL(objectUrl);
+}
+
+// Download all images as separate files
+async function downloadAllImages(pages: CarouselPage[], articleId: string) {
+  for (let i = 0; i < pages.length; i++) {
+    const page = pages[i];
+    if (page.imageUrl) {
+      await downloadImage(
+        page.imageUrl,
+        `linwheel-carousel-${articleId.slice(0, 8)}-slide-${i + 1}.png`
+      );
+      // Small delay between downloads
+      await new Promise(resolve => setTimeout(resolve, 300));
+    }
+  }
+}
+
 interface CarouselPage {
   pageNumber: number;
   slideType: "title" | "content" | "cta";
@@ -27,8 +56,33 @@ interface CarouselPreviewProps {
 export function CarouselPreview({ pages, pdfUrl, articleId, onRegenerateSlide, regeneratingSlide, onViewVersions }: CarouselPreviewProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [direction, setDirection] = useState(0);
+  const [downloadingSlide, setDownloadingSlide] = useState(false);
+  const [downloadingAll, setDownloadingAll] = useState(false);
 
   const totalPages = pages.length;
+
+  const handleDownloadSlide = async () => {
+    const page = pages[currentIndex];
+    if (!page.imageUrl) return;
+    setDownloadingSlide(true);
+    try {
+      await downloadImage(
+        page.imageUrl,
+        `linwheel-carousel-${articleId.slice(0, 8)}-slide-${currentIndex + 1}.png`
+      );
+    } finally {
+      setDownloadingSlide(false);
+    }
+  };
+
+  const handleDownloadAll = async () => {
+    setDownloadingAll(true);
+    try {
+      await downloadAllImages(pages, articleId);
+    } finally {
+      setDownloadingAll(false);
+    }
+  };
 
   const goToSlide = useCallback((index: number) => {
     if (index >= 0 && index < totalPages) {
@@ -134,41 +188,68 @@ export function CarouselPreview({ pages, pdfUrl, articleId, onRegenerateSlide, r
                 </div>
               )}
 
-              {/* Regenerate button (top left) */}
-              {onRegenerateSlide && (
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onRegenerateSlide(currentPage.pageNumber);
-                  }}
-                  disabled={regeneratingSlide !== null}
-                  className={`absolute top-3 left-3 px-3 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center gap-1.5 ${
-                    regeneratingSlide === currentPage.pageNumber
-                      ? "bg-amber-500 text-white cursor-wait"
-                      : regeneratingSlide !== null
-                      ? "bg-white/50 text-slate-400 cursor-not-allowed"
-                      : "bg-white/90 hover:bg-white text-slate-700 hover:scale-105 shadow-lg"
-                  }`}
-                  title={`Regenerate slide ${currentPage.pageNumber}`}
-                >
-                  {regeneratingSlide === currentPage.pageNumber ? (
-                    <>
+              {/* Top left controls: Regenerate + Download */}
+              <div className="absolute top-3 left-3 flex items-center gap-2">
+                {/* Regenerate button */}
+                {onRegenerateSlide && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onRegenerateSlide(currentPage.pageNumber);
+                    }}
+                    disabled={regeneratingSlide !== null}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center gap-1.5 ${
+                      regeneratingSlide === currentPage.pageNumber
+                        ? "bg-amber-500 text-white cursor-wait"
+                        : regeneratingSlide !== null
+                        ? "bg-white/50 text-slate-400 cursor-not-allowed"
+                        : "bg-white/90 hover:bg-white text-slate-700 hover:scale-105 shadow-lg"
+                    }`}
+                    title={`Regenerate slide ${currentPage.pageNumber}`}
+                  >
+                    {regeneratingSlide === currentPage.pageNumber ? (
+                      <>
+                        <svg className="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                        </svg>
+                        Regenerating...
+                      </>
+                    ) : (
+                      <>
+                        <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                        </svg>
+                        Regenerate
+                      </>
+                    )}
+                  </button>
+                )}
+
+                {/* Download current slide button */}
+                {currentPage.imageUrl && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDownloadSlide();
+                    }}
+                    disabled={downloadingSlide}
+                    className="px-3 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center gap-1.5 bg-white/90 hover:bg-white text-slate-700 hover:scale-105 shadow-lg disabled:opacity-50"
+                    title="Download this slide"
+                  >
+                    {downloadingSlide ? (
                       <svg className="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24">
                         <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                         <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                       </svg>
-                      Regenerating...
-                    </>
-                  ) : (
-                    <>
-                      <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    ) : (
+                      <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                       </svg>
-                      Regenerate
-                    </>
-                  )}
-                </button>
-              )}
+                    )}
+                  </button>
+                )}
+              </div>
 
               {/* Slide info overlay */}
               {currentPage.imageUrl && (
@@ -266,23 +347,52 @@ export function CarouselPreview({ pages, pdfUrl, articleId, onRegenerateSlide, r
       </div>
 
       {/* Actions */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-wrap gap-3">
         <p className="text-xs text-slate-500 dark:text-slate-400">
           ← → Arrow keys or swipe to navigate
         </p>
 
-        {pdfUrl && (
-          <a
-            href={pdfUrl}
-            download={`carousel-${articleId}.pdf`}
-            className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white text-sm font-medium rounded-lg shadow-lg shadow-amber-500/25 transition-all hover:scale-105"
+        <div className="flex items-center gap-2">
+          {/* Download All Slides button */}
+          <button
+            onClick={handleDownloadAll}
+            disabled={downloadingAll || !pages.some(p => p.imageUrl)}
+            className="inline-flex items-center gap-2 px-3 py-2 bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300 text-sm font-medium rounded-lg transition-all hover:scale-105 disabled:opacity-50"
           >
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-            </svg>
-            Download PDF
-          </a>
-        )}
+            {downloadingAll ? (
+              <>
+                <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                </svg>
+                Downloading...
+              </>
+            ) : (
+              <>
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                </svg>
+                All Slides
+              </>
+            )}
+          </button>
+
+          {/* PDF Download - opens in new tab on iOS, downloads on desktop */}
+          {pdfUrl && (
+            <a
+              href={pdfUrl}
+              download={`linwheel-carousel-${articleId.slice(0, 8)}.pdf`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white text-sm font-medium rounded-lg shadow-lg shadow-amber-500/25 transition-all hover:scale-105"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+              PDF
+            </a>
+          )}
+        </div>
       </div>
     </div>
   );

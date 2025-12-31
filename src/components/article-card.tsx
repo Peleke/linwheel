@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import ReactMarkdown from "react-markdown";
 import { ApprovalButtons } from "./approval-buttons";
 import { CopyButton } from "./copy-button";
+import { DownloadButton } from "./download-button";
 import { ImagePreview } from "./image-preview";
 import { CarouselButton } from "./carousel-button";
 import { RegeneratePromptButton } from "./regenerate-prompt-button";
@@ -316,7 +317,16 @@ export function ArticleCard({
             hasImage={hasImage}
             imageUrl={article.imageIntent?.generatedImageUrl}
           />
-          <CopyButton text={article.fullText} />
+          <div className="flex items-center gap-1.5">
+            {hasImage && (
+              <DownloadButton
+                imageUrl={article.imageIntent!.generatedImageUrl!}
+                filename={`linwheel-article-${article.id.slice(0, 8)}.png`}
+                label="Download cover image"
+              />
+            )}
+            <CopyButton text={article.fullText} />
+          </div>
         </div>
       </motion.div>
     </motion.div>

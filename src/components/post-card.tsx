@@ -5,6 +5,7 @@ import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import ReactMarkdown from "react-markdown";
 import { CopyButton } from "@/components/copy-button";
+import { DownloadButton } from "@/components/download-button";
 import { ApprovalButtons } from "@/components/approval-buttons";
 import { ImagePreview } from "./image-preview";
 import { RegeneratePromptButton } from "./regenerate-prompt-button";
@@ -233,7 +234,16 @@ export function PostCard({ post, runId }: PostCardProps) {
             hasImage={hasImage}
             imageUrl={post.imageIntent?.generatedImageUrl}
           />
-          <CopyButton text={post.fullText} />
+          <div className="flex items-center gap-1.5">
+            {hasImage && (
+              <DownloadButton
+                imageUrl={post.imageIntent!.generatedImageUrl!}
+                filename={`linwheel-post-${post.id.slice(0, 8)}.png`}
+                label="Download cover image"
+              />
+            )}
+            <CopyButton text={post.fullText} />
+          </div>
         </div>
       </motion.div>
     </motion.div>
