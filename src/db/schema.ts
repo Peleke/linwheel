@@ -37,6 +37,8 @@ export const generationRuns = sqliteTable("generation_runs", {
   // Multi-angle: which angles were selected for this run
   selectedAngles: text("selected_angles", { mode: "json" }).$type<PostAngle[]>(),
   selectedArticleAngles: text("selected_article_angles", { mode: "json" }).$type<ArticleAngle[]>(),
+  // Auth: Supabase user UUID
+  userId: text("user_id"),
 });
 
 // Insights table

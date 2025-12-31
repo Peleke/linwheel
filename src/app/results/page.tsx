@@ -1,16 +1,25 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { db } from "@/db";
 import { generationRuns } from "@/db/schema";
-import { desc } from "drizzle-orm";
+import { desc, eq } from "drizzle-orm";
 import { ClearRunsButton } from "@/components/clear-runs-button";
 import { DeleteRunButton } from "@/components/delete-run-button";
 import { AppHeader } from "@/components/app-header";
+import { getCurrentUser } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 
 export default async function ResultsListPage() {
-  // Fetch all runs, most recent first
+  // Get current user
+  const user = await getCurrentUser();
+  if (!user) {
+    redirect("/login?redirect=/results");
+  }
+
+  // Fetch runs for this user, most recent first
   const runs = await db.query.generationRuns.findMany({
+    where: eq(generationRuns.userId, user.id),
     orderBy: [desc(generationRuns.createdAt)],
   });
 

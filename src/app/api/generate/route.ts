@@ -9,6 +9,8 @@ import { eq } from "drizzle-orm";
 import { runPipeline } from "@/lib/generate";
 import type { LLMProvider } from "@/lib/llm";
 import { randomUUID } from "crypto";
+import { requireAuth } from "@/lib/auth";
+import { canGenerate, incrementUsage } from "@/lib/usage";
 
 /**
  * Process generation in background (fire-and-forget)
@@ -195,6 +197,30 @@ async function processGeneration(
 
 export async function POST(request: NextRequest) {
   try {
+    // Require authentication
+    let user;
+    try {
+      user = await requireAuth();
+    } catch {
+      return NextResponse.json(
+        { error: "Unauthorized" },
+        { status: 401 }
+      );
+    }
+
+    // Check usage quota
+    const { allowed, usage } = await canGenerate(user.id);
+    if (!allowed) {
+      return NextResponse.json(
+        {
+          error: "quota_exceeded",
+          message: `You've used all ${usage.limit} free generations. Upgrade to Pro for unlimited access.`,
+          usage,
+        },
+        { status: 402 }
+      );
+    }
+
     const body = await request.json();
     const {
       transcript,
@@ -225,6 +251,9 @@ export async function POST(request: NextRequest) {
     const llmProvider: LLMProvider | undefined =
       rawLLMProvider === "claude" || rawLLMProvider === "openai" ? rawLLMProvider : undefined;
 
+    // Increment usage count
+    await incrementUsage(user.id);
+
     // Create run record with pending status
     const runId = randomUUID();
     await db.insert(generationRuns).values({
@@ -235,6 +264,7 @@ export async function POST(request: NextRequest) {
       status: "pending",
       selectedAngles,
       selectedArticleAngles: selectedArticleAngles.length > 0 ? selectedArticleAngles : null,
+      userId: user.id, // Associate with user
     });
 
     // Use Next.js after() to keep serverless function alive after response

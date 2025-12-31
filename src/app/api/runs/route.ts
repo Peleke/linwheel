@@ -4,15 +4,28 @@ import {
   generationRuns, insights, linkedinPosts, imageIntents,
   articles, articleImageIntents, articleCarouselIntents
 } from "@/db/schema";
-import { inArray } from "drizzle-orm";
+import { inArray, eq } from "drizzle-orm";
+import { requireAuth } from "@/lib/auth";
 
 /**
- * DELETE /api/runs - Clear all generation runs and related data
+ * DELETE /api/runs - Clear all generation runs and related data for the current user
  */
 export async function DELETE() {
   try {
-    // Get all run IDs first
+    // Require authentication
+    let user;
+    try {
+      user = await requireAuth();
+    } catch {
+      return NextResponse.json(
+        { error: "Unauthorized" },
+        { status: 401 }
+      );
+    }
+
+    // Get all run IDs for this user
     const runs = await db.query.generationRuns.findMany({
+      where: eq(generationRuns.userId, user.id),
       columns: { id: true },
     });
 

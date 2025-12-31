@@ -24,6 +24,7 @@
     "@langchain/openai": "^1.2.0",
     "@libsql/client": "^0.15.15",
     "@resvg/resvg-wasm": "^2.6.2",
+    "@supabase/ssr": "^0.8.0",
     "@supabase/supabase-js": "^2.89.0",
     "@tailwindcss/postcss": "^4.1.18",
     "@tailwindcss/typography": "^0.5.19",

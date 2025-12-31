@@ -4,10 +4,25 @@ import {
   generationRuns, insights, linkedinPosts, imageIntents,
   articles, articleImageIntents, articleCarouselIntents
 } from "@/db/schema";
-import { eq, inArray } from "drizzle-orm";
+import { eq, inArray, and } from "drizzle-orm";
+import { requireAuth } from "@/lib/auth";
 
 interface RouteParams {
   params: Promise<{ runId: string }>;
+}
+
+/**
+ * Verify run ownership - returns run if user owns it
+ */
+async function verifyRunOwnership(runId: string, userId: string) {
+  const run = await db.query.generationRuns.findFirst({
+    where: and(
+      eq(generationRuns.id, runId),
+      eq(generationRuns.userId, userId)
+    ),
+    columns: { id: true, userId: true },
+  });
+  return run;
 }
 
 /**
@@ -15,7 +30,25 @@ interface RouteParams {
  */
 export async function PATCH(request: NextRequest, { params }: RouteParams) {
   try {
+    // Require authentication
+    let user;
+    try {
+      user = await requireAuth();
+    } catch {
+      return NextResponse.json(
+        { error: "Unauthorized" },
+        { status: 401 }
+      );
+    }
+
     const { runId } = await params;
+
+    // Verify ownership
+    const run = await verifyRunOwnership(runId, user.id);
+    if (!run) {
+      return NextResponse.json({ error: "Run not found" }, { status: 404 });
+    }
+
     const body = await request.json();
     const { status, error } = body;
 
@@ -43,14 +76,21 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
  */
 export async function DELETE(request: NextRequest, { params }: RouteParams) {
   try {
+    // Require authentication
+    let user;
+    try {
+      user = await requireAuth();
+    } catch {
+      return NextResponse.json(
+        { error: "Unauthorized" },
+        { status: 401 }
+      );
+    }
+
     const { runId } = await params;
 
-    // Check run exists
-    const run = await db.query.generationRuns.findFirst({
-      where: eq(generationRuns.id, runId),
-      columns: { id: true },
-    });
-
+    // Verify ownership
+    const run = await verifyRunOwnership(runId, user.id);
     if (!run) {
       return NextResponse.json({ error: "Run not found" }, { status: 404 });
     }
