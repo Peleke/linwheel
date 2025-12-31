@@ -17,19 +17,18 @@ const contentTypes = [
 
 export function Hero() {
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [nextIndex, setNextIndex] = useState(1);
-  const [isAnimating, setIsAnimating] = useState(false);
+  const [isExiting, setIsExiting] = useState(false);
 
   useEffect(() => {
     const interval = setInterval(() => {
-      setIsAnimating(true);
+      // Start exit animation
+      setIsExiting(true);
 
-      // After exit animation completes, update indices
+      // After exit completes, swap text and enter
       setTimeout(() => {
         setCurrentIndex((prev) => (prev + 1) % contentTypes.length);
-        setNextIndex((prev) => (prev + 1) % contentTypes.length);
-        setIsAnimating(false);
-      }, 400);
+        setIsExiting(false);
+      }, 300);
     }, 3000);
 
     return () => clearInterval(interval);
@@ -65,45 +64,38 @@ export function Hero() {
           <span className="text-sm text-neutral-300">Now in public beta</span>
         </div>
 
-        {/* Headline with sliding text */}
+        {/* Headline with sliding text - FIXED WIDTH container */}
         <h1 className="animate-fade-up-delay-1 text-5xl md:text-7xl font-bold tracking-tight mb-6 leading-tight">
-          Turn{" "}
-          <span className="relative inline-block overflow-hidden h-[1.2em] align-bottom">
-            {/* Current text - exits by sliding down and fading */}
+          <span className="block md:inline">Turn </span>
+          {/* Fixed-width container prevents layout shift */}
+          <span className="inline-block w-[280px] md:w-[420px] text-left relative h-[1.15em] overflow-hidden align-bottom">
             <span
-              className={`inline-block text-indigo-400 transition-all duration-400 ease-out ${
-                isAnimating
-                  ? "opacity-0 translate-y-full"
-                  : "opacity-100 translate-y-0"
+              className={`absolute inset-0 flex items-center text-indigo-400 transition-all duration-300 ease-out ${
+                isExiting
+                  ? "translate-y-full opacity-0"
+                  : "translate-y-0 opacity-100"
               }`}
+              style={{
+                transitionTimingFunction: isExiting ? "ease-in" : "ease-out",
+              }}
             >
               {contentTypes[currentIndex]}
             </span>
-            {/* Next text - enters by sliding in from top */}
-            <span
-              className={`absolute left-0 top-0 inline-block text-indigo-400 transition-all duration-400 ease-out ${
-                isAnimating
-                  ? "opacity-100 translate-y-0"
-                  : "opacity-0 -translate-y-full"
-              }`}
-            >
-              {contentTypes[nextIndex]}
-            </span>
           </span>
           <br />
-          into <span className="gradient-text">LinkedIn gold.</span>
+          <span>into </span>
+          <span className="gradient-text">LinkedIn gold.</span>
         </h1>
 
         {/* Subheadline */}
         <p className="animate-fade-up-delay-2 text-xl md:text-2xl text-neutral-400 mb-4 max-w-3xl mx-auto leading-relaxed">
-          Paste any content. Get <span className="text-white font-medium">90+ ready-to-post</span> pieces
-          <br className="hidden md:block" />
+          Paste any content. Get <span className="text-white font-medium">90+ ready-to-post</span> pieces{" "}
           in <span className="text-white font-medium">6 distinct voices</span>—with <span className="text-emerald-400 font-medium">AI cover images</span>.
         </p>
 
         {/* Social proof line */}
         <p className="animate-fade-up-delay-2 text-neutral-500 mb-10">
-          One piece of content = a month of scroll-stopping LinkedIn posts
+          One piece of content <strong className="text-white font-semibold">stops the scroll for a month.</strong>
         </p>
 
         {/* CTAs */}
