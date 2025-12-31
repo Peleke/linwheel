@@ -142,24 +142,29 @@ export default function GeneratePage() {
             </p>
           </motion.div>
 
-          <form onSubmit={handleSubmit} className="space-y-10">
+          <form onSubmit={handleSubmit} className="space-y-8">
+            {/* Source Label Input */}
             <motion.div
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.4, delay: 0.1 }}
+              className="rounded-2xl bg-white dark:bg-zinc-900 shadow-sm overflow-hidden"
             >
-              <label htmlFor="sourceLabel" className="block text-sm font-medium mb-2 text-zinc-700 dark:text-zinc-300">
-                Source label <span className="font-normal text-zinc-500">(optional)</span>
-              </label>
-              <input
-                id="sourceLabel"
-                type="text"
-                value={sourceLabel}
-                onChange={(e) => setSourceLabel(e.target.value)}
-                placeholder="e.g., AI Daily Brief - Dec 22"
-                disabled={isSubmitting}
-                className="w-full px-4 py-3 border border-zinc-200 dark:border-zinc-700 rounded-lg bg-white dark:bg-zinc-900 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed transition-all"
-              />
+              <div className="h-1 w-full bg-gradient-to-r from-zinc-200 to-zinc-300 dark:from-zinc-700 dark:to-zinc-600" />
+              <div className="p-5">
+                <label htmlFor="sourceLabel" className="block text-sm font-medium mb-2 text-zinc-700 dark:text-zinc-300">
+                  Source label <span className="font-normal text-zinc-500">(optional)</span>
+                </label>
+                <input
+                  id="sourceLabel"
+                  type="text"
+                  value={sourceLabel}
+                  onChange={(e) => setSourceLabel(e.target.value)}
+                  placeholder="e.g., AI Daily Brief - Dec 22"
+                  disabled={isSubmitting}
+                  className="w-full px-4 py-3 rounded-xl bg-zinc-50 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 dark:placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                />
+              </div>
             </motion.div>
 
             {/* Post angle selection - Collapsible Panel */}
@@ -167,8 +172,11 @@ export default function GeneratePage() {
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.4, delay: 0.2 }}
-              className="overflow-hidden rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800"
+              className="overflow-hidden rounded-2xl bg-white dark:bg-zinc-900 shadow-sm"
             >
+              {/* Accent ribbon */}
+              <div className="h-1 w-full bg-gradient-to-r from-blue-400 to-blue-500" />
+
               {/* Header - Clickable to expand/collapse */}
               <button
                 type="button"
@@ -176,14 +184,14 @@ export default function GeneratePage() {
                 className="w-full px-5 py-4 flex justify-between items-center hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors"
               >
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-lg bg-blue-500 flex items-center justify-center">
+                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow-lg shadow-blue-500/20">
                     <span className="text-lg">📝</span>
                   </div>
                   <div className="text-left">
                     <h3 className="font-semibold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
                       LinkedIn Posts
                       {selectedAngles.length > 0 && (
-                        <span className="px-2 py-0.5 text-xs font-medium rounded-md bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300">
+                        <span className="px-2 py-0.5 text-xs font-medium rounded-lg bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-300">
                           {selectedAngles.length} selected
                         </span>
                       )}
@@ -199,7 +207,7 @@ export default function GeneratePage() {
                       type="button"
                       onClick={selectAllAngles}
                       disabled={isSubmitting}
-                      className="px-3 py-1.5 rounded-md bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 hover:bg-blue-200 dark:hover:bg-blue-900/60 disabled:opacity-50 transition-colors font-medium"
+                      className="px-3 py-1.5 rounded-lg bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-300 hover:bg-blue-200 dark:hover:bg-blue-500/30 disabled:opacity-50 transition-colors font-medium"
                     >
                       All
                     </button>
@@ -207,7 +215,7 @@ export default function GeneratePage() {
                       type="button"
                       onClick={clearAllAngles}
                       disabled={isSubmitting}
-                      className="px-3 py-1.5 rounded-md bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-700 disabled:opacity-50 transition-colors"
+                      className="px-3 py-1.5 rounded-lg bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-700 disabled:opacity-50 transition-colors"
                     >
                       Clear
                     </button>
@@ -234,7 +242,7 @@ export default function GeneratePage() {
                     transition={{ duration: 0.25, ease: "easeOut" }}
                     className="overflow-hidden"
                   >
-                    <div className="px-5 pb-5 pt-2 border-t border-zinc-100 dark:border-zinc-800">
+                    <div className="px-5 pb-5 pt-2">
                       <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                         {POST_ANGLES.map((angle, i) => (
                           <motion.label
@@ -242,10 +250,10 @@ export default function GeneratePage() {
                             initial={{ opacity: 0, y: 8 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ duration: 0.15, delay: i * 0.02 }}
-                            className={`group/card relative flex items-start gap-3 p-4 rounded-lg cursor-pointer transition-all duration-150 ${
+                            className={`group/card relative flex items-start gap-3 p-4 rounded-xl cursor-pointer transition-all duration-150 ${
                               selectedAngles.includes(angle.id)
-                                ? "bg-blue-50 dark:bg-blue-900/20 ring-2 ring-blue-500 dark:ring-blue-400"
-                                : "bg-zinc-50 dark:bg-zinc-800/50 hover:bg-zinc-100 dark:hover:bg-zinc-800 ring-1 ring-zinc-200 dark:ring-zinc-700 hover:ring-zinc-300 dark:hover:ring-zinc-600"
+                                ? "bg-blue-50 dark:bg-blue-500/10 shadow-sm shadow-blue-500/10"
+                                : "bg-zinc-50 dark:bg-zinc-800/50 hover:bg-zinc-100 dark:hover:bg-zinc-800"
                             } ${isSubmitting ? "opacity-50 cursor-not-allowed" : ""}`}
                           >
                             <input
@@ -256,10 +264,10 @@ export default function GeneratePage() {
                               className="sr-only"
                             />
 
-                            <div className={`shrink-0 w-5 h-5 mt-0.5 rounded flex items-center justify-center transition-all ${
+                            <div className={`shrink-0 w-5 h-5 mt-0.5 rounded-md flex items-center justify-center transition-all ${
                               selectedAngles.includes(angle.id)
-                                ? "bg-blue-500"
-                                : "border-2 border-zinc-300 dark:border-zinc-600 group-hover/card:border-blue-400"
+                                ? "bg-blue-500 shadow-sm shadow-blue-500/30"
+                                : "bg-zinc-200 dark:bg-zinc-700 group-hover/card:bg-blue-200 dark:group-hover/card:bg-blue-900/50"
                             }`}>
                               {selectedAngles.includes(angle.id) && (
                                 <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
@@ -300,8 +308,11 @@ export default function GeneratePage() {
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.4, delay: 0.3 }}
-              className="overflow-hidden rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800"
+              className="overflow-hidden rounded-2xl bg-white dark:bg-zinc-900 shadow-sm"
             >
+              {/* Accent ribbon */}
+              <div className="h-1 w-full bg-gradient-to-r from-sky-400 to-sky-500" />
+
               {/* Header - Clickable to expand/collapse */}
               <button
                 type="button"
@@ -309,14 +320,14 @@ export default function GeneratePage() {
                 className="w-full px-5 py-4 flex justify-between items-center hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors"
               >
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-lg bg-sky-500 flex items-center justify-center">
+                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-sky-500 to-sky-600 flex items-center justify-center shadow-lg shadow-sky-500/20">
                     <span className="text-lg">📄</span>
                   </div>
                   <div className="text-left">
                     <h3 className="font-semibold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
                       LinkedIn Articles
                       {selectedArticleAngles.length > 0 && (
-                        <span className="px-2 py-0.5 text-xs font-medium rounded-md bg-sky-100 dark:bg-sky-900/50 text-sky-700 dark:text-sky-300">
+                        <span className="px-2 py-0.5 text-xs font-medium rounded-lg bg-sky-100 dark:bg-sky-500/20 text-sky-700 dark:text-sky-300">
                           {selectedArticleAngles.length} selected
                         </span>
                       )}
@@ -332,7 +343,7 @@ export default function GeneratePage() {
                       type="button"
                       onClick={selectAllArticleAngles}
                       disabled={isSubmitting}
-                      className="px-3 py-1.5 rounded-md bg-sky-100 dark:bg-sky-900/40 text-sky-700 dark:text-sky-300 hover:bg-sky-200 dark:hover:bg-sky-900/60 disabled:opacity-50 transition-colors font-medium"
+                      className="px-3 py-1.5 rounded-lg bg-sky-100 dark:bg-sky-500/20 text-sky-700 dark:text-sky-300 hover:bg-sky-200 dark:hover:bg-sky-500/30 disabled:opacity-50 transition-colors font-medium"
                     >
                       All
                     </button>
@@ -340,7 +351,7 @@ export default function GeneratePage() {
                       type="button"
                       onClick={clearAllArticleAngles}
                       disabled={isSubmitting}
-                      className="px-3 py-1.5 rounded-md bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-700 disabled:opacity-50 transition-colors"
+                      className="px-3 py-1.5 rounded-lg bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-700 disabled:opacity-50 transition-colors"
                     >
                       Clear
                     </button>
@@ -367,7 +378,7 @@ export default function GeneratePage() {
                     transition={{ duration: 0.25, ease: "easeOut" }}
                     className="overflow-hidden"
                   >
-                    <div className="px-5 pb-5 pt-2 border-t border-zinc-100 dark:border-zinc-800">
+                    <div className="px-5 pb-5 pt-2">
                       <div className="grid grid-cols-2 gap-3">
                         {ARTICLE_ANGLES.map((angle, i) => (
                           <motion.label
@@ -375,10 +386,10 @@ export default function GeneratePage() {
                             initial={{ opacity: 0, y: 8 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ duration: 0.15, delay: i * 0.03 }}
-                            className={`group/card relative flex items-start gap-3 p-4 rounded-lg cursor-pointer transition-all duration-150 ${
+                            className={`group/card relative flex items-start gap-3 p-4 rounded-xl cursor-pointer transition-all duration-150 ${
                               selectedArticleAngles.includes(angle.id)
-                                ? "bg-sky-50 dark:bg-sky-900/20 ring-2 ring-sky-500 dark:ring-sky-400"
-                                : "bg-zinc-50 dark:bg-zinc-800/50 hover:bg-zinc-100 dark:hover:bg-zinc-800 ring-1 ring-zinc-200 dark:ring-zinc-700 hover:ring-zinc-300 dark:hover:ring-zinc-600"
+                                ? "bg-sky-50 dark:bg-sky-500/10 shadow-sm shadow-sky-500/10"
+                                : "bg-zinc-50 dark:bg-zinc-800/50 hover:bg-zinc-100 dark:hover:bg-zinc-800"
                             } ${isSubmitting ? "opacity-50 cursor-not-allowed" : ""}`}
                           >
                             <input
@@ -389,10 +400,10 @@ export default function GeneratePage() {
                               className="sr-only"
                             />
 
-                            <div className={`shrink-0 w-5 h-5 mt-0.5 rounded flex items-center justify-center transition-all ${
+                            <div className={`shrink-0 w-5 h-5 mt-0.5 rounded-md flex items-center justify-center transition-all ${
                               selectedArticleAngles.includes(angle.id)
-                                ? "bg-sky-500"
-                                : "border-2 border-zinc-300 dark:border-zinc-600 group-hover/card:border-sky-400"
+                                ? "bg-sky-500 shadow-sm shadow-sky-500/30"
+                                : "bg-zinc-200 dark:bg-zinc-700 group-hover/card:bg-sky-200 dark:group-hover/card:bg-sky-900/50"
                             }`}>
                               {selectedArticleAngles.includes(angle.id) && (
                                 <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
@@ -428,27 +439,32 @@ export default function GeneratePage() {
               </AnimatePresence>
             </motion.div>
 
+            {/* Transcript Input */}
             <motion.div
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.4, delay: 0.4 }}
+              className="rounded-2xl bg-white dark:bg-zinc-900 shadow-sm overflow-hidden"
             >
-              <label htmlFor="transcript" className="block text-sm font-medium mb-2 text-zinc-700 dark:text-zinc-300">
-                Transcript
-              </label>
-              <textarea
-                id="transcript"
-                value={transcript}
-                onChange={(e) => setTranscript(e.target.value)}
-                placeholder="Paste your podcast transcript here..."
-                rows={16}
-                disabled={isSubmitting}
-                className="w-full px-4 py-4 border border-zinc-200 dark:border-zinc-700 rounded-lg bg-white dark:bg-zinc-900 font-mono text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent resize-y disabled:opacity-50 disabled:cursor-not-allowed transition-all"
-                required
-              />
-              <p className="text-sm text-zinc-500 mt-3">
-                Tip: Copy the full transcript from Podscribe. We&apos;ll clean up timestamps automatically.
-              </p>
+              <div className="h-1 w-full bg-gradient-to-r from-zinc-200 to-zinc-300 dark:from-zinc-700 dark:to-zinc-600" />
+              <div className="p-5">
+                <label htmlFor="transcript" className="block text-sm font-medium mb-2 text-zinc-700 dark:text-zinc-300">
+                  Transcript
+                </label>
+                <textarea
+                  id="transcript"
+                  value={transcript}
+                  onChange={(e) => setTranscript(e.target.value)}
+                  placeholder="Paste your podcast transcript here..."
+                  rows={16}
+                  disabled={isSubmitting}
+                  className="w-full px-4 py-4 rounded-xl bg-zinc-50 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 dark:placeholder-zinc-500 font-mono text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 resize-y disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                  required
+                />
+                <p className="text-sm text-zinc-500 mt-3">
+                  Tip: Copy the full transcript from Podscribe. We&apos;ll clean up timestamps automatically.
+                </p>
+              </div>
             </motion.div>
 
             <AnimatePresence>
@@ -457,7 +473,7 @@ export default function GeneratePage() {
                   initial={{ opacity: 0, y: -8 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -8 }}
-                  className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-red-700 dark:text-red-400"
+                  className="p-4 rounded-xl bg-red-50 dark:bg-red-500/10 text-red-700 dark:text-red-400"
                 >
                   {error}
                 </motion.div>
@@ -473,12 +489,12 @@ export default function GeneratePage() {
               <button
                 type="submit"
                 disabled={isSubmitting || !transcript.trim() || !hasContentSelected}
-                className={`w-full px-6 py-4 rounded-lg font-medium transition-all ${
+                className={`w-full px-6 py-4 rounded-xl font-medium transition-all ${
                   isSubmitting
                     ? "bg-blue-600 text-white"
                     : !hasContentSelected || !transcript.trim()
                       ? "bg-zinc-200 dark:bg-zinc-800 text-zinc-400 dark:text-zinc-500 cursor-not-allowed"
-                      : "bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-500/25 hover:shadow-blue-500/40"
+                      : "bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 text-white shadow-lg shadow-blue-500/25 hover:shadow-blue-500/40"
                 }`}
               >
                 <span className="flex items-center justify-center gap-3">
@@ -501,13 +517,13 @@ export default function GeneratePage() {
                       <span>Generate content</span>
                       <div className="flex gap-2">
                         {selectedAngles.length > 0 && (
-                          <span className="px-2.5 py-1 rounded-md bg-white/20 text-xs font-medium">
-                            {selectedAngles.length} post angle{selectedAngles.length !== 1 ? 's' : ''}
+                          <span className="px-2.5 py-1 rounded-lg bg-white/20 text-xs font-medium">
+                            {selectedAngles.length} post{selectedAngles.length !== 1 ? 's' : ''}
                           </span>
                         )}
                         {selectedArticleAngles.length > 0 && (
-                          <span className="px-2.5 py-1 rounded-md bg-white/20 text-xs font-medium">
-                            {selectedArticleAngles.length} article angle{selectedArticleAngles.length !== 1 ? 's' : ''}
+                          <span className="px-2.5 py-1 rounded-lg bg-white/20 text-xs font-medium">
+                            {selectedArticleAngles.length} article{selectedArticleAngles.length !== 1 ? 's' : ''}
                           </span>
                         )}
                       </div>

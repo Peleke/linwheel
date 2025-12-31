@@ -371,28 +371,32 @@ function AngleBucket({
   const approvedCount = posts.filter(p => p.approved).length;
 
   return (
-    <details className="group border border-zinc-200 dark:border-zinc-800 rounded-xl overflow-hidden" open>
-      {/* Accent bar at top */}
-      <div className="h-0.5 w-full bg-blue-500" />
+    <details className="group rounded-2xl overflow-hidden bg-white dark:bg-zinc-900 shadow-sm" open>
+      {/* Accent ribbon at top */}
+      <div className="h-1 w-full bg-gradient-to-r from-blue-400 to-blue-500" />
 
-      <summary className="px-5 py-4 bg-zinc-50 dark:bg-zinc-900 cursor-pointer hover:bg-zinc-100 dark:hover:bg-zinc-800 list-none transition-colors">
+      <summary className="px-5 py-4 cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-800/50 list-none transition-colors">
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
           <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-            <span className="text-lg flex-shrink-0">📝</span>
-            <span className="text-base font-semibold capitalize text-zinc-900 dark:text-zinc-100 truncate">
-              {angle.replace("_", " ")}
-            </span>
-            <span className="text-sm text-zinc-500 dark:text-zinc-400 hidden lg:inline">
-              {ANGLE_DESCRIPTIONS[angle]}
-            </span>
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow-sm shadow-blue-500/20 flex-shrink-0">
+              <span className="text-sm">📝</span>
+            </div>
+            <div className="min-w-0">
+              <span className="text-base font-semibold capitalize text-zinc-900 dark:text-zinc-100 block truncate">
+                {angle.replace("_", " ")}
+              </span>
+              <span className="text-xs text-zinc-500 dark:text-zinc-400 hidden lg:block">
+                {ANGLE_DESCRIPTIONS[angle]}
+              </span>
+            </div>
           </div>
           <div className="flex items-center justify-between sm:justify-end gap-2 sm:gap-4 flex-shrink-0">
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-md text-xs font-medium bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300">
+              <span className="px-2.5 py-1 rounded-lg text-xs font-medium bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-300">
                 {posts.length} ver{posts.length !== 1 ? "s" : ""}
               </span>
               {approvedCount > 0 && (
-                <span className="px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-md text-xs font-medium bg-emerald-500 text-white">
+                <span className="px-2.5 py-1 rounded-lg text-xs font-medium bg-emerald-500 text-white shadow-sm shadow-emerald-500/20">
                   {approvedCount}✓
                 </span>
               )}
@@ -407,7 +411,7 @@ function AngleBucket({
         </div>
       </summary>
 
-      <div className="p-5 bg-white dark:bg-zinc-950">
+      <div className="p-5 bg-zinc-50 dark:bg-zinc-950">
         <div className="sm:hidden mb-4">
           <GenerateMoreButton runId={runId} angle={angle} />
         </div>
@@ -433,28 +437,32 @@ function ArticleBucket({
   const approvedCount = articles.filter(a => a.approved).length;
 
   return (
-    <details className="group border border-zinc-200 dark:border-zinc-800 rounded-xl overflow-hidden" open>
-      {/* Accent bar at top */}
-      <div className="h-0.5 w-full bg-sky-500" />
+    <details className="group rounded-2xl overflow-hidden bg-white dark:bg-zinc-900 shadow-sm" open>
+      {/* Accent ribbon at top */}
+      <div className="h-1 w-full bg-gradient-to-r from-sky-400 to-sky-500" />
 
-      <summary className="px-5 py-4 bg-zinc-50 dark:bg-zinc-900 cursor-pointer hover:bg-zinc-100 dark:hover:bg-zinc-800 list-none transition-colors">
+      <summary className="px-5 py-4 cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-800/50 list-none transition-colors">
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
           <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-            <span className="text-lg flex-shrink-0">📄</span>
-            <span className="text-base font-semibold capitalize text-zinc-900 dark:text-zinc-100 truncate">
-              {angle.replace("_", " ")}
-            </span>
-            <span className="text-sm text-zinc-500 dark:text-zinc-400 hidden lg:inline">
-              {ARTICLE_ANGLE_DESCRIPTIONS[angle]}
-            </span>
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-sky-500 to-sky-600 flex items-center justify-center shadow-sm shadow-sky-500/20 flex-shrink-0">
+              <span className="text-sm">📄</span>
+            </div>
+            <div className="min-w-0">
+              <span className="text-base font-semibold capitalize text-zinc-900 dark:text-zinc-100 block truncate">
+                {angle.replace("_", " ")}
+              </span>
+              <span className="text-xs text-zinc-500 dark:text-zinc-400 hidden lg:block">
+                {ARTICLE_ANGLE_DESCRIPTIONS[angle]}
+              </span>
+            </div>
           </div>
           <div className="flex items-center justify-between sm:justify-end gap-2 sm:gap-4 flex-shrink-0">
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-md text-xs font-medium bg-sky-100 dark:bg-sky-900/40 text-sky-700 dark:text-sky-300">
+              <span className="px-2.5 py-1 rounded-lg text-xs font-medium bg-sky-100 dark:bg-sky-500/20 text-sky-700 dark:text-sky-300">
                 {articles.length} ver{articles.length !== 1 ? "s" : ""}
               </span>
               {approvedCount > 0 && (
-                <span className="px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-md text-xs font-medium bg-emerald-500 text-white">
+                <span className="px-2.5 py-1 rounded-lg text-xs font-medium bg-emerald-500 text-white shadow-sm shadow-emerald-500/20">
                   {approvedCount}✓
                 </span>
               )}
@@ -469,7 +477,7 @@ function ArticleBucket({
         </div>
       </summary>
 
-      <div className="p-5 bg-white dark:bg-zinc-950">
+      <div className="p-5 bg-zinc-50 dark:bg-zinc-950">
         <div className="sm:hidden mb-4">
           <GenerateMoreArticlesButton runId={runId} angle={angle} />
         </div>
