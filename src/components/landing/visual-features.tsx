@@ -5,40 +5,32 @@ import Image from "next/image";
 
 const features = [
   {
-    icon: (
-      <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-      </svg>
-    ),
+    image: "/promo/feature-ai-cover.png",
     title: "AI Cover Images",
     description: "Every post gets a custom image prompt. Generate scroll-stopping visuals in one click.",
+    gradient: "from-emerald-500/20 to-teal-500/20",
+    border: "hover:border-emerald-500/40",
   },
   {
-    icon: (
-      <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-      </svg>
-    ),
+    image: "/promo/feature-carousel.png",
     title: "Carousel Generator",
     description: "Turn articles into 5-slide carousels. Perfect for LinkedIn's algorithm-favorite format.",
+    gradient: "from-amber-500/20 to-orange-500/20",
+    border: "hover:border-amber-500/40",
   },
   {
-    icon: (
-      <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-      </svg>
-    ),
+    image: "/promo/feature-download.png",
     title: "One-Tap Download",
     description: "Download any image or carousel for mobile posting. No desktop required.",
+    gradient: "from-blue-500/20 to-cyan-500/20",
+    border: "hover:border-blue-500/40",
   },
   {
-    icon: (
-      <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-      </svg>
-    ),
+    image: "/promo/feature-regenerate.png",
     title: "Regenerate Anytime",
     description: "Not happy with a result? Regenerate any image or slide until it's perfect.",
+    gradient: "from-purple-500/20 to-pink-500/20",
+    border: "hover:border-purple-500/40",
   },
 ];
 
@@ -50,6 +42,7 @@ const stats = [
 
 export function VisualFeatures() {
   const [visible, setVisible] = useState(false);
+  const [scrollY, setScrollY] = useState(0);
   const sectionRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -59,7 +52,7 @@ export function VisualFeatures() {
           setVisible(true);
         }
       },
-      { threshold: 0.15 }
+      { threshold: 0.1 }
     );
 
     if (sectionRef.current) {
@@ -69,16 +62,55 @@ export function VisualFeatures() {
     return () => observer.disconnect();
   }, []);
 
+  // Parallax scroll effect
+  useEffect(() => {
+    const handleScroll = () => {
+      if (sectionRef.current) {
+        const rect = sectionRef.current.getBoundingClientRect();
+        const scrollProgress = -rect.top / window.innerHeight;
+        setScrollY(scrollProgress);
+      }
+    };
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
   return (
     <section
       id="visuals"
       ref={sectionRef}
       className="py-24 md:py-32 relative overflow-hidden"
     >
-      {/* Background gradient */}
-      <div className="absolute inset-0 bg-gradient-to-b from-black via-emerald-950/10 to-black" />
+      {/* Parallax Background Image */}
+      <div
+        className="absolute inset-0 z-0"
+        style={{ transform: `translateY(${scrollY * 50}px)` }}
+      >
+        <Image
+          src="/promo/visual-features-bg.png"
+          alt=""
+          fill
+          className="object-cover opacity-30 mix-blend-screen"
+        />
+        <div className="absolute inset-0 bg-gradient-to-r from-[#0a0a0a] via-transparent to-[#0a0a0a]" />
+        <div className="absolute inset-0 bg-gradient-to-b from-[#0a0a0a] via-transparent to-[#0a0a0a]" />
+      </div>
 
-      <div className="relative max-w-6xl mx-auto px-6">
+      {/* Background gradient */}
+      <div className="absolute inset-0 bg-gradient-to-b from-black via-emerald-950/10 to-black z-0" />
+
+      {/* Floating orbs with parallax */}
+      <div
+        className="absolute top-20 left-10 w-64 h-64 bg-emerald-500/10 rounded-full blur-3xl"
+        style={{ transform: `translateY(${scrollY * 100}px)` }}
+      />
+      <div
+        className="absolute bottom-20 right-10 w-96 h-96 bg-teal-500/10 rounded-full blur-3xl"
+        style={{ transform: `translateY(${scrollY * -80}px)` }}
+      />
+
+      <div className="relative z-10 max-w-6xl mx-auto px-6">
         {/* Section header */}
         <div className="text-center mb-16">
           <div
@@ -153,10 +185,11 @@ export function VisualFeatures() {
             visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
           }`}
         >
-          {stats.map((stat) => (
+          {stats.map((stat, i) => (
             <div
               key={stat.label}
-              className="text-center p-6 rounded-2xl bg-white/5 border border-white/5"
+              className="text-center p-6 rounded-2xl bg-white/5 border border-white/5 backdrop-blur-sm hover:bg-white/10 transition-all duration-300"
+              style={{ transform: `translateY(${scrollY * (20 + i * 10)}px)` }}
             >
               <div className="text-4xl md:text-5xl font-bold text-emerald-400 mb-2">
                 {stat.value}
@@ -167,28 +200,38 @@ export function VisualFeatures() {
           ))}
         </div>
 
-        {/* Features grid */}
+        {/* Features grid with images */}
         <div className="grid md:grid-cols-2 gap-6">
           {features.map((feature, i) => (
             <div
               key={feature.title}
-              className={`group glass-card rounded-2xl p-6 transition-all duration-700 hover:border-emerald-500/30 ${
+              className={`group glass-card rounded-2xl overflow-hidden transition-all duration-700 ${feature.border} ${
                 visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-12"
               }`}
-              style={{ transitionDelay: `${400 + i * 100}ms` }}
+              style={{
+                transitionDelay: `${400 + i * 100}ms`,
+                transform: visible ? `translateY(${scrollY * (10 + i * 5)}px)` : undefined,
+              }}
             >
-              <div className="flex items-start gap-4">
-                <div className="shrink-0 w-12 h-12 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
-                  {feature.icon}
-                </div>
-                <div>
-                  <h3 className="font-semibold text-lg text-neutral-100 mb-1">
-                    {feature.title}
-                  </h3>
-                  <p className="text-neutral-400 text-sm leading-relaxed">
-                    {feature.description}
-                  </p>
-                </div>
+              {/* Card image header */}
+              <div className={`relative h-32 bg-gradient-to-br ${feature.gradient}`}>
+                <Image
+                  src={feature.image}
+                  alt={feature.title}
+                  fill
+                  className="object-cover opacity-80 group-hover:opacity-100 group-hover:scale-110 transition-all duration-500"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
+              </div>
+
+              {/* Card content */}
+              <div className="p-6">
+                <h3 className="font-semibold text-lg text-neutral-100 mb-2">
+                  {feature.title}
+                </h3>
+                <p className="text-neutral-400 text-sm leading-relaxed">
+                  {feature.description}
+                </p>
               </div>
             </div>
           ))}
@@ -201,7 +244,7 @@ export function VisualFeatures() {
           }`}
         >
           <p className="text-neutral-500 text-sm">
-            Powered by <span className="text-neutral-400">Flux.1</span> AI image generation
+            Powered by <span className="text-emerald-400 font-medium">Flux.1</span> AI image generation
           </p>
         </div>
       </div>
