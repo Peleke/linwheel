@@ -6,7 +6,6 @@ import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { UserMenu } from "./user-menu";
-import { ThemeToggle } from "./theme-toggle";
 import type { User } from "@supabase/supabase-js";
 
 export function AppHeader() {
@@ -78,10 +77,7 @@ export function AppHeader() {
               Results
             </Link>
 
-            <div className="w-px h-6 bg-zinc-200 dark:bg-zinc-700 mx-2" />
-
-            {/* Theme Toggle */}
-            <ThemeToggle />
+            <div className="w-px h-6 bg-zinc-700 mx-2" />
 
             {/* User Menu */}
             <UserMenu user={user} />
