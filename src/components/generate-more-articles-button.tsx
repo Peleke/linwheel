@@ -47,20 +47,20 @@ export function GenerateMoreArticlesButton({
     <>
       <button
         onClick={() => setIsOpen(true)}
-        className="px-3 py-1.5 text-xs font-medium text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded transition-colors"
+        className="px-3 py-1.5 text-xs font-medium text-sky-600 dark:text-sky-400 hover:bg-sky-50 dark:hover:bg-sky-900/20 rounded-lg transition-colors"
       >
         + Generate more
       </button>
 
       {isOpen && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white dark:bg-neutral-900 rounded-xl p-6 max-w-sm w-full mx-4 shadow-xl">
-            <h3 className="font-semibold text-lg mb-4">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="bg-white dark:bg-zinc-900 rounded-xl p-6 max-w-sm w-full mx-4 shadow-xl border border-zinc-200 dark:border-zinc-800">
+            <h3 className="font-semibold text-lg text-zinc-900 dark:text-zinc-100 mb-4">
               Generate more {angle.replace("_", " ")} articles
             </h3>
 
             <div className="mb-4">
-              <label className="text-sm text-neutral-600 dark:text-neutral-400 block mb-2">
+              <label className="text-sm text-zinc-600 dark:text-zinc-400 block mb-2">
                 How many articles?
               </label>
               <div className="flex gap-2">
@@ -68,10 +68,10 @@ export function GenerateMoreArticlesButton({
                   <button
                     key={n}
                     onClick={() => setCount(n)}
-                    className={`flex-1 px-4 py-2 rounded-lg border transition-colors ${
+                    className={`flex-1 px-4 py-2 rounded-lg border transition-colors text-sm font-medium ${
                       count === n
                         ? "border-blue-600 bg-blue-50 text-blue-600 dark:border-blue-400 dark:bg-blue-900/20 dark:text-blue-400"
-                        : "border-neutral-200 dark:border-neutral-700 hover:border-neutral-400"
+                        : "border-zinc-200 dark:border-zinc-700 text-zinc-700 dark:text-zinc-300 hover:border-zinc-400 dark:hover:border-zinc-600"
                     }`}
                   >
                     {n}
@@ -90,14 +90,14 @@ export function GenerateMoreArticlesButton({
               <button
                 onClick={() => setIsOpen(false)}
                 disabled={isPending}
-                className="flex-1 px-4 py-2 border border-neutral-200 dark:border-neutral-700 rounded-lg hover:bg-neutral-50 dark:hover:bg-neutral-800 disabled:opacity-50"
+                className="flex-1 px-4 py-2 text-sm font-medium border border-zinc-200 dark:border-zinc-700 text-zinc-700 dark:text-zinc-300 rounded-lg hover:bg-zinc-50 dark:hover:bg-zinc-800 disabled:opacity-50 transition-colors"
               >
                 Cancel
               </button>
               <button
                 onClick={handleGenerate}
                 disabled={isPending}
-                className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+                className="flex-1 px-4 py-2 text-sm font-medium bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors"
               >
                 {isPending ? "Generating..." : "Generate"}
               </button>

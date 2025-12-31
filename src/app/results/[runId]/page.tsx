@@ -187,17 +187,17 @@ export default async function ResultsDashboardPage({ params }: Props) {
   return (
     <ResultsClientWrapper posts={postsForClient} runLabel={run.sourceLabel}>
       <ToastContainer />
-      <div className="min-h-screen flex flex-col">
+      <div className="min-h-screen flex flex-col bg-zinc-50 dark:bg-zinc-950">
         <AppHeader />
 
       <main className="flex-1">
-        <div className="max-w-6xl mx-auto px-6 py-8">
+        <div className="max-w-6xl mx-auto px-8 py-12">
           {/* Run header */}
-          <div className="mb-8">
+          <div className="mb-10">
             <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4 mb-4">
               <div className="min-w-0 flex-1">
-                <h1 className="text-xl sm:text-2xl font-bold mb-2 truncate">{run.sourceLabel}</h1>
-                <p className="text-sm sm:text-base text-neutral-600 dark:text-neutral-400">
+                <h1 className="text-xl sm:text-2xl font-bold mb-2 text-zinc-900 dark:text-zinc-100 truncate">{run.sourceLabel}</h1>
+                <p className="text-sm sm:text-base text-zinc-600 dark:text-zinc-400">
                   {posts.length > 0 && <span>{posts.length} posts</span>}
                   {posts.length > 0 && articleRecords.length > 0 && " • "}
                   {articleRecords.length > 0 && <span>{articleRecords.length} articles</span>}
@@ -221,12 +221,11 @@ export default async function ResultsDashboardPage({ params }: Props) {
             />
 
             {(run.status === "pending" || run.status === "processing") && (
-              <div className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+              <div className="p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <div className="relative">
-                      <div className="animate-spin h-6 w-6 border-2 border-blue-600 border-t-transparent rounded-full" />
-                      <div className="absolute inset-0 animate-ping h-6 w-6 border border-blue-400 rounded-full opacity-30" />
+                      <div className="animate-spin h-5 w-5 border-2 border-blue-600 border-t-transparent rounded-full" />
                     </div>
                     <div>
                       <span className="text-blue-700 dark:text-blue-300 font-medium">
@@ -242,12 +241,12 @@ export default async function ResultsDashboardPage({ params }: Props) {
                   {run.status === "processing" && (posts.length > 0 || articleRecords.length > 0) && (
                     <div className="flex items-center gap-3 text-sm">
                       {posts.length > 0 && (
-                        <span className="px-2.5 py-1 rounded-full bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300 font-medium">
+                        <span className="px-2.5 py-1 rounded-md bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 font-medium">
                           {posts.length} post{posts.length !== 1 ? "s" : ""}
                         </span>
                       )}
                       {articleRecords.length > 0 && (
-                        <span className="px-2.5 py-1 rounded-full bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 font-medium">
+                        <span className="px-2.5 py-1 rounded-md bg-sky-100 dark:bg-sky-900/40 text-sky-700 dark:text-sky-300 font-medium">
                           {articleRecords.length} article{articleRecords.length !== 1 ? "s" : ""}
                         </span>
                       )}
@@ -308,15 +307,15 @@ export default async function ResultsDashboardPage({ params }: Props) {
 
             {/* Collapsible original transcript */}
             {run.transcript && (
-              <details className="border border-neutral-200 dark:border-neutral-800 rounded-lg overflow-hidden">
-                <summary className="px-4 py-3 bg-neutral-50 dark:bg-neutral-900 cursor-pointer hover:bg-neutral-100 dark:hover:bg-neutral-800 list-none flex justify-between items-center">
-                  <span className="font-medium">Original Input</span>
-                  <span className="text-sm text-neutral-500">
+              <details className="border border-zinc-200 dark:border-zinc-800 rounded-lg overflow-hidden">
+                <summary className="px-4 py-3 bg-zinc-50 dark:bg-zinc-900 cursor-pointer hover:bg-zinc-100 dark:hover:bg-zinc-800 list-none flex justify-between items-center">
+                  <span className="font-medium text-zinc-900 dark:text-zinc-100">Original Input</span>
+                  <span className="text-sm text-zinc-500">
                     {run.transcript.length.toLocaleString()} characters
                   </span>
                 </summary>
-                <div className="p-4 max-h-64 overflow-y-auto">
-                  <pre className="whitespace-pre-wrap text-sm text-neutral-600 dark:text-neutral-400 font-sans">
+                <div className="p-4 max-h-64 overflow-y-auto bg-white dark:bg-zinc-900">
+                  <pre className="whitespace-pre-wrap text-sm text-zinc-600 dark:text-zinc-400 font-sans">
                     {run.transcript}
                   </pre>
                 </div>
@@ -372,28 +371,28 @@ function AngleBucket({
   const approvedCount = posts.filter(p => p.approved).length;
 
   return (
-    <details className="group border border-indigo-200/70 dark:border-indigo-800/50 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-300" open>
-      {/* Gradient slice bar at top */}
-      <div className="h-1 w-full bg-gradient-to-r from-indigo-400 via-violet-500 to-indigo-400" />
+    <details className="group border border-zinc-200 dark:border-zinc-800 rounded-xl overflow-hidden" open>
+      {/* Accent bar at top */}
+      <div className="h-0.5 w-full bg-blue-500" />
 
-      <summary className="px-4 sm:px-6 py-4 sm:py-5 bg-gradient-to-r from-indigo-50/80 via-slate-50/50 to-indigo-50/80 dark:from-indigo-950/40 dark:via-slate-900/50 dark:to-indigo-950/40 cursor-pointer hover:from-indigo-100/80 hover:via-slate-100/50 hover:to-indigo-100/80 dark:hover:from-indigo-950/60 dark:hover:via-slate-800/50 dark:hover:to-indigo-950/60 list-none transition-all duration-300">
+      <summary className="px-5 py-4 bg-zinc-50 dark:bg-zinc-900 cursor-pointer hover:bg-zinc-100 dark:hover:bg-zinc-800 list-none transition-colors">
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
           <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-            <span className="text-lg sm:text-xl flex-shrink-0">📝</span>
-            <span className="text-base sm:text-lg font-bold capitalize bg-clip-text text-transparent bg-gradient-to-r from-indigo-700 to-violet-600 dark:from-indigo-300 dark:to-violet-400 truncate">
+            <span className="text-lg flex-shrink-0">📝</span>
+            <span className="text-base font-semibold capitalize text-zinc-900 dark:text-zinc-100 truncate">
               {angle.replace("_", " ")}
             </span>
-            <span className="text-sm text-indigo-500 dark:text-indigo-400 hidden lg:inline">
+            <span className="text-sm text-zinc-500 dark:text-zinc-400 hidden lg:inline">
               {ANGLE_DESCRIPTIONS[angle]}
             </span>
           </div>
           <div className="flex items-center justify-between sm:justify-end gap-2 sm:gap-4 flex-shrink-0">
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full text-xs font-semibold bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300">
+              <span className="px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-md text-xs font-medium bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300">
                 {posts.length} ver{posts.length !== 1 ? "s" : ""}
               </span>
               {approvedCount > 0 && (
-                <span className="px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full text-xs font-bold bg-gradient-to-r from-emerald-500 to-green-500 text-white shadow-sm">
+                <span className="px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-md text-xs font-medium bg-emerald-500 text-white">
                   {approvedCount}✓
                 </span>
               )}
@@ -401,18 +400,18 @@ function AngleBucket({
             <div className="hidden sm:block">
               <GenerateMoreButton runId={runId} angle={angle} />
             </div>
-            <span className="text-indigo-400 group-open:rotate-180 transition-transform duration-300 flex-shrink-0">
+            <span className="text-zinc-400 group-open:rotate-180 transition-transform flex-shrink-0">
               ▼
             </span>
           </div>
         </div>
       </summary>
 
-      <div className="p-4 sm:p-6 bg-gradient-to-b from-slate-50/50 to-white dark:from-slate-900/50 dark:to-slate-900">
+      <div className="p-5 bg-white dark:bg-zinc-950">
         <div className="sm:hidden mb-4">
           <GenerateMoreButton runId={runId} angle={angle} />
         </div>
-        <div className="grid gap-4 sm:gap-5 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
           {posts.map((post) => (
             <PostCard key={post.id} post={post} runId={runId} />
           ))}
@@ -434,28 +433,28 @@ function ArticleBucket({
   const approvedCount = articles.filter(a => a.approved).length;
 
   return (
-    <details className="group border border-blue-200/70 dark:border-blue-800/50 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-300" open>
-      {/* Gradient slice bar at top */}
-      <div className="h-1 w-full bg-gradient-to-r from-blue-400 via-indigo-500 to-blue-400" />
+    <details className="group border border-zinc-200 dark:border-zinc-800 rounded-xl overflow-hidden" open>
+      {/* Accent bar at top */}
+      <div className="h-0.5 w-full bg-sky-500" />
 
-      <summary className="px-4 sm:px-6 py-4 sm:py-5 bg-gradient-to-r from-blue-50/80 via-indigo-50/50 to-blue-50/80 dark:from-blue-950/40 dark:via-indigo-950/30 dark:to-blue-950/40 cursor-pointer hover:from-blue-100/80 hover:via-indigo-100/50 hover:to-blue-100/80 dark:hover:from-blue-950/60 dark:hover:via-indigo-950/40 dark:hover:to-blue-950/60 list-none transition-all duration-300">
+      <summary className="px-5 py-4 bg-zinc-50 dark:bg-zinc-900 cursor-pointer hover:bg-zinc-100 dark:hover:bg-zinc-800 list-none transition-colors">
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
           <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-            <span className="text-lg sm:text-xl flex-shrink-0">📄</span>
-            <span className="text-base sm:text-lg font-bold capitalize bg-clip-text text-transparent bg-gradient-to-r from-blue-700 to-indigo-600 dark:from-blue-300 dark:to-indigo-400 truncate">
+            <span className="text-lg flex-shrink-0">📄</span>
+            <span className="text-base font-semibold capitalize text-zinc-900 dark:text-zinc-100 truncate">
               {angle.replace("_", " ")}
             </span>
-            <span className="text-sm text-blue-600 dark:text-blue-400 hidden lg:inline">
+            <span className="text-sm text-zinc-500 dark:text-zinc-400 hidden lg:inline">
               {ARTICLE_ANGLE_DESCRIPTIONS[angle]}
             </span>
           </div>
           <div className="flex items-center justify-between sm:justify-end gap-2 sm:gap-4 flex-shrink-0">
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full text-xs font-semibold bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300">
+              <span className="px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-md text-xs font-medium bg-sky-100 dark:bg-sky-900/40 text-sky-700 dark:text-sky-300">
                 {articles.length} ver{articles.length !== 1 ? "s" : ""}
               </span>
               {approvedCount > 0 && (
-                <span className="px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full text-xs font-bold bg-gradient-to-r from-emerald-500 to-green-500 text-white shadow-sm">
+                <span className="px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-md text-xs font-medium bg-emerald-500 text-white">
                   {approvedCount}✓
                 </span>
               )}
@@ -463,18 +462,18 @@ function ArticleBucket({
             <div className="hidden sm:block">
               <GenerateMoreArticlesButton runId={runId} angle={angle} />
             </div>
-            <span className="text-blue-400 group-open:rotate-180 transition-transform duration-300 flex-shrink-0">
+            <span className="text-zinc-400 group-open:rotate-180 transition-transform flex-shrink-0">
               ▼
             </span>
           </div>
         </div>
       </summary>
 
-      <div className="p-4 sm:p-6 bg-gradient-to-b from-blue-50/30 to-white dark:from-blue-950/20 dark:to-slate-900">
+      <div className="p-5 bg-white dark:bg-zinc-950">
         <div className="sm:hidden mb-4">
           <GenerateMoreArticlesButton runId={runId} angle={angle} />
         </div>
-        <div className="grid gap-4 sm:gap-5 md:grid-cols-2">
+        <div className="grid gap-5 md:grid-cols-2">
           {articles.map((article) => (
             <ArticleCard key={article.id} article={article} runId={runId} />
           ))}
@@ -486,52 +485,31 @@ function ArticleBucket({
 
 function StatusBadge({ status }: { status: string }) {
   const baseStyles: Record<string, string> = {
-    pending: "bg-gradient-to-r from-yellow-400 to-amber-500 text-white shadow-lg shadow-yellow-500/30",
-    processing: "bg-gradient-to-r from-blue-500 to-indigo-500 text-white shadow-lg shadow-blue-500/30",
-    complete: "bg-gradient-to-r from-green-500 to-emerald-500 text-white shadow-lg shadow-green-500/30",
-    failed: "bg-gradient-to-r from-red-500 to-rose-500 text-white shadow-lg shadow-red-500/30",
+    pending: "bg-amber-500 text-white",
+    processing: "bg-blue-500 text-white",
+    complete: "bg-emerald-500 text-white",
+    failed: "bg-red-500 text-white",
   };
 
-  const isActive = status === "pending" || status === "processing";
-
   return (
-    <span className="relative inline-flex">
-      {/* Pulsing glow for active states */}
-      {isActive && (
-        <span
-          className={`absolute inset-0 rounded-full animate-ping opacity-40 ${
-            status === "pending"
-              ? "bg-yellow-400"
-              : "bg-blue-500"
-          }`}
-          style={{ animationDuration: "1.5s" }}
-        />
-      )}
-      <span
-        className={`relative px-3.5 py-1.5 text-sm font-bold rounded-full ${baseStyles[status] || baseStyles.pending} ${
-          isActive ? "animate-pulse" : ""
-        }`}
-        style={isActive ? { animationDuration: "2s" } : undefined}
-      >
-        <span className="flex items-center gap-1.5">
-          {status === "processing" && (
-            <span className="w-2 h-2 bg-white rounded-full animate-bounce" style={{ animationDuration: "0.6s" }} />
-          )}
-          {status === "pending" && (
-            <span className="w-2 h-2 bg-white rounded-full animate-pulse" />
-          )}
-          {status === "complete" && (
-            <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
-              <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-            </svg>
-          )}
-          {status === "failed" && (
-            <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
-              <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
-            </svg>
-          )}
-          {status}
-        </span>
+    <span
+      className={`px-3 py-1.5 text-sm font-medium rounded-md ${baseStyles[status] || baseStyles.pending}`}
+    >
+      <span className="flex items-center gap-1.5">
+        {status === "processing" && (
+          <span className="w-1.5 h-1.5 bg-white rounded-full animate-pulse" />
+        )}
+        {status === "complete" && (
+          <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
+            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+          </svg>
+        )}
+        {status === "failed" && (
+          <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
+            <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+          </svg>
+        )}
+        {status}
       </span>
     </span>
   );
