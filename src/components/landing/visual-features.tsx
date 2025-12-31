@@ -210,7 +210,6 @@ export function VisualFeatures() {
               }`}
               style={{
                 transitionDelay: `${400 + i * 100}ms`,
-                transform: visible ? `translateY(${scrollY * (10 + i * 5)}px)` : undefined,
               }}
             >
               {/* Card image header */}

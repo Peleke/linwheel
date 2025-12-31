@@ -17,16 +17,20 @@ const contentTypes = [
 
 export function Hero() {
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [nextIndex, setNextIndex] = useState(1);
   const [isAnimating, setIsAnimating] = useState(false);
 
   useEffect(() => {
     const interval = setInterval(() => {
       setIsAnimating(true);
+
+      // After exit animation completes, update indices
       setTimeout(() => {
         setCurrentIndex((prev) => (prev + 1) % contentTypes.length);
+        setNextIndex((prev) => (prev + 1) % contentTypes.length);
         setIsAnimating(false);
-      }, 200);
-    }, 2500);
+      }, 400);
+    }, 3000);
 
     return () => clearInterval(interval);
   }, []);
@@ -61,18 +65,29 @@ export function Hero() {
           <span className="text-sm text-neutral-300">Now in public beta</span>
         </div>
 
-        {/* Headline with rotating text */}
+        {/* Headline with sliding text */}
         <h1 className="animate-fade-up-delay-1 text-5xl md:text-7xl font-bold tracking-tight mb-6 leading-tight">
           Turn{" "}
-          <span className="relative inline-block">
+          <span className="relative inline-block overflow-hidden h-[1.2em] align-bottom">
+            {/* Current text - exits by sliding down and fading */}
             <span
-              className={`inline-block transition-all duration-200 ${
+              className={`inline-block text-indigo-400 transition-all duration-400 ease-out ${
                 isAnimating
-                  ? "opacity-0 translate-y-2"
+                  ? "opacity-0 translate-y-full"
                   : "opacity-100 translate-y-0"
               }`}
             >
-              <span className="text-indigo-400">{contentTypes[currentIndex]}</span>
+              {contentTypes[currentIndex]}
+            </span>
+            {/* Next text - enters by sliding in from top */}
+            <span
+              className={`absolute left-0 top-0 inline-block text-indigo-400 transition-all duration-400 ease-out ${
+                isAnimating
+                  ? "opacity-100 translate-y-0"
+                  : "opacity-0 -translate-y-full"
+              }`}
+            >
+              {contentTypes[nextIndex]}
             </span>
           </span>
           <br />
