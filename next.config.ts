@@ -18,10 +18,6 @@ const nextConfig: NextConfig = {
       },
     ],
   },
-  // Include font files in serverless function bundle for text overlay
-  outputFileTracingIncludes: {
-    "/api/articles/[articleId]/carousel": ["./public/fonts/**/*"],
-  },
 };
 
 export default nextConfig;
