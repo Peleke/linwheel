@@ -2,9 +2,12 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { createClient } from "@/lib/supabase/client";
+import type { User } from "@supabase/supabase-js";
 
 export function Header() {
   const [scrolled, setScrolled] = useState(false);
+  const [user, setUser] = useState<User | null>(null);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -13,6 +16,13 @@ export function Header() {
 
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  useEffect(() => {
+    const supabase = createClient();
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      setUser(user);
+    });
   }, []);
 
   return (
@@ -44,20 +54,37 @@ export function Header() {
           >
             The 6 Angles
           </Link>
-          <Link
-            href="/generate"
-            className="glow-button px-5 py-2.5 rounded-lg text-sm font-medium text-white"
-          >
-            Try Free
-          </Link>
+          {user ? (
+            <Link
+              href="/generate"
+              className="glow-button px-5 py-2.5 rounded-lg text-sm font-medium text-white"
+            >
+              Dashboard
+            </Link>
+          ) : (
+            <>
+              <Link
+                href="/login"
+                className="text-sm text-neutral-400 hover:text-white transition-colors"
+              >
+                Sign in
+              </Link>
+              <Link
+                href="/login"
+                className="glow-button px-5 py-2.5 rounded-lg text-sm font-medium text-white"
+              >
+                Get Started
+              </Link>
+            </>
+          )}
         </nav>
 
         {/* Mobile menu button */}
         <Link
-          href="/generate"
+          href={user ? "/generate" : "/login"}
           className="md:hidden glow-button px-4 py-2 rounded-lg text-sm font-medium text-white"
         >
-          Try Free
+          {user ? "Dashboard" : "Get Started"}
         </Link>
       </div>
     </header>
