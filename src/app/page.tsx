@@ -3,6 +3,7 @@ import {
   Hero,
   PainPoints,
   HowItWorks,
+  VisualFeatures,
   AnglesGrid,
   CTASection,
   Footer,
@@ -16,6 +17,7 @@ export default function Home() {
         <Hero />
         <PainPoints />
         <HowItWorks />
+        <VisualFeatures />
         <AnglesGrid />
         <CTASection />
       </main>

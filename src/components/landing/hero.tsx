@@ -33,12 +33,12 @@ export function Hero() {
         <p className="animate-fade-up-delay-2 text-xl md:text-2xl text-neutral-400 mb-4 max-w-3xl mx-auto leading-relaxed">
           Paste a transcript. Get <span className="text-white font-medium">90+ ready-to-post</span> content pieces
           <br className="hidden md:block" />
-          in <span className="text-white font-medium">6 distinct voices</span>. In under 60 seconds.
+          in <span className="text-white font-medium">6 distinct voices</span>—with <span className="text-emerald-400 font-medium">AI cover images</span>.
         </p>
 
         {/* Social proof line */}
         <p className="animate-fade-up-delay-2 text-neutral-500 mb-10">
-          One transcript = a month of LinkedIn content
+          One transcript = a month of scroll-stopping LinkedIn content
         </p>
 
         {/* CTAs */}
@@ -64,7 +64,7 @@ export function Hero() {
         </div>
 
         {/* Stats preview */}
-        <div className="animate-fade-up-delay-3 flex flex-wrap justify-center gap-8 md:gap-16 pb-20 md:pb-0">
+        <div className="animate-fade-up-delay-3 flex flex-wrap justify-center gap-6 md:gap-12 pb-20 md:pb-0">
           <div className="text-center">
             <div className="text-3xl md:text-4xl font-bold gradient-text">90+</div>
             <div className="text-sm text-neutral-500">Posts per transcript</div>
@@ -72,6 +72,10 @@ export function Hero() {
           <div className="text-center">
             <div className="text-3xl md:text-4xl font-bold gradient-text">6</div>
             <div className="text-sm text-neutral-500">Distinct angles</div>
+          </div>
+          <div className="text-center">
+            <div className="text-3xl md:text-4xl font-bold text-emerald-400">AI</div>
+            <div className="text-sm text-neutral-500">Cover images</div>
           </div>
           <div className="text-center">
             <div className="text-3xl md:text-4xl font-bold gradient-text">&lt;60s</div>

@@ -49,6 +49,12 @@ export function Header() {
             How it works
           </Link>
           <Link
+            href="#visuals"
+            className="text-sm text-neutral-400 hover:text-white transition-colors"
+          >
+            Visual Content
+          </Link>
+          <Link
             href="#angles"
             className="text-sm text-neutral-400 hover:text-white transition-colors"
           >
