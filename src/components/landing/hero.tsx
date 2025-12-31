@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { ParticleBackground } from "./particle-background";
 
 export function Hero() {
@@ -9,6 +10,18 @@ export function Hero() {
       {/* Background effects */}
       <div className="absolute inset-0 grid-pattern" />
       <ParticleBackground />
+
+      {/* AI-generated hero visual */}
+      <div className="absolute inset-0 z-0">
+        <Image
+          src="/promo/hero-visual.png"
+          alt=""
+          fill
+          className="object-cover opacity-30 mix-blend-screen"
+          priority
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0a] via-[#0a0a0a]/80 to-transparent" />
+      </div>
 
       {/* Gradient orbs */}
       <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-indigo-600/20 rounded-full blur-3xl animate-pulse-glow" />

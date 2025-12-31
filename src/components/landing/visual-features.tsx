@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import Image from "next/image";
 
 const features = [
   {
@@ -105,6 +106,45 @@ export function VisualFeatures() {
             LinkedIn&apos;s algorithm loves visuals. We generate custom cover images and carousels
             for every piece of content—so you stand out in the feed.
           </p>
+        </div>
+
+        {/* Visual showcase - AI generated images */}
+        <div
+          className={`mb-16 transition-all duration-700 delay-250 ${
+            visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-12"
+          }`}
+        >
+          <div className="grid md:grid-cols-2 gap-6">
+            {/* Transformation visual */}
+            <div className="relative aspect-video rounded-2xl overflow-hidden group">
+              <Image
+                src="/promo/visual-showcase-1.png"
+                alt="Content transformation visualization"
+                fill
+                className="object-cover transition-transform duration-700 group-hover:scale-105"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+              <div className="absolute bottom-4 left-4 right-4">
+                <p className="text-white text-sm font-medium">Raw transcript → Polished content</p>
+                <p className="text-neutral-400 text-xs">AI transforms chaos into engagement</p>
+              </div>
+            </div>
+
+            {/* Carousel visual */}
+            <div className="relative aspect-video rounded-2xl overflow-hidden group">
+              <Image
+                src="/promo/visual-showcase-2.png"
+                alt="Carousel generation visualization"
+                fill
+                className="object-cover transition-transform duration-700 group-hover:scale-105"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+              <div className="absolute bottom-4 left-4 right-4">
+                <p className="text-white text-sm font-medium">5-slide carousels, one click</p>
+                <p className="text-neutral-400 text-xs">LinkedIn&apos;s favorite content format</p>
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Stats row */}
