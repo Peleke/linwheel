@@ -128,7 +128,7 @@ export async function generateCarousel(
     // 7. Generate BACKGROUND images for each page (text added via overlay)
     const imageRequests: ImageGenerationRequest[] = pages.map((page) => ({
       prompt: page.prompt,
-      negativePrompt: "cluttered, busy, text, words, letters, cartoon, stock photo, generic, lightbulb, gears, brain",
+      negativePrompt: "text, words, letters, numbers, digits, numerals, typography, writing, labels, captions, watermarks, logos, symbols, icons, cluttered, busy, cartoon, stock photo, generic, lightbulb, gears, brain, people, faces, hands, human figures",
       headlineText: "", // Don't pass headline to T2I - we overlay it ourselves
       stylePreset,
       aspectRatio: "1:1" as const, // LinkedIn carousels are square
@@ -367,6 +367,189 @@ async function generatePdf(pages: CarouselPage[]): Promise<string> {
   // Note: In production, upload to blob storage instead
   const base64 = Buffer.from(pdfBytes).toString("base64");
   return `data:application/pdf;base64,${base64}`;
+}
+
+export interface SlideRegenerationOptions {
+  /** Override the default T2I provider */
+  provider?: T2IProviderType;
+  /** Model to use */
+  model?: string;
+  /** Custom prompt for this slide (if not provided, generates new one via LLM) */
+  customPrompt?: string;
+  /** Regenerate the prompt via LLM (default: true if no customPrompt) */
+  regeneratePrompt?: boolean;
+}
+
+/**
+ * Regenerate a single slide in an existing carousel
+ */
+export async function regenerateCarouselSlide(
+  articleId: string,
+  slideNumber: number,
+  options: SlideRegenerationOptions = {}
+): Promise<CarouselGenerationResult> {
+  const { provider, model, customPrompt, regeneratePrompt = !customPrompt } = options;
+
+  try {
+    // 1. Fetch the article
+    const article = await db.query.articles.findFirst({
+      where: eq(articles.id, articleId),
+    });
+
+    if (!article) {
+      return { success: false, error: "Article not found" };
+    }
+
+    // 2. Get existing carousel intent
+    const carouselIntent = await db.query.articleCarouselIntents.findFirst({
+      where: eq(articleCarouselIntents.articleId, articleId),
+    });
+
+    if (!carouselIntent || !carouselIntent.pages) {
+      return { success: false, error: "Carousel not found. Generate a full carousel first." };
+    }
+
+    const pages = carouselIntent.pages as CarouselPage[];
+    const slideIndex = slideNumber - 1;
+
+    if (slideIndex < 0 || slideIndex >= pages.length) {
+      return { success: false, error: `Invalid slide number. Must be 1-${pages.length}` };
+    }
+
+    const targetPage = pages[slideIndex];
+    const stylePreset = (carouselIntent.stylePreset || "typographic_minimal") as StylePreset;
+
+    // 3. Determine the prompt to use
+    let newPrompt = targetPage.prompt;
+
+    if (customPrompt) {
+      // Use provided custom prompt
+      newPrompt = customPrompt;
+    } else if (regeneratePrompt) {
+      // Generate a new prompt via LLM for just this slide
+      console.log(`[Carousel] Regenerating prompt for slide ${slideNumber} via LLM...`);
+      const captionResult = await generateSlideCaptions(article);
+      if (captionResult.success && captionResult.captions?.[slideIndex]) {
+        const newCaption = captionResult.captions[slideIndex];
+        newPrompt = newCaption.imagePrompt;
+        // Also update headline/caption if LLM gave us new ones
+        targetPage.headlineText = newCaption.headline;
+        targetPage.caption = newCaption.caption;
+      }
+    }
+
+    targetPage.prompt = newPrompt;
+    console.log(`[Carousel] Regenerating slide ${slideNumber} with prompt: ${newPrompt.substring(0, 100)}...`);
+
+    // 4. Generate the new background image
+    const imageRequest: ImageGenerationRequest = {
+      prompt: newPrompt,
+      negativePrompt: "text, words, letters, numbers, digits, numerals, typography, writing, labels, captions, watermarks, logos, symbols, icons, cluttered, busy, cartoon, stock photo, generic, lightbulb, gears, brain, people, faces, hands, human figures",
+      headlineText: "",
+      stylePreset,
+      aspectRatio: "1:1" as const,
+      quality: "hd" as const,
+    };
+
+    const [imageResult] = await generateImages([imageRequest], provider, model);
+
+    // 5. Apply text overlay
+    let finalImageUrl: string | undefined;
+    let error: string | undefined;
+
+    try {
+      if (imageResult.success && imageResult.imageUrl) {
+        console.log(`[Carousel] Slide ${slideNumber}: Applying text overlay...`);
+        const overlaidBuffer = await overlayCarouselTextFromUrl(imageResult.imageUrl, {
+          headline: targetPage.headlineText,
+          caption: targetPage.caption,
+          slideType: targetPage.slideType,
+          slideNumber: targetPage.pageNumber,
+          size: 1080,
+        });
+
+        const filename = `carousel-${carouselIntent.id}-page-${slideNumber}-v${Date.now()}.png`;
+        finalImageUrl = await uploadImage(overlaidBuffer, filename, "image/png");
+        console.log(`[Carousel] Slide ${slideNumber}: Saved to ${finalImageUrl}`);
+      } else {
+        // T2I failed - create fallback
+        console.log(`[Carousel] Slide ${slideNumber}: T2I failed, generating fallback...`);
+        const fallbackBuffer = await generateFallbackSlide({
+          headline: targetPage.headlineText,
+          caption: targetPage.caption,
+          slideType: targetPage.slideType,
+          slideNumber: targetPage.pageNumber,
+          size: 1080,
+        });
+        const filename = `carousel-${carouselIntent.id}-page-${slideNumber}-fallback-v${Date.now()}.png`;
+        finalImageUrl = await uploadImage(fallbackBuffer, filename, "image/png");
+      }
+    } catch (overlayError) {
+      console.error(`[Carousel] Slide ${slideNumber}: Overlay failed:`, overlayError);
+      error = overlayError instanceof Error ? overlayError.message : "Overlay failed";
+
+      // Try fallback
+      try {
+        const fallbackBuffer = await generateFallbackSlide({
+          headline: targetPage.headlineText,
+          caption: targetPage.caption,
+          slideType: targetPage.slideType,
+          slideNumber: targetPage.pageNumber,
+          size: 1080,
+        });
+        const filename = `carousel-${carouselIntent.id}-page-${slideNumber}-fallback-v${Date.now()}.png`;
+        finalImageUrl = await uploadImage(fallbackBuffer, filename, "image/png");
+        error = undefined;
+      } catch {
+        console.error(`[Carousel] Slide ${slideNumber}: Fallback also failed`);
+      }
+    }
+
+    // 6. Update the page in the array
+    targetPage.imageUrl = finalImageUrl;
+    targetPage.generatedAt = new Date();
+    targetPage.generationError = error || imageResult.error;
+
+    pages[slideIndex] = targetPage;
+
+    // 7. Regenerate PDF with updated pages
+    let pdfUrl: string | undefined;
+    const successfulPages = pages.filter((p) => p.imageUrl);
+    if (successfulPages.length > 0) {
+      try {
+        pdfUrl = await generatePdf(successfulPages);
+      } catch (pdfError) {
+        console.error("[Carousel] PDF regeneration failed:", pdfError);
+      }
+    }
+
+    // 8. Update carousel intent
+    await db
+      .update(articleCarouselIntents)
+      .set({
+        pages,
+        generatedPdfUrl: pdfUrl || carouselIntent.generatedPdfUrl,
+        generatedAt: new Date(),
+        generationProvider: provider || imageResult.provider,
+      })
+      .where(eq(articleCarouselIntents.id, carouselIntent.id));
+
+    console.log(`[Carousel] Successfully regenerated slide ${slideNumber}`);
+
+    return {
+      success: true,
+      carouselId: carouselIntent.id,
+      pdfUrl: pdfUrl || carouselIntent.generatedPdfUrl || undefined,
+      pages,
+      provider: provider || (imageResult.provider as T2IProviderType),
+    };
+  } catch (error) {
+    console.error("[Carousel] Slide regeneration failed:", error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Slide regeneration failed",
+    };
+  }
 }
 
 /**

@@ -36,6 +36,7 @@ export function CarouselButton({ articleId, isApproved }: CarouselButtonProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isExpanded, setIsExpanded] = useState(false);
+  const [regeneratingSlide, setRegeneratingSlide] = useState<number | null>(null);
 
   // Fetch carousel status
   const fetchStatus = async () => {
@@ -115,6 +116,46 @@ export function CarouselButton({ articleId, isApproved }: CarouselButtonProps) {
       setError(err instanceof Error ? err.message : "Delete failed");
     } finally {
       setIsDeleting(false);
+    }
+  };
+
+  // Regenerate a single slide
+  const handleRegenerateSlide = async (slideNumber: number) => {
+    setRegeneratingSlide(slideNumber);
+    setError(null);
+
+    // Get provider preference
+    const prefs = getStoredPreferences();
+
+    try {
+      const res = await fetch(`/api/articles/${articleId}/carousel`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          slideNumber,
+          provider: prefs.provider,
+          model: prefs.provider === "fal" ? prefs.falModel : prefs.openaiModel,
+          regeneratePrompt: true, // Always generate a fresh prompt via LLM
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || "Slide regeneration failed");
+      }
+
+      // Update status with new pages
+      setStatus(prev => prev ? {
+        ...prev,
+        pages: data.pages,
+        pdfUrl: data.pdfUrl,
+        generatedAt: new Date().toISOString(),
+      } : null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Slide regeneration failed");
+    } finally {
+      setRegeneratingSlide(null);
     }
   };
 
@@ -239,6 +280,8 @@ export function CarouselButton({ articleId, isApproved }: CarouselButtonProps) {
                     pages={status?.pages || []}
                     pdfUrl={status?.pdfUrl}
                     articleId={articleId}
+                    onRegenerateSlide={handleRegenerateSlide}
+                    regeneratingSlide={regeneratingSlide}
                   />
                 </div>
               ) : !isLoading && isApproved ? (

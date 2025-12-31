@@ -17,9 +17,11 @@ interface CarouselPreviewProps {
   pages: CarouselPage[];
   pdfUrl?: string;
   articleId: string;
+  onRegenerateSlide?: (slideNumber: number) => Promise<void>;
+  regeneratingSlide?: number | null;
 }
 
-export function CarouselPreview({ pages, pdfUrl, articleId }: CarouselPreviewProps) {
+export function CarouselPreview({ pages, pdfUrl, articleId, onRegenerateSlide, regeneratingSlide }: CarouselPreviewProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [direction, setDirection] = useState(0);
 
@@ -127,6 +129,42 @@ export function CarouselPreview({ pages, pdfUrl, articleId }: CarouselPreviewPro
                     )}
                   </div>
                 </div>
+              )}
+
+              {/* Regenerate button (top left) */}
+              {onRegenerateSlide && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onRegenerateSlide(currentPage.pageNumber);
+                  }}
+                  disabled={regeneratingSlide !== null}
+                  className={`absolute top-3 left-3 px-3 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center gap-1.5 ${
+                    regeneratingSlide === currentPage.pageNumber
+                      ? "bg-amber-500 text-white cursor-wait"
+                      : regeneratingSlide !== null
+                      ? "bg-white/50 text-slate-400 cursor-not-allowed"
+                      : "bg-white/90 hover:bg-white text-slate-700 hover:scale-105 shadow-lg"
+                  }`}
+                  title={`Regenerate slide ${currentPage.pageNumber}`}
+                >
+                  {regeneratingSlide === currentPage.pageNumber ? (
+                    <>
+                      <svg className="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                      </svg>
+                      Regenerating...
+                    </>
+                  ) : (
+                    <>
+                      <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                      </svg>
+                      Regenerate
+                    </>
+                  )}
+                </button>
               )}
 
               {/* Slide info overlay */}

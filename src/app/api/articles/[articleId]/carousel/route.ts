@@ -2,12 +2,13 @@
  * Article Carousel API
  *
  * POST /api/articles/[articleId]/carousel - Generate carousel
+ * PATCH /api/articles/[articleId]/carousel - Regenerate a single slide
  * GET /api/articles/[articleId]/carousel - Get carousel status
  * DELETE /api/articles/[articleId]/carousel - Delete carousel
  */
 
 import { NextResponse } from "next/server";
-import { generateCarousel, getCarouselStatus, deleteCarousel } from "@/lib/carousel";
+import { generateCarousel, getCarouselStatus, deleteCarousel, regenerateCarouselSlide } from "@/lib/carousel";
 import type { T2IProviderType, StylePreset } from "@/lib/t2i/types";
 
 interface CarouselRequest {
@@ -19,6 +20,19 @@ interface CarouselRequest {
   stylePreset?: StylePreset;
   /** Force regeneration, bypassing cache */
   forceRegenerate?: boolean;
+}
+
+interface SlideRegenerateRequest {
+  /** Which slide to regenerate (1-indexed) */
+  slideNumber: number;
+  /** Override the default T2I provider */
+  provider?: T2IProviderType;
+  /** Model to use */
+  model?: string;
+  /** Custom prompt for this slide */
+  customPrompt?: string;
+  /** Whether to regenerate the prompt via LLM */
+  regeneratePrompt?: boolean;
 }
 
 /**
@@ -92,6 +106,57 @@ export async function DELETE(
     console.error("[API] Carousel delete error:", error);
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Delete failed" },
+      { status: 500 }
+    );
+  }
+}
+
+/**
+ * PATCH - Regenerate a single slide in the carousel
+ */
+export async function PATCH(
+  request: Request,
+  { params }: { params: Promise<{ articleId: string }> }
+) {
+  try {
+    const { articleId } = await params;
+    const body = (await request.json().catch(() => ({}))) as SlideRegenerateRequest;
+
+    if (!body.slideNumber || typeof body.slideNumber !== "number") {
+      return NextResponse.json(
+        { error: "slideNumber is required and must be a number" },
+        { status: 400 }
+      );
+    }
+
+    console.log(`[API] Regenerating slide ${body.slideNumber} for article ${articleId}`);
+
+    const result = await regenerateCarouselSlide(articleId, body.slideNumber, {
+      provider: body.provider,
+      model: body.model,
+      customPrompt: body.customPrompt,
+      regeneratePrompt: body.regeneratePrompt,
+    });
+
+    if (!result.success) {
+      return NextResponse.json(
+        { error: result.error },
+        { status: result.error?.includes("not found") ? 404 : 500 }
+      );
+    }
+
+    return NextResponse.json({
+      success: true,
+      carouselId: result.carouselId,
+      pdfUrl: result.pdfUrl,
+      pages: result.pages,
+      regeneratedSlide: body.slideNumber,
+      provider: result.provider,
+    });
+  } catch (error) {
+    console.error("[API] Slide regeneration error:", error);
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : "Slide regeneration failed" },
       { status: 500 }
     );
   }
