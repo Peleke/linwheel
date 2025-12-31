@@ -12,20 +12,22 @@ import type { Article } from "@/db/schema";
 const SlideContentSchema = z.object({
   slides: z.array(
     z.object({
-      // Optional fields that LLM might omit
+      // Optional fields that LLM might omit or use different names
       slideNumber: z.number().optional(),
+      slide: z.number().optional(), // Claude sometimes uses "slide" instead of "slideNumber"
+      slide_number: z.number().optional(), // snake_case variant
       slideType: z.enum(["title", "content", "cta"]).optional(),
       // Required content - accept both camelCase and snake_case
       headline: z.string(),
-      caption: z.string().optional(), // Optional supporting text
+      caption: z.string().nullable().optional(), // LLM returns null for empty captions
       imagePrompt: z.string().optional(),
       image_prompt: z.string().optional(), // Claude sometimes uses snake_case
     }).transform((s) => ({
       // Normalize to consistent format - slideNumber will be set later
-      slideNumber: s.slideNumber ?? 0, // Will be overridden by index
+      slideNumber: s.slideNumber ?? s.slide ?? s.slide_number ?? 0, // Will be overridden by index
       slideType: s.slideType ?? "content" as const,
       headline: s.headline.substring(0, 50), // Shorter for punchy feel
-      caption: s.caption?.substring(0, 80), // Optional caption
+      caption: s.caption?.substring(0, 80) ?? undefined, // Convert null to undefined
       imagePrompt: (s.imagePrompt || s.image_prompt || "Abstract professional gradient with soft blue tones and minimal geometric shapes, editorial magazine photography, soft studio lighting, calm sophisticated mood").substring(0, 350),
     }))
   ),

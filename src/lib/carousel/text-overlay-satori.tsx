@@ -18,6 +18,9 @@ import type { ReactNode } from "react";
 // WASM initialization state
 let wasmInitialized = false;
 
+// Mutex to prevent concurrent Resvg rendering (WASM is not thread-safe)
+let renderLock: Promise<void> = Promise.resolve();
+
 async function ensureWasmInitialized(): Promise<void> {
   if (wasmInitialized) return;
 
@@ -90,6 +93,7 @@ interface CoverOverlayOptions {
 
 /**
  * Render JSX to PNG buffer using Satori + Resvg
+ * Uses a mutex lock to prevent concurrent WASM access (not thread-safe)
  */
 async function renderToPng(
   element: ReactNode,
@@ -101,7 +105,7 @@ async function renderToPng(
 
   const font = getFontData();
 
-  // Convert JSX to SVG using Satori
+  // Convert JSX to SVG using Satori (this part is safe to run concurrently)
   const svg = await satori(element, {
     width,
     height,
@@ -115,16 +119,29 @@ async function renderToPng(
     ],
   });
 
-  // Convert SVG to PNG using Resvg
-  const resvg = new Resvg(svg, {
-    fitTo: {
-      mode: "width",
-      value: width,
-    },
-  });
+  // Use mutex lock for Resvg rendering (WASM is not thread-safe)
+  let resolve: () => void;
+  const currentLock = renderLock;
+  renderLock = new Promise<void>((r) => { resolve = r; });
 
-  const pngData = resvg.render();
-  return Buffer.from(pngData.asPng());
+  try {
+    // Wait for previous render to complete
+    await currentLock;
+
+    // Convert SVG to PNG using Resvg
+    const resvg = new Resvg(svg, {
+      fitTo: {
+        mode: "width",
+        value: width,
+      },
+    });
+
+    const pngData = resvg.render();
+    return Buffer.from(pngData.asPng());
+  } finally {
+    // Release the lock
+    resolve!();
+  }
 }
 
 /**
