@@ -12,7 +12,6 @@ const contentTypes = [
   "meeting notes",
   "conference talks",
   "white papers",
-  "interview recordings",
 ];
 
 export function Hero() {
@@ -21,10 +20,7 @@ export function Hero() {
 
   useEffect(() => {
     const interval = setInterval(() => {
-      // Start exit animation
       setIsExiting(true);
-
-      // After exit completes, swap text and enter
       setTimeout(() => {
         setCurrentIndex((prev) => (prev + 1) % contentTypes.length);
         setIsExiting(false);
@@ -64,31 +60,30 @@ export function Hero() {
           <span className="text-sm text-neutral-300">Now in public beta</span>
         </div>
 
-        {/* Headline with sliding text - FIXED WIDTH container */}
-        <h1 className="animate-fade-up-delay-1 text-5xl md:text-7xl font-bold tracking-tight mb-6 leading-tight">
-          <span className="block md:inline">Turn </span>
-          {/* Fixed-width container prevents layout shift */}
-          <span className="inline-block w-[280px] md:w-[420px] text-left relative h-[1.15em] overflow-hidden align-bottom">
+        {/* Headline - three lines for clean layout */}
+        <h1 className="animate-fade-up-delay-1 text-4xl sm:text-5xl md:text-7xl font-bold tracking-tight mb-6 leading-[1.15]">
+          {/* Line 1: Turn */}
+          <span className="block">Turn</span>
+          {/* Line 2: [rotating content type] */}
+          <span className="block relative overflow-hidden h-[1.2em] mb-1">
             <span
-              className={`absolute inset-0 flex items-center text-indigo-400 transition-all duration-300 ease-out ${
+              className={`absolute inset-x-0 text-indigo-400 transition-all duration-300 ease-out ${
                 isExiting
                   ? "translate-y-full opacity-0"
                   : "translate-y-0 opacity-100"
               }`}
-              style={{
-                transitionTimingFunction: isExiting ? "ease-in" : "ease-out",
-              }}
             >
               {contentTypes[currentIndex]}
             </span>
           </span>
-          <br />
-          <span>into </span>
-          <span className="gradient-text">LinkedIn gold.</span>
+          {/* Line 3: into LinkedIn gold. */}
+          <span className="block">
+            into <span className="gradient-text">LinkedIn gold.</span>
+          </span>
         </h1>
 
         {/* Subheadline */}
-        <p className="animate-fade-up-delay-2 text-xl md:text-2xl text-neutral-400 mb-4 max-w-3xl mx-auto leading-relaxed">
+        <p className="animate-fade-up-delay-2 text-lg sm:text-xl md:text-2xl text-neutral-400 mb-4 max-w-3xl mx-auto leading-relaxed">
           Paste any content. Get <span className="text-white font-medium">90+ ready-to-post</span> pieces{" "}
           in <span className="text-white font-medium">6 distinct voices</span>—with <span className="text-emerald-400 font-medium">AI cover images</span>.
         </p>
