@@ -44,7 +44,7 @@ export function PostCard({ post, runId }: PostCardProps) {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
-      className="group relative"
+      className="group relative min-w-0 overflow-hidden"
     >
       {/* Glow effect behind card */}
       <div
@@ -107,9 +107,9 @@ export function PostCard({ post, runId }: PostCardProps) {
 
         {/* Integrated image preview (when available and expanded or always show thumbnail) */}
         {hasImage && (
-          <div className="px-4 pb-2">
+          <div className="px-4 pb-2 overflow-hidden">
             <div
-              className="relative aspect-[1.91/1] rounded-lg overflow-hidden bg-slate-100 dark:bg-slate-800 cursor-pointer group/img"
+              className="relative w-full aspect-[1.91/1] rounded-lg overflow-hidden bg-slate-100 dark:bg-slate-800 cursor-pointer group/img"
               onClick={() => setIsExpanded(!isExpanded)}
             >
               <Image
@@ -117,7 +117,7 @@ export function PostCard({ post, runId }: PostCardProps) {
                 alt={post.imageIntent!.headlineText || "Post cover"}
                 fill
                 className="object-cover transition-transform duration-300 group-hover/img:scale-105"
-                sizes="(max-width: 768px) 100vw, 400px"
+                sizes="(max-width: 768px) 90vw, 400px"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent opacity-0 group-hover/img:opacity-100 transition-opacity" />
               <div className="absolute bottom-2 left-2 right-2 opacity-0 group-hover/img:opacity-100 transition-opacity">

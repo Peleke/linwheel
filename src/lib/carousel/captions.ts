@@ -8,32 +8,55 @@
 import { generateStructured, z } from "@/lib/llm";
 import type { Article } from "@/db/schema";
 
-// Zod schema for slide content - flexible to handle LLM variations
-const SlideContentSchema = z.object({
-  slides: z.array(
-    z.object({
-      // Optional fields that LLM might omit or use different names
-      slideNumber: z.number().optional(),
-      slide: z.number().optional(), // Claude sometimes uses "slide" instead of "slideNumber"
-      slide_number: z.number().optional(), // snake_case variant
-      slideType: z.enum(["title", "content", "cta"]).optional(),
-      // Required content - accept both camelCase and snake_case
-      headline: z.string(),
-      caption: z.string().nullable().optional(), // LLM returns null for empty captions
-      imagePrompt: z.string().optional(),
-      image_prompt: z.string().optional(), // Claude sometimes uses snake_case
-    }).transform((s) => ({
-      // Normalize to consistent format - slideNumber will be set later
-      slideNumber: s.slideNumber ?? s.slide ?? s.slide_number ?? 0, // Will be overridden by index
-      slideType: s.slideType ?? "content" as const,
-      headline: s.headline.substring(0, 50), // Shorter for punchy feel
-      caption: s.caption?.substring(0, 80) ?? undefined, // Convert null to undefined
-      imagePrompt: (s.imagePrompt || s.image_prompt || "Flowing abstract ribbons of deep indigo and electric cyan light, silky translucent layers with soft rim lighting, editorial magazine cover photography, elegant professional atmosphere, no text no numbers no letters").substring(0, 400),
-    }))
-  ),
+// Individual slide schema for validation
+const SlideSchema = z.object({
+  // Optional fields that LLM might omit or use different names
+  slideNumber: z.number().optional(),
+  slide: z.number().optional(), // Claude sometimes uses "slide" instead of "slideNumber"
+  slide_number: z.number().optional(), // snake_case variant
+  slideType: z.enum(["title", "content", "cta"]).optional(),
+  // Required content - accept both camelCase and snake_case
+  headline: z.string(),
+  caption: z.string().nullable().optional(), // LLM returns null for empty captions
+  imagePrompt: z.string().optional(),
+  image_prompt: z.string().optional(), // Claude sometimes uses snake_case
+}).transform((s) => ({
+  // Normalize to consistent format - slideNumber will be set later
+  slideNumber: s.slideNumber ?? s.slide ?? s.slide_number ?? 0, // Will be overridden by index
+  slideType: s.slideType ?? "content" as const,
+  headline: s.headline.substring(0, 50), // Shorter for punchy feel
+  caption: s.caption?.substring(0, 80) ?? undefined, // Convert null to undefined
+  imagePrompt: (s.imagePrompt || s.image_prompt || "Flowing abstract ribbons of deep indigo and electric cyan light, silky translucent layers with soft rim lighting, editorial magazine cover photography, elegant professional atmosphere, no text no numbers no letters").substring(0, 400),
+}));
+
+// Schema that handles both array format { slides: [...] } and object format { slide1: {...}, slide2: {...} }
+const SlideContentSchema = z.union([
+  // Standard array format
+  z.object({
+    slides: z.array(SlideSchema),
+  }),
+  // Object format with numbered keys (slide1, slide2, etc.)
+  z.record(z.string(), SlideSchema),
+]).transform((data) => {
+  // If it's already the array format, return as-is
+  if ("slides" in data && Array.isArray(data.slides)) {
+    return { slides: data.slides };
+  }
+
+  // Convert object format { slide1: {...}, slide2: {...} } to { slides: [...] }
+  const slideEntries = Object.entries(data)
+    .filter(([key]) => key.match(/^slide\d+$/i))
+    .sort(([a], [b]) => {
+      const numA = parseInt(a.replace(/\D/g, ""));
+      const numB = parseInt(b.replace(/\D/g, ""));
+      return numA - numB;
+    })
+    .map(([, value]) => value);
+
+  return { slides: slideEntries };
 });
 
-type SlideContent = z.infer<typeof SlideContentSchema>;
+type SlideContent = { slides: z.infer<typeof SlideSchema>[] };
 
 interface SlideCaption {
   slideNumber: number;
