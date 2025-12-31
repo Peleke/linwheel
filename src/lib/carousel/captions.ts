@@ -28,7 +28,7 @@ const SlideContentSchema = z.object({
       slideType: s.slideType ?? "content" as const,
       headline: s.headline.substring(0, 50), // Shorter for punchy feel
       caption: s.caption?.substring(0, 80) ?? undefined, // Convert null to undefined
-      imagePrompt: (s.imagePrompt || s.image_prompt || "Abstract professional gradient with soft blue tones and minimal geometric shapes, editorial magazine photography, soft studio lighting, calm sophisticated mood").substring(0, 350),
+      imagePrompt: (s.imagePrompt || s.image_prompt || "Flowing abstract ribbons of deep indigo and electric cyan light, silky translucent layers with soft rim lighting, editorial magazine cover photography, elegant professional atmosphere, no text no numbers no letters").substring(0, 400),
     }))
   ),
 });
@@ -78,11 +78,41 @@ RULES FOR CAPTIONS:
 3. Captions should be conversational and add value
 4. Set caption to null for slides 1, 3, and 5
 
-RULES FOR IMAGE PROMPTS (FLUX MODEL):
-1. Front-load important elements
-2. Aim for 30-60 words
-3. Abstract professional visuals only - geometric shapes, gradients, no people
-4. Think: editorial photography, magazine covers
+RULES FOR IMAGE PROMPTS (FLUX MODEL) - CRITICAL:
+
+⚠️ ABSOLUTELY NO TEXT, NUMBERS, LETTERS, WORDS, OR TYPOGRAPHY IN IMAGES ⚠️
+The image must be a PURE VISUAL BACKGROUND. Text overlays are added separately.
+
+Each prompt must be 40-80 words and include ALL of these elements:
+1. SUBJECT: Specific abstract visual (NOT generic "abstract shapes")
+2. COLOR PALETTE: Exact colors with transitions (e.g., "deep indigo flowing into electric cyan")
+3. LIGHTING: Specific lighting setup (e.g., "soft rim lighting from upper left", "dramatic backlit glow")
+4. TEXTURE/MATERIAL: Physical quality (e.g., "liquid glass", "brushed metal", "silk fabric", "crystalline")
+5. MOOD/ATMOSPHERE: Emotional tone (e.g., "confident and bold", "serene contemplation", "energetic momentum")
+6. PHOTOGRAPHY STYLE: Professional reference (e.g., "editorial magazine cover", "high-end product photography")
+
+EXCELLENT IMAGE PROMPT EXAMPLES:
+
+Slide 1 (title - dramatic impact):
+"Massive crystalline structure emerging from deep purple mist, faceted surfaces catching dramatic golden rim light, electric blue core glowing through translucent layers, editorial magazine cover photography, confident powerful atmosphere, 4K ultra sharp detail"
+
+Slide 2 (content - balanced professional):
+"Flowing streams of liquid metal in rose gold and silver, interweaving ribbons suspended in motion, soft diffused studio lighting from above, subtle depth of field blur, high-end cosmetic advertisement aesthetic, sophisticated contemplative mood"
+
+Slide 3 (content - dynamic energy):
+"Geometric glass panels refracting light into prismatic spectrum, deep teal transitioning to warm coral at edges, dramatic side lighting creating bold shadows, architectural photography style, forward-moving energetic atmosphere"
+
+Slide 4 (content - contemplative depth):
+"Layered translucent spheres floating in dark space, soft cyan and magenta gradients within each orb, gentle volumetric fog, f/1.4 shallow depth of field, fine art photography aesthetic, mysterious yet inviting mood"
+
+Slide 5 (cta - uplifting momentum):
+"Golden light rays bursting through abstract cloud formations, warm amber center fading to soft lavender edges, particles of light floating upward, inspirational sunrise photography, hopeful aspirational energy, cinematic wide shot"
+
+BAD PROMPTS TO AVOID:
+❌ "Abstract gradient background" - too generic, produces flat boring results
+❌ "Professional business imagery" - vague, no visual specifics
+❌ "Modern tech aesthetic" - no colors, lighting, or textures specified
+❌ "Colorful abstract shapes" - will produce random blob nonsense
 
 GOOD HEADLINE SEQUENCE EXAMPLE:
 1. "90% of AI projects fail" (no caption)
@@ -182,11 +212,11 @@ function generateFallbackCaptions(article: Article): SlideCaption[] {
       : article.sections || [];
 
   const fallbackPrompts = [
-    "Bold abstract geometric forms radiating from center, deep purple flowing into electric blue gradient, editorial magazine cover photography, soft diffused studio lighting, modern professional aesthetic, confident powerful mood",
-    "Elegant flowing abstract shapes in motion, teal and warm coral accents against dark backdrop, high-end product photography lighting, clean editorial style, sophisticated contemplative atmosphere",
-    "Layered translucent geometric panels floating in deep space, subtle blue gradients with cyan edge glow, f/2.8 depth of field, professional magazine quality, mysterious yet inviting mood",
-    "Dynamic intersecting geometric planes creating depth, warm amber contrasting cool blue tones, editorial photography composition, soft rim lighting, energetic forward-moving atmosphere",
-    "Ascending abstract shapes reaching upward, golden light rays through soft clouds, inspirational landscape photography style, warm optimistic tones, hopeful aspirational mood",
+    "Massive crystalline formation emerging from deep purple mist, faceted obsidian surfaces catching dramatic golden rim light, electric blue core energy glowing through translucent layers, editorial magazine cover photography, confident powerful atmosphere, 4K ultra sharp detail, no text no numbers no letters",
+    "Flowing streams of liquid metal in rose gold and burnished silver, interweaving ribbons suspended in graceful motion, soft diffused studio lighting from above, subtle depth of field blur, high-end cosmetic advertisement aesthetic, sophisticated contemplative mood, no text no numbers no letters",
+    "Geometric glass panels refracting light into prismatic spectrum bands, deep teal transitioning to warm coral at edges, dramatic side lighting creating bold architectural shadows, professional architectural photography style, forward-moving energetic atmosphere, no text no numbers no letters",
+    "Layered translucent spheres floating in dark cosmic space, soft cyan and magenta gradients glowing within each orb, gentle volumetric fog drifting between layers, f/1.4 shallow depth of field, fine art photography aesthetic, mysterious yet inviting mood, no text no numbers no letters",
+    "Golden light rays bursting through abstract cloud formations, warm amber center fading to soft lavender edges, luminous particles of light floating upward, inspirational sunrise photography style, hopeful aspirational energy, cinematic wide shot composition, no text no numbers no letters",
   ];
 
   const captions: SlideCaption[] = [
