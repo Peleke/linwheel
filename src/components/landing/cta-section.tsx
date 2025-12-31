@@ -1,17 +1,30 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 
 export function CTASection() {
   return (
     <section className="py-24 md:py-32 relative overflow-hidden">
+      {/* Background image */}
+      <div className="absolute inset-0 z-0">
+        <Image
+          src="/promo/cta-bg.png"
+          alt=""
+          fill
+          className="object-cover opacity-50 mix-blend-screen"
+        />
+        <div className="absolute inset-0 bg-gradient-to-r from-[#0a0a0a] via-transparent to-[#0a0a0a]" />
+        <div className="absolute inset-0 bg-gradient-to-b from-[#0a0a0a]/80 via-transparent to-[#0a0a0a]" />
+      </div>
+
       {/* Background gradient */}
-      <div className="absolute inset-0 bg-gradient-to-b from-indigo-950/20 via-purple-950/30 to-black" />
+      <div className="absolute inset-0 bg-gradient-to-b from-indigo-950/20 via-purple-950/30 to-black z-0" />
 
       {/* Glow orbs */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-indigo-600/10 rounded-full blur-3xl" />
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-indigo-600/10 rounded-full blur-3xl z-0" />
 
-      <div className="relative max-w-3xl mx-auto px-6 text-center">
+      <div className="relative z-10 max-w-3xl mx-auto px-6 text-center">
         <h2 className="text-3xl md:text-5xl font-bold mb-6">
           Stop letting insights
           <br />

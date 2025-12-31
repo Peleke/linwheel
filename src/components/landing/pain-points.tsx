@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import Image from "next/image";
 
 const painPoints = [
   "2 hours formatting one podcast into posts",
@@ -42,10 +43,22 @@ export function PainPoints() {
 
   return (
     <section ref={sectionRef} className="py-24 md:py-32 relative overflow-hidden">
-      {/* Blade divider effect at top */}
-      <div className="absolute top-0 left-0 right-0 h-32 bg-gradient-to-b from-black/50 to-transparent" />
+      {/* Background image */}
+      <div className="absolute inset-0 z-0">
+        <Image
+          src="/promo/pain-points-bg.png"
+          alt=""
+          fill
+          className="object-cover opacity-40 mix-blend-screen"
+        />
+        <div className="absolute inset-0 bg-gradient-to-r from-[#0a0a0a] via-transparent to-[#0a0a0a]" />
+        <div className="absolute inset-0 bg-gradient-to-b from-[#0a0a0a] via-transparent to-[#0a0a0a]" />
+      </div>
 
-      <div className="max-w-4xl mx-auto px-6">
+      {/* Blade divider effect at top */}
+      <div className="absolute top-0 left-0 right-0 h-32 bg-gradient-to-b from-black/50 to-transparent z-10" />
+
+      <div className="relative z-10 max-w-4xl mx-auto px-6">
         <div className="space-y-4 mb-12">
           {painPoints.map((point, i) => (
             <div

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 
 export function Footer() {
   return (
@@ -7,8 +8,13 @@ export function Footer() {
         <div className="flex flex-col md:flex-row justify-between items-center gap-6">
           {/* Logo & tagline */}
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
-              <span className="text-white font-bold text-sm">L</span>
+            <div className="relative w-10 h-10 rounded-lg overflow-hidden">
+              <Image
+                src="/logo.png"
+                alt="LinWheel"
+                fill
+                className="object-cover"
+              />
             </div>
             <div>
               <span className="font-semibold">LinWheel</span>

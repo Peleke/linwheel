@@ -87,14 +87,14 @@ export function AnglesGrid() {
               visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
             }`}
           >
-            6 Angles. <span className="gradient-text">90+ Posts.</span> One Click.
+            6 Angles. <span className="gradient-text">90+ Posts.</span> <span className="text-emerald-400">AI Images.</span>
           </h2>
           <p
             className={`text-lg text-neutral-400 transition-all duration-700 delay-100 ${
               visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
             }`}
           >
-            Each insight gets rewritten in 6 distinct voices for maximum reach.
+            Each insight gets rewritten in 6 distinct voices—with custom cover images to make every post pop.
           </p>
         </div>
 
