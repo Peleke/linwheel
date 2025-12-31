@@ -4,7 +4,7 @@
 
 import { NextResponse } from "next/server";
 import { requireAuth } from "@/lib/auth";
-import { getUsage } from "@/lib/usage";
+import { getFullUsage } from "@/lib/usage";
 
 export async function GET() {
   try {
@@ -18,13 +18,22 @@ export async function GET() {
       );
     }
 
-    const usage = await getUsage(user.id);
+    const usage = await getFullUsage(user.id);
     return NextResponse.json({
       email: user.email,
       id: user.id,
-      used: usage.count,
-      limit: usage.limit === Infinity ? "Unlimited" : usage.limit,
-      remaining: usage.remaining === Infinity ? "Unlimited" : usage.remaining,
+      // Content generations
+      contentUsed: usage.content.count,
+      contentLimit: usage.content.limit === Infinity ? "Unlimited" : usage.content.limit,
+      contentRemaining: usage.content.remaining === Infinity ? "Unlimited" : usage.content.remaining,
+      // Image generations
+      imageUsed: usage.images.count,
+      imageLimit: usage.images.limit === Infinity ? "Unlimited" : usage.images.limit,
+      imageRemaining: usage.images.remaining === Infinity ? "Unlimited" : usage.images.remaining,
+      // Legacy fields (for backwards compatibility)
+      used: usage.content.count,
+      limit: usage.content.limit === Infinity ? "Unlimited" : usage.content.limit,
+      remaining: usage.content.remaining === Infinity ? "Unlimited" : usage.content.remaining,
       subscriptionStatus: usage.subscriptionStatus,
     });
   } catch (error) {

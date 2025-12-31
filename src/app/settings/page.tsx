@@ -13,6 +13,15 @@ interface LLMProviderStatus {
 interface UserInfo {
   email: string | null;
   id: string;
+  // Content generations
+  contentUsed: number;
+  contentLimit: number | string;
+  contentRemaining: number | string;
+  // Image generations
+  imageUsed: number;
+  imageLimit: number | string;
+  imageRemaining: number | string;
+  // Legacy fields
   used: number;
   limit: number | string;
   remaining: number | string;
@@ -480,15 +489,69 @@ export default function SettingsPage() {
                 <span className="text-sm text-neutral-500">Email</span>
                 <span className="text-sm font-medium">{userInfo.email || "—"}</span>
               </div>
-              <div className="flex items-center justify-between py-2 border-b border-neutral-100 dark:border-neutral-700">
-                <span className="text-sm text-neutral-500">Generations Used</span>
-                <span className="text-sm font-medium">{userInfo.used} / {userInfo.limit}</span>
+
+              {/* Content Generations */}
+              <div className="pt-2">
+                <h3 className="text-xs font-semibold uppercase tracking-wider text-neutral-400 mb-2">
+                  Content Generations
+                </h3>
+                <div className="flex items-center justify-between py-1">
+                  <span className="text-sm text-neutral-500">Used</span>
+                  <span className="text-sm font-medium">
+                    {userInfo.contentUsed ?? userInfo.used} / {userInfo.contentLimit ?? userInfo.limit}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between py-1">
+                  <span className="text-sm text-neutral-500">Remaining</span>
+                  {(() => {
+                    const remaining = userInfo.contentRemaining ?? userInfo.remaining;
+                    const isLow = typeof remaining === "number" && remaining <= 2;
+                    return (
+                      <span className={`text-sm font-medium ${isLow ? "text-amber-600" : "text-green-600"}`}>
+                        {remaining}
+                      </span>
+                    );
+                  })()}
+                </div>
               </div>
-              <div className="flex items-center justify-between py-2">
-                <span className="text-sm text-neutral-500">Remaining</span>
-                <span className={`text-sm font-medium ${typeof userInfo.remaining === "number" && userInfo.remaining <= 2 ? "text-amber-600" : "text-green-600"}`}>
-                  {userInfo.remaining}
-                </span>
+
+              {/* Image Generations */}
+              <div className="pt-2 border-t border-neutral-100 dark:border-neutral-700">
+                <h3 className="text-xs font-semibold uppercase tracking-wider text-neutral-400 mb-2">
+                  Image Generations
+                </h3>
+                <div className="flex items-center justify-between py-1">
+                  <span className="text-sm text-neutral-500">Used</span>
+                  <span className="text-sm font-medium">
+                    {userInfo.imageUsed ?? 0} / {userInfo.imageLimit ?? 25}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between py-1">
+                  <span className="text-sm text-neutral-500">Remaining</span>
+                  {(() => {
+                    const remaining = userInfo.imageRemaining ?? 25;
+                    const isLow = typeof remaining === "number" && remaining <= 2;
+                    return (
+                      <span className={`text-sm font-medium ${isLow ? "text-amber-600" : "text-green-600"}`}>
+                        {remaining}
+                      </span>
+                    );
+                  })()}
+                </div>
+              </div>
+
+              {/* Subscription Status */}
+              <div className="pt-2 border-t border-neutral-100 dark:border-neutral-700">
+                <div className="flex items-center justify-between py-1">
+                  <span className="text-sm text-neutral-500">Plan</span>
+                  <span className={`text-sm font-medium px-2 py-0.5 rounded-full ${
+                    userInfo.subscriptionStatus === "pro"
+                      ? "bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300"
+                      : "bg-neutral-100 text-neutral-600 dark:bg-neutral-700 dark:text-neutral-300"
+                  }`}>
+                    {userInfo.subscriptionStatus === "pro" ? "Pro" : "Free"}
+                  </span>
+                </div>
               </div>
             </div>
           ) : (

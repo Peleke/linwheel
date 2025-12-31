@@ -10,6 +10,8 @@
 import { NextResponse } from "next/server";
 import { generateCarousel, getCarouselStatus, deleteCarousel, regenerateCarouselSlide } from "@/lib/carousel";
 import type { T2IProviderType, StylePreset } from "@/lib/t2i/types";
+import { getCurrentUser } from "@/lib/auth";
+import { incrementImageUsage, canGenerateImages } from "@/lib/usage";
 
 interface CarouselRequest {
   /** Override the default T2I provider */
@@ -46,6 +48,25 @@ export async function POST(
     const { articleId } = await params;
     const body = (await request.json().catch(() => ({}))) as CarouselRequest;
 
+    // Check user and image usage limits
+    const user = await getCurrentUser();
+    if (user) {
+      const { allowed, usage } = await canGenerateImages(user.id);
+      if (!allowed) {
+        return NextResponse.json(
+          {
+            error: "Image generation limit reached",
+            usage: {
+              used: usage.count,
+              limit: usage.limit,
+              remaining: usage.remaining,
+            }
+          },
+          { status: 403 }
+        );
+      }
+    }
+
     const action = body.forceRegenerate ? "Regenerating" : "Generating";
     console.log(`[API] ${action} carousel for article ${articleId} with provider: ${body.provider || 'default'}`);
 
@@ -61,6 +82,12 @@ export async function POST(
         { error: result.error },
         { status: result.error === "Article not found" ? 404 : 500 }
       );
+    }
+
+    // Increment image usage after successful generation (5 slides per carousel)
+    const slideCount = result.pages?.length || 5;
+    if (user) {
+      await incrementImageUsage(user.id, slideCount);
     }
 
     return NextResponse.json({
@@ -129,6 +156,25 @@ export async function PATCH(
       );
     }
 
+    // Check user and image usage limits
+    const user = await getCurrentUser();
+    if (user) {
+      const { allowed, usage } = await canGenerateImages(user.id);
+      if (!allowed) {
+        return NextResponse.json(
+          {
+            error: "Image generation limit reached",
+            usage: {
+              used: usage.count,
+              limit: usage.limit,
+              remaining: usage.remaining,
+            }
+          },
+          { status: 403 }
+        );
+      }
+    }
+
     console.log(`[API] Regenerating slide ${body.slideNumber} for article ${articleId}`);
 
     const result = await regenerateCarouselSlide(articleId, body.slideNumber, {
@@ -143,6 +189,11 @@ export async function PATCH(
         { error: result.error },
         { status: result.error?.includes("not found") ? 404 : 500 }
       );
+    }
+
+    // Increment image usage after successful slide regeneration (1 image)
+    if (user) {
+      await incrementImageUsage(user.id, 1);
     }
 
     return NextResponse.json({

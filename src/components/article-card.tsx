@@ -148,9 +148,9 @@ export function ArticleCard({
 
         {/* Integrated cover image (always visible when available) */}
         {hasImage && (
-          <div className="px-4 pb-3">
+          <div className="px-4 pb-3 overflow-hidden">
             <div
-              className="relative aspect-[1.91/1] rounded-lg overflow-hidden bg-slate-100 dark:bg-slate-800 cursor-pointer group/img"
+              className="relative w-full aspect-[1.91/1] rounded-lg overflow-hidden bg-slate-100 dark:bg-slate-800 cursor-pointer group/img"
               onClick={() => setIsExpanded(!isExpanded)}
             >
               <Image
@@ -158,7 +158,7 @@ export function ArticleCard({
                 alt={article.imageIntent!.headlineText || "Article cover"}
                 fill
                 className="object-cover transition-transform duration-300 group-hover/img:scale-105"
-                sizes="(max-width: 768px) 100vw, 600px"
+                sizes="(max-width: 768px) 90vw, 600px"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
               <div className="absolute bottom-3 left-3 right-3">
