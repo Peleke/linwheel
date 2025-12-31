@@ -41,52 +41,68 @@ export function PostCard({ post, runId }: PostCardProps) {
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 12 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.25 }}
-      className="group relative min-w-0 overflow-hidden"
+      initial={{ opacity: 0, y: 20, scale: 0.98 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      transition={{
+        duration: 0.35,
+        ease: [0.25, 0.46, 0.45, 0.94],
+      }}
+      whileHover={{
+        y: -3,
+        transition: { duration: 0.2, ease: "easeOut" }
+      }}
+      className="group relative"
     >
-      <div
-        className={`relative rounded-xl overflow-hidden transition-all duration-200 ${
-          post.approved
-            ? "bg-white dark:bg-zinc-900 border-l-2 border-l-emerald-500 border border-zinc-200 dark:border-zinc-800 border-l-emerald-500"
-            : "bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-700"
-        } hover:shadow-md dark:hover:shadow-zinc-900/50`}
+      <motion.div
+        className="relative rounded-xl overflow-hidden bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800"
+        whileHover={{
+          boxShadow: "0 16px 32px -8px rgba(0, 0, 0, 0.1), 0 8px 16px -8px rgba(0, 0, 0, 0.06)",
+        }}
+        transition={{ duration: 0.2 }}
       >
+        {/* Accent top bar */}
+        <div className={`h-1 w-full ${post.approved ? "bg-gradient-to-r from-emerald-400 to-emerald-500" : "bg-gradient-to-r from-blue-400 to-blue-500"}`} />
 
-        {/* Card header - title with version badge */}
-        <div className="px-5 py-4 flex items-start justify-between gap-3">
-          <div className="flex-1 min-w-0">
-            <h3
-              className="font-semibold text-zinc-900 dark:text-zinc-100 truncate cursor-default"
-              title={post.hook}
-            >
-              {displayTitle}
-            </h3>
-            <div className="flex items-center gap-2.5 mt-1.5">
-              <span className="text-xs text-zinc-500 dark:text-zinc-500">
-                v{post.versionNumber ?? 1}
-              </span>
-              {hasImage && (
-                <span className="text-xs text-blue-600 dark:text-blue-400 flex items-center gap-1">
-                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+        {/* Card header */}
+        <div className="px-4 py-3">
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex-1 min-w-0">
+              <h3
+                className="font-semibold text-zinc-900 dark:text-zinc-100 text-sm leading-snug line-clamp-2"
+                title={post.hook}
+              >
+                {displayTitle}
+              </h3>
+              <div className="flex items-center gap-2 mt-1.5">
+                <span className="inline-flex items-center gap-1 text-xs text-zinc-500 dark:text-zinc-400">
+                  <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A2 2 0 013 12V7a4 4 0 014-4z" />
                   </svg>
-                  Image ready
+                  v{post.versionNumber ?? 1}
                 </span>
-              )}
+                {hasImage && (
+                  <span className="inline-flex items-center gap-1 text-xs text-emerald-600 dark:text-emerald-400">
+                    <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                    </svg>
+                    <span className="sr-only">Image ready</span>
+                  </span>
+                )}
+              </div>
             </div>
+            {post.approved && (
+              <span className="shrink-0 inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded-full bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400">
+                <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                </svg>
+              </span>
+            )}
           </div>
-          {post.approved && (
-            <span className="shrink-0 px-2.5 py-1 text-xs font-medium rounded-md bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400">
-              Approved
-            </span>
-          )}
         </div>
 
         {/* Integrated image preview */}
         {hasImage && (
-          <div className="px-5 pb-3 overflow-hidden">
+          <div className="px-4 pb-3">
             <div
               className="relative w-full aspect-[1.91/1] rounded-lg overflow-hidden bg-zinc-100 dark:bg-zinc-800 cursor-pointer group/img"
               onClick={() => setIsExpanded(!isExpanded)}
@@ -95,116 +111,121 @@ export function PostCard({ post, runId }: PostCardProps) {
                 src={post.imageIntent!.generatedImageUrl!}
                 alt={post.imageIntent!.headlineText || "Post cover"}
                 fill
-                className="object-cover transition-transform duration-300 group-hover/img:scale-[1.02]"
+                className="object-cover transition-transform duration-500 group-hover/img:scale-105"
                 sizes="(max-width: 768px) 90vw, 400px"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover/img:opacity-100 transition-opacity" />
-              <div className="absolute bottom-2 left-2 right-2 opacity-0 group-hover/img:opacity-100 transition-opacity">
-                <p className="text-white text-xs font-medium drop-shadow-lg truncate">
-                  {post.imageIntent!.headlineText}
-                </p>
-              </div>
+              <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent opacity-0 group-hover/img:opacity-100 transition-opacity duration-300" />
             </div>
           </div>
         )}
 
-        {/* Expandable content */}
-        <div className="px-5 pb-4">
+        {/* Expand button */}
+        <div className="px-4 pb-3">
           <button
             onClick={() => setIsExpanded(!isExpanded)}
-            className="text-sm text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 transition-colors flex items-center gap-1.5"
+            className="inline-flex items-center gap-1.5 text-xs font-medium text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors"
           >
-            <motion.span
+            <motion.svg
               animate={{ rotate: isExpanded ? 180 : 0 }}
               transition={{ duration: 0.2 }}
-              className="text-xs"
+              className="w-3.5 h-3.5"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={2}
             >
-              ▼
-            </motion.span>
-            {isExpanded ? "Collapse" : "View full post"}
+              <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+            </motion.svg>
+            {isExpanded ? "Less" : "More"}
           </button>
-
-          <AnimatePresence>
-            {isExpanded && (
-              <motion.div
-                initial={{ height: 0, opacity: 0 }}
-                animate={{ height: "auto", opacity: 1 }}
-                exit={{ height: 0, opacity: 0 }}
-                transition={{ duration: 0.25, ease: "easeOut" }}
-                className="overflow-hidden"
-              >
-                <div className="mt-4 pt-4 border-t border-zinc-100 dark:border-zinc-800">
-                  {/* Full Post Text */}
-                  <div className="prose prose-sm prose-zinc dark:prose-invert max-w-none prose-p:my-3 prose-p:leading-relaxed">
-                    <ReactMarkdown>
-                      {post.fullText.replace(/\n(?!\n)/g, '\n\n')}
-                    </ReactMarkdown>
-                  </div>
-
-                  {/* Image details (collapsible) */}
-                  {post.imageIntent && (
-                    <div className="mt-5 pt-4 border-t border-zinc-100 dark:border-zinc-800">
-                      <div className="flex items-center justify-between">
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setShowImageDetails(!showImageDetails);
-                          }}
-                          className="text-xs text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-300 flex items-center gap-1"
-                        >
-                          <motion.span
-                            animate={{ rotate: showImageDetails ? 90 : 0 }}
-                            transition={{ duration: 0.15 }}
-                          >
-                            ›
-                          </motion.span>
-                          Image prompt details
-                        </button>
-                        <RegeneratePromptButton
-                          id={post.id}
-                          isArticle={false}
-                          hasIntent={!!post.imageIntent}
-                        />
-                      </div>
-
-                      <AnimatePresence>
-                        {showImageDetails && (
-                          <motion.div
-                            initial={{ height: 0, opacity: 0 }}
-                            animate={{ height: "auto", opacity: 1 }}
-                            exit={{ height: 0, opacity: 0 }}
-                            className="overflow-hidden"
-                          >
-                            <div className="mt-2 p-3 bg-zinc-50 dark:bg-zinc-800/50 rounded-lg text-xs font-mono text-zinc-600 dark:text-zinc-400">
-                              <p className="truncate" title={post.imageIntent.prompt}>
-                                <span className="text-emerald-600 dark:text-emerald-400">+</span> {post.imageIntent.prompt}
-                              </p>
-                              <p className="truncate mt-1" title={post.imageIntent.negativePrompt}>
-                                <span className="text-rose-600 dark:text-rose-400">−</span> {post.imageIntent.negativePrompt}
-                              </p>
-                            </div>
-                            <div className="mt-3">
-                              <ImagePreview
-                                intentId={post.imageIntent.id}
-                                isArticle={false}
-                                generatedImageUrl={post.imageIntent.generatedImageUrl}
-                                headlineText={post.imageIntent.headlineText}
-                                isApproved={post.approved ?? false}
-                              />
-                            </div>
-                          </motion.div>
-                        )}
-                      </AnimatePresence>
-                    </div>
-                  )}
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
         </div>
 
-        {/* Actions */}
-        <div className="px-5 py-3 border-t border-zinc-100 dark:border-zinc-800 flex justify-between items-center bg-zinc-50/50 dark:bg-zinc-900/50">
+        {/* Expandable content */}
+        <AnimatePresence>
+          {isExpanded && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: "auto", opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.25, ease: "easeOut" }}
+              className="overflow-hidden"
+            >
+              <div className="px-4 pb-4 pt-2 border-t border-zinc-100 dark:border-zinc-800">
+                {/* Full Post Text */}
+                <div className="prose prose-sm prose-zinc dark:prose-invert max-w-none prose-p:my-2 prose-p:leading-relaxed text-sm">
+                  <ReactMarkdown>
+                    {post.fullText.replace(/\n(?!\n)/g, '\n\n')}
+                  </ReactMarkdown>
+                </div>
+
+                {/* Image details (collapsible) */}
+                {post.imageIntent && (
+                  <div className="mt-4 pt-3 border-t border-zinc-100 dark:border-zinc-800">
+                    <div className="flex items-center justify-between">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setShowImageDetails(!showImageDetails);
+                        }}
+                        className="inline-flex items-center gap-1 text-xs text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-300 transition-colors"
+                      >
+                        <motion.svg
+                          animate={{ rotate: showImageDetails ? 90 : 0 }}
+                          transition={{ duration: 0.15 }}
+                          className="w-3 h-3"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                          strokeWidth={2}
+                        >
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                        </motion.svg>
+                        Prompt
+                      </button>
+                      <RegeneratePromptButton
+                        id={post.id}
+                        isArticle={false}
+                        hasIntent={!!post.imageIntent}
+                      />
+                    </div>
+
+                    <AnimatePresence>
+                      {showImageDetails && (
+                        <motion.div
+                          initial={{ height: 0, opacity: 0 }}
+                          animate={{ height: "auto", opacity: 1 }}
+                          exit={{ height: 0, opacity: 0 }}
+                          className="overflow-hidden"
+                        >
+                          <div className="mt-2 p-3 bg-zinc-50 dark:bg-zinc-800/50 rounded-lg text-xs font-mono text-zinc-600 dark:text-zinc-400">
+                            <p className="truncate" title={post.imageIntent.prompt}>
+                              <span className="text-emerald-600 dark:text-emerald-400">+</span> {post.imageIntent.prompt}
+                            </p>
+                            <p className="truncate mt-1" title={post.imageIntent.negativePrompt}>
+                              <span className="text-rose-600 dark:text-rose-400">−</span> {post.imageIntent.negativePrompt}
+                            </p>
+                          </div>
+                          <div className="mt-3">
+                            <ImagePreview
+                              intentId={post.imageIntent.id}
+                              isArticle={false}
+                              generatedImageUrl={post.imageIntent.generatedImageUrl}
+                              headlineText={post.imageIntent.headlineText}
+                              isApproved={post.approved ?? false}
+                            />
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Action bar - icon-based */}
+        <div className="px-4 py-2.5 border-t border-zinc-100 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/50 flex items-center justify-between gap-2">
           <ApprovalButtons
             postId={post.id}
             approved={post.approved ?? false}
@@ -214,7 +235,7 @@ export function PostCard({ post, runId }: PostCardProps) {
           />
           <CopyButton text={post.fullText} />
         </div>
-      </div>
+      </motion.div>
     </motion.div>
   );
 }
