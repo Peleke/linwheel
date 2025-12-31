@@ -4,6 +4,8 @@ import { imageIntents } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { generateImage } from "@/lib/t2i";
 import type { StylePreset, T2IProviderType } from "@/lib/t2i";
+import { overlayCoverTextFromUrl } from "@/lib/carousel/text-overlay-satori";
+import { uploadImage } from "@/lib/storage";
 
 interface RouteParams {
   params: Promise<{ intentId: string }>;
@@ -118,7 +120,8 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
 /**
  * POST /api/posts/image-intents/[intentId]
  *
- * Triggers image generation for the intent
+ * Triggers image generation for the intent.
+ * Generates T2I background, overlays headline text with Satori, uploads to storage.
  */
 export async function POST(request: NextRequest, { params }: RouteParams) {
   try {
@@ -141,12 +144,12 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       );
     }
 
-    // Generate the image
+    // Generate the background image (T2I is unreliable with text, so don't pass headline)
     const result = await generateImage(
       {
         prompt: intent.prompt,
         negativePrompt: intent.negativePrompt,
-        headlineText: intent.headlineText,
+        headlineText: "", // Don't include text in T2I prompt - we overlay it ourselves
         stylePreset: intent.stylePreset as StylePreset,
         aspectRatio: "1.91:1",
         quality: "hd",
@@ -155,26 +158,17 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       model
     );
 
-    // Update the database with the result
-    const updateData = result.success
-      ? {
-          generatedImageUrl: result.imageUrl,
-          generatedAt: new Date(),
-          generationProvider: result.provider,
-          generationError: null,
-        }
-      : {
+    if (!result.success || !result.imageUrl) {
+      // T2I failed - update DB with error
+      await db
+        .update(imageIntents)
+        .set({
           generationError: result.error,
           generatedAt: new Date(),
           generationProvider: result.provider,
-        };
+        })
+        .where(eq(imageIntents.id, intentId));
 
-    await db
-      .update(imageIntents)
-      .set(updateData)
-      .where(eq(imageIntents.id, intentId));
-
-    if (!result.success) {
       return NextResponse.json(
         {
           success: false,
@@ -185,9 +179,42 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       );
     }
 
+    // Overlay headline text on the background using Satori (works on Vercel)
+    let finalImageUrl = result.imageUrl;
+
+    if (intent.headlineText) {
+      try {
+        console.log(`[PostImage] Overlaying text on cover image...`);
+        const compositedBuffer = await overlayCoverTextFromUrl(result.imageUrl, {
+          headline: intent.headlineText,
+          width: 1200,
+          height: 628,
+        });
+
+        // Upload to storage
+        const filename = `post-cover-${intentId}.png`;
+        finalImageUrl = await uploadImage(compositedBuffer, filename, "image/png");
+        console.log(`[PostImage] Uploaded composited image: ${finalImageUrl}`);
+      } catch (overlayError) {
+        // If overlay fails, fall back to the raw T2I image
+        console.error("[PostImage] Text overlay failed, using raw T2I image:", overlayError);
+      }
+    }
+
+    // Update the database with the result
+    await db
+      .update(imageIntents)
+      .set({
+        generatedImageUrl: finalImageUrl,
+        generatedAt: new Date(),
+        generationProvider: result.provider,
+        generationError: null,
+      })
+      .where(eq(imageIntents.id, intentId));
+
     return NextResponse.json({
       success: true,
-      imageUrl: result.imageUrl,
+      imageUrl: finalImageUrl,
       provider: result.provider,
       metadata: result.metadata,
     });

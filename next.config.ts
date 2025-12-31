@@ -18,6 +18,12 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  // Include font files in serverless function bundles for Satori text overlay
+  outputFileTracingIncludes: {
+    "/api/articles/[articleId]/carousel": ["./public/fonts/**/*"],
+    "/api/posts/image-intents/[intentId]": ["./public/fonts/**/*"],
+    "/api/articles/image-intents/[intentId]": ["./public/fonts/**/*"],
+  },
 };
 
 export default nextConfig;
