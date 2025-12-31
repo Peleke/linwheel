@@ -14,7 +14,7 @@ import fs from "fs/promises";
 import path from "path";
 import { db } from "@/db";
 import { articles, articleCarouselIntents, carouselSlideVersions, type CarouselPage, type CarouselSlideVersion } from "@/db/schema";
-import { eq, and, desc } from "drizzle-orm";
+import { eq, and, desc, sql } from "drizzle-orm";
 import { generateImages } from "@/lib/t2i";
 import type { T2IProviderType, StylePreset, ImageGenerationRequest } from "@/lib/t2i/types";
 import { uploadImage } from "@/lib/storage";
@@ -633,11 +633,31 @@ export async function getCarouselStatus(articleId: string) {
     return { exists: false };
   }
 
+  // Fetch version counts for each slide
+  let pagesWithVersions = intent.pages;
+  if (intent.pages && intent.pages.length > 0) {
+    const versionCounts = await db
+      .select({
+        slideNumber: carouselSlideVersions.slideNumber,
+        count: sql<number>`count(*)`,
+      })
+      .from(carouselSlideVersions)
+      .where(eq(carouselSlideVersions.carouselIntentId, intent.id))
+      .groupBy(carouselSlideVersions.slideNumber);
+
+    const countMap = new Map(versionCounts.map(v => [v.slideNumber, v.count]));
+
+    pagesWithVersions = intent.pages.map(page => ({
+      ...page,
+      versionCount: countMap.get(page.pageNumber) || 1,
+    }));
+  }
+
   return {
     exists: true,
     id: intent.id,
     pageCount: intent.pageCount,
-    pages: intent.pages,
+    pages: pagesWithVersions,
     pdfUrl: intent.generatedPdfUrl,
     generatedAt: intent.generatedAt,
     provider: intent.generationProvider,

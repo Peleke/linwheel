@@ -4,17 +4,19 @@ import { useEffect, useState, useCallback } from "react";
 import { useImagePreferences, type ImagePreferences } from "@/hooks/use-image-preferences";
 import { useLLMPreferences, type LLMPreferences, type LLMProvider } from "@/hooks/use-llm-preferences";
 import { AppHeader } from "@/components/app-header";
-import type { T2IProviderType } from "@/lib/t2i/types";
-
-interface ProviderStatus {
-  openai: boolean;
-  fal: boolean;
-  comfyui: boolean;
-}
 
 interface LLMProviderStatus {
   claude: boolean;
   openai: boolean;
+}
+
+interface UserInfo {
+  email: string | null;
+  id: string;
+  used: number;
+  limit: number | string;
+  remaining: number | string;
+  subscriptionStatus: "free" | "pro";
 }
 
 interface VoiceProfile {
@@ -44,16 +46,12 @@ export default function SettingsPage() {
     setOpenaiModel: setLLMOpenaiModel,
   } = useLLMPreferences();
 
-  const [providerStatus, setProviderStatus] = useState<ProviderStatus>({
-    openai: false,
-    fal: false,
-    comfyui: false,
-  });
-
   const [llmProviderStatus, setLLMProviderStatus] = useState<LLMProviderStatus>({
     claude: false,
     openai: false,
   });
+
+  const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
 
   // Voice profile state
   const [voiceProfiles, setVoiceProfiles] = useState<VoiceProfile[]>([]);
@@ -75,24 +73,24 @@ export default function SettingsPage() {
     }
   }, []);
 
-  // Fetch provider status on mount
+  // Fetch user info and provider status on mount
   useEffect(() => {
-    // Fetch image provider status
-    fetch("/api/images/generate")
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.providers) {
-          setProviderStatus(data.providers);
-        }
-      })
-      .catch(console.error);
-
     // Fetch LLM provider status
     fetch("/api/llm/status")
       .then((res) => res.json())
       .then((data) => {
         if (data.providers) {
           setLLMProviderStatus(data.providers);
+        }
+      })
+      .catch(console.error);
+
+    // Fetch user info and usage
+    fetch("/api/usage")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.used !== undefined) {
+          setUserInfo(data);
         }
       })
       .catch(console.error);
@@ -271,148 +269,44 @@ export default function SettingsPage() {
             </div>
           )}
 
-          {/* Note about server-side preference */}
-          <div className="p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg">
-            <p className="text-sm text-amber-800 dark:text-amber-200">
-              <strong>Note:</strong> Provider preference is sent with each generation request.
-              The server&apos;s <code className="bg-amber-100 dark:bg-amber-900/50 px-1 rounded">LLM_PROVIDER</code> env var takes precedence if set.
-            </p>
-          </div>
         </section>
 
         {/* Image Generation Section */}
         <section className="bg-white dark:bg-neutral-800 rounded-xl border border-neutral-200 dark:border-neutral-700 p-6 mb-6">
           <h2 className="text-lg font-semibold mb-4">Image Generation</h2>
+          <p className="text-sm text-neutral-500 mb-4">
+            Images are generated using FAL.ai FLUX models.
+          </p>
 
-          {/* Generation Mode */}
-          <div className="mb-6">
+          {/* FAL Model Selection */}
+          <div className="mb-2">
             <label className="block text-sm font-medium mb-2">
-              Generation Mode
+              Model
             </label>
-            <div className="flex gap-3">
-              <ModeButton
-                mode="cloud"
-                currentMode={imagePreferences.mode}
-                onClick={() => setMode("cloud")}
-                label="Cloud"
-                description="Use cloud APIs (FAL.ai, OpenAI)"
+            <div className="grid grid-cols-3 gap-3">
+              <ModelButton
+                model="flux-dev"
+                currentModel={imagePreferences.falModel}
+                onClick={() => setFalModel("flux-dev")}
+                label="FLUX.1 Dev"
+                description="Best quality"
               />
-              <ModeButton
-                mode="local"
-                currentMode={imagePreferences.mode}
-                onClick={() => setMode("local")}
-                label="Local"
-                description="Use local ComfyUI server"
-                disabled={!providerStatus.comfyui}
+              <ModelButton
+                model="flux-pro"
+                currentModel={imagePreferences.falModel}
+                onClick={() => setFalModel("flux-pro")}
+                label="FLUX Pro"
+                description="Faster"
+              />
+              <ModelButton
+                model="recraft-v3"
+                currentModel={imagePreferences.falModel}
+                onClick={() => setFalModel("recraft-v3")}
+                label="Recraft V3"
+                description="Best for text"
               />
             </div>
           </div>
-
-          {/* Cloud Provider Selection */}
-          {imagePreferences.mode === "cloud" && (
-            <div className="mb-6">
-              <label className="block text-sm font-medium mb-2">
-                Cloud Provider
-              </label>
-              <div className="flex gap-3">
-                <ProviderButton
-                  provider="fal"
-                  currentProvider={imagePreferences.provider}
-                  onClick={() => setImageProvider("fal")}
-                  label="FAL.ai"
-                  description="FLUX models"
-                  available={providerStatus.fal}
-                />
-                <ProviderButton
-                  provider="openai"
-                  currentProvider={imagePreferences.provider}
-                  onClick={() => setImageProvider("openai")}
-                  label="OpenAI"
-                  description="GPT Image"
-                  available={providerStatus.openai}
-                />
-              </div>
-            </div>
-          )}
-
-          {/* FAL Model Selection */}
-          {imagePreferences.mode === "cloud" && imagePreferences.provider === "fal" && (
-            <div className="mb-6">
-              <label className="block text-sm font-medium mb-2">
-                FAL Model
-              </label>
-              <div className="grid grid-cols-3 gap-3">
-                <ModelButton
-                  model="flux-dev"
-                  currentModel={imagePreferences.falModel}
-                  onClick={() => setFalModel("flux-dev")}
-                  label="FLUX.1 Dev"
-                  description="Best quality"
-                />
-                <ModelButton
-                  model="flux-pro"
-                  currentModel={imagePreferences.falModel}
-                  onClick={() => setFalModel("flux-pro")}
-                  label="FLUX Pro"
-                  description="Faster"
-                />
-                <ModelButton
-                  model="recraft-v3"
-                  currentModel={imagePreferences.falModel}
-                  onClick={() => setFalModel("recraft-v3")}
-                  label="Recraft V3"
-                  description="Best for text"
-                />
-              </div>
-            </div>
-          )}
-
-          {/* OpenAI Model Selection */}
-          {imagePreferences.mode === "cloud" && imagePreferences.provider === "openai" && (
-            <div className="mb-6">
-              <label className="block text-sm font-medium mb-2">
-                OpenAI Model
-              </label>
-              <div className="grid grid-cols-3 gap-3">
-                <ModelButton
-                  model="gpt-image-1"
-                  currentModel={imagePreferences.openaiModel}
-                  onClick={() => setImageOpenaiModel("gpt-image-1")}
-                  label="GPT Image 1"
-                  description="Default"
-                />
-                <ModelButton
-                  model="gpt-image-1.5"
-                  currentModel={imagePreferences.openaiModel}
-                  onClick={() => setImageOpenaiModel("gpt-image-1.5")}
-                  label="GPT Image 1.5"
-                  description="Improved"
-                />
-                <ModelButton
-                  model="dall-e-3"
-                  currentModel={imagePreferences.openaiModel}
-                  onClick={() => setImageOpenaiModel("dall-e-3")}
-                  label="DALL-E 3"
-                  description="Legacy"
-                />
-              </div>
-            </div>
-          )}
-
-          {/* Local Mode Info */}
-          {imagePreferences.mode === "local" && (
-            <div className="p-4 bg-neutral-50 dark:bg-neutral-700/50 rounded-lg">
-              <p className="text-sm text-neutral-600 dark:text-neutral-400">
-                {providerStatus.comfyui ? (
-                  <>ComfyUI server detected. Images will be generated locally.</>
-                ) : (
-                  <>
-                    ComfyUI not configured. Set <code className="bg-neutral-200 dark:bg-neutral-600 px-1 rounded">COMFYUI_SERVER_URL</code> in your environment.
-                  </>
-                )}
-              </p>
-            </div>
-          )}
         </section>
 
         {/* Voice Profile Section */}
@@ -577,34 +471,29 @@ export default function SettingsPage() {
           ) : null}
         </section>
 
-        {/* Provider Status */}
+        {/* Account Section */}
         <section className="bg-white dark:bg-neutral-800 rounded-xl border border-neutral-200 dark:border-neutral-700 p-6 mb-6">
-          <h2 className="text-lg font-semibold mb-4">Provider Status</h2>
-          <div className="space-y-4">
-            <div>
-              <h3 className="text-sm font-medium text-neutral-500 mb-2">Text (LLM)</h3>
-              <div className="space-y-2">
-                <StatusRow label="OpenAI" available={llmProviderStatus.openai} envVar="OPENAI_API_KEY" />
-                <StatusRow label="Claude" available={llmProviderStatus.claude} envVar="ANTHROPIC_API_KEY" />
+          <h2 className="text-lg font-semibold mb-4">Account</h2>
+          {userInfo ? (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between py-2 border-b border-neutral-100 dark:border-neutral-700">
+                <span className="text-sm text-neutral-500">Email</span>
+                <span className="text-sm font-medium">{userInfo.email || "—"}</span>
+              </div>
+              <div className="flex items-center justify-between py-2 border-b border-neutral-100 dark:border-neutral-700">
+                <span className="text-sm text-neutral-500">Generations Used</span>
+                <span className="text-sm font-medium">{userInfo.used} / {userInfo.limit}</span>
+              </div>
+              <div className="flex items-center justify-between py-2">
+                <span className="text-sm text-neutral-500">Remaining</span>
+                <span className={`text-sm font-medium ${typeof userInfo.remaining === "number" && userInfo.remaining <= 2 ? "text-amber-600" : "text-green-600"}`}>
+                  {userInfo.remaining}
+                </span>
               </div>
             </div>
-            <div>
-              <h3 className="text-sm font-medium text-neutral-500 mb-2">Image (T2I)</h3>
-              <div className="space-y-2">
-                <StatusRow label="OpenAI" available={providerStatus.openai} envVar="OPENAI_API_KEY" />
-                <StatusRow label="FAL.ai" available={providerStatus.fal} envVar="FAL_KEY" />
-                <StatusRow label="ComfyUI" available={providerStatus.comfyui} envVar="COMFYUI_SERVER_URL" />
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* Account Section (Placeholder) */}
-        <section className="bg-white dark:bg-neutral-800 rounded-xl border border-neutral-200 dark:border-neutral-700 p-6 opacity-50">
-          <h2 className="text-lg font-semibold mb-2">Account</h2>
-          <p className="text-sm text-neutral-500">
-            Coming soon with Supabase authentication.
-          </p>
+          ) : (
+            <p className="text-sm text-neutral-500">Loading account info...</p>
+          )}
         </section>
 
         {/* Current Config Debug */}
@@ -632,81 +521,6 @@ function LLMProviderButton({
 }: {
   provider: LLMProvider;
   currentProvider: LLMProvider;
-  onClick: () => void;
-  label: string;
-  description: string;
-  available: boolean;
-}) {
-  const isActive = provider === currentProvider;
-  return (
-    <button
-      onClick={onClick}
-      disabled={!available}
-      className={`flex-1 p-4 rounded-lg border-2 text-left transition-all ${
-        isActive
-          ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20"
-          : !available
-          ? "border-neutral-200 dark:border-neutral-700 opacity-50 cursor-not-allowed"
-          : "border-neutral-200 dark:border-neutral-700 hover:border-neutral-300 dark:hover:border-neutral-600"
-      }`}
-    >
-      <div className="flex items-center gap-2">
-        <span className="font-medium">{label}</span>
-        <span
-          className={`w-2 h-2 rounded-full ${
-            available ? "bg-green-500" : "bg-red-500"
-          }`}
-        />
-      </div>
-      <div className="text-xs text-neutral-500 mt-1">{description}</div>
-    </button>
-  );
-}
-
-function ModeButton({
-  mode,
-  currentMode,
-  onClick,
-  label,
-  description,
-  disabled,
-}: {
-  mode: ImagePreferences["mode"];
-  currentMode: ImagePreferences["mode"];
-  onClick: () => void;
-  label: string;
-  description: string;
-  disabled?: boolean;
-}) {
-  const isActive = mode === currentMode;
-  return (
-    <button
-      onClick={onClick}
-      disabled={disabled}
-      className={`flex-1 p-4 rounded-lg border-2 text-left transition-all ${
-        isActive
-          ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20"
-          : disabled
-          ? "border-neutral-200 dark:border-neutral-700 opacity-50 cursor-not-allowed"
-          : "border-neutral-200 dark:border-neutral-700 hover:border-neutral-300 dark:hover:border-neutral-600"
-      }`}
-    >
-      <div className="font-medium">{label}</div>
-      <div className="text-xs text-neutral-500 mt-1">{description}</div>
-    </button>
-  );
-}
-
-function ProviderButton({
-  provider,
-  currentProvider,
-  onClick,
-  label,
-  description,
-  available,
-}: {
-  provider: T2IProviderType;
-  currentProvider: T2IProviderType;
   onClick: () => void;
   label: string;
   description: string;
@@ -767,28 +581,3 @@ function ModelButton({
   );
 }
 
-function StatusRow({
-  label,
-  available,
-  envVar,
-}: {
-  label: string;
-  available: boolean;
-  envVar: string;
-}) {
-  return (
-    <div className="flex items-center justify-between">
-      <div className="flex items-center gap-2">
-        <span
-          className={`w-2 h-2 rounded-full ${
-            available ? "bg-green-500" : "bg-red-500"
-          }`}
-        />
-        <span>{label}</span>
-      </div>
-      <code className="text-xs text-neutral-500 bg-neutral-100 dark:bg-neutral-700 px-2 py-1 rounded">
-        {envVar}
-      </code>
-    </div>
-  );
-}

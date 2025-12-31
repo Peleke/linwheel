@@ -19,7 +19,14 @@ export async function GET() {
     }
 
     const usage = await getUsage(user.id);
-    return NextResponse.json(usage);
+    return NextResponse.json({
+      email: user.email,
+      id: user.id,
+      used: usage.count,
+      limit: usage.limit === Infinity ? "Unlimited" : usage.limit,
+      remaining: usage.remaining === Infinity ? "Unlimited" : usage.remaining,
+      subscriptionStatus: usage.subscriptionStatus,
+    });
   } catch (error) {
     console.error("Error fetching usage:", error);
     return NextResponse.json(
