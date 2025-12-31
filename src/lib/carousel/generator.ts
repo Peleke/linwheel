@@ -20,7 +20,7 @@ import type { T2IProviderType, StylePreset, ImageGenerationRequest } from "@/lib
 import { uploadImage } from "@/lib/storage";
 import { analyzeCarouselFormat } from "./analyzer";
 import { generateCarouselPages } from "./prompts";
-import { overlayTextOnImageUrl, generateFallbackSlide } from "./text-overlay";
+import { overlayCarouselTextFromUrl, generateFallbackSlide } from "./text-overlay-satori";
 import { generateSlideCaptions } from "./captions";
 
 export interface CarouselGenerationResult {
@@ -96,10 +96,11 @@ export async function generateCarousel(
     // 5. Build pages using LLM-generated content
     const pages = generateCarouselPages(article, format, stylePreset);
 
-    // Override headlines AND prompts with LLM-generated content
+    // Override headlines, captions, AND prompts with LLM-generated content
     pages.forEach((page, i) => {
       if (captions[i]) {
         page.headlineText = captions[i].headline;
+        page.caption = captions[i].caption; // Optional caption for some slides
         // Use LLM-generated prompts (topic-specific, weighted keywords)
         page.prompt = captions[i].imagePrompt;
       }
@@ -157,12 +158,12 @@ export async function generateCarousel(
         try {
           if (result.success && result.imageUrl) {
             console.log(`[Carousel] Page ${page.pageNumber}: Fetching T2I image from ${result.imageUrl.substring(0, 60)}...`);
-            // Apply text overlay to the background image - HEADLINE ONLY for clean design
-            const overlaidBuffer = await overlayTextOnImageUrl(result.imageUrl, {
+            // Apply text overlay to the background image using Satori (works on Vercel)
+            const overlaidBuffer = await overlayCarouselTextFromUrl(result.imageUrl, {
               headline: page.headlineText,
-              // No body text - keep it clean
+              caption: page.caption,
               slideType: page.slideType,
-              stylePreset,
+              slideNumber: page.pageNumber,
               size: 1080,
             });
             console.log(`[Carousel] Page ${page.pageNumber}: Overlay successful, buffer size: ${overlaidBuffer.length}`);
@@ -175,9 +176,9 @@ export async function generateCarousel(
             console.log(`[Carousel] Page ${page.pageNumber}: T2I failed (${result.error}), generating fallback...`);
             const fallbackBuffer = await generateFallbackSlide({
               headline: page.headlineText,
-              // No body text - keep it clean
+              caption: page.caption,
               slideType: page.slideType,
-              stylePreset,
+              slideNumber: page.pageNumber,
               size: 1080,
             });
             // Save fallback to storage too
@@ -192,8 +193,9 @@ export async function generateCarousel(
           try {
             const fallbackBuffer = await generateFallbackSlide({
               headline: page.headlineText,
+              caption: page.caption,
               slideType: page.slideType,
-              stylePreset,
+              slideNumber: page.pageNumber,
               size: 1080,
             });
             const filename = `carousel-${carouselId}-page-${page.pageNumber}-fallback.png`;

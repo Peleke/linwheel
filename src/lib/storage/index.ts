@@ -52,6 +52,8 @@ export function getStorageProvider(): StorageProvider {
 
 /**
  * Upload an image and return its permanent URL
+ *
+ * Falls back to base64 if primary storage fails (e.g., bucket not found)
  */
 export async function uploadImage(
   buffer: Buffer,
@@ -59,7 +61,19 @@ export async function uploadImage(
   contentType: string = "image/png"
 ): Promise<string> {
   const provider = getStorageProvider();
-  return provider.upload(buffer, filename, contentType);
+
+  try {
+    return await provider.upload(buffer, filename, contentType);
+  } catch (error) {
+    // If Supabase fails (bucket not found, permissions, etc.), fall back to base64
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    console.warn(`[Storage] Primary storage failed: ${errorMessage}`);
+    console.warn("[Storage] Falling back to base64 data URL");
+
+    // Use base64 fallback
+    const base64Provider = createBase64StorageProvider();
+    return base64Provider.upload(buffer, filename, contentType);
+  }
 }
 
 /**
