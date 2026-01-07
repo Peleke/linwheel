@@ -285,20 +285,27 @@ cp .env.example .env.local
 ```bash
 # .env.local
 
-# Required
-ANTHROPIC_API_KEY=your-anthropic-key
-FAL_API_KEY=your-fal-key
+# AI Providers (Required)
+ANTHROPIC_API_KEY=your-anthropic-key      # Claude for text generation
+FAL_KEY=your-fal-key                       # Flux.1 for image generation
 
 # Supabase Auth
 NEXT_PUBLIC_SUPABASE_URL=your-project-url
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+SUPABASE_SERVICE_ROLE_KEY=your-service-key # For admin operations
 
-# Database (Turso or local)
+# Database (Turso)
 DATABASE_URL=libsql://your-db.turso.io
 DATABASE_AUTH_TOKEN=your-token
 
-# Or for local development
-DATABASE_URL=file:local.db
+# Stripe Billing
+STRIPE_SECRET_KEY=sk_live_...              # or sk_test_ for dev
+STRIPE_WEBHOOK_SECRET=whsec_...
+STRIPE_PRO_MONTHLY_PRICE_ID=price_...
+STRIPE_PRO_YEARLY_PRICE_ID=price_...       # Optional
+
+# App URL (for Stripe redirects)
+NEXT_PUBLIC_APP_URL=https://linwheel.ai    # Your production domain
 ```
 
 ### Database Setup
@@ -332,28 +339,30 @@ linwheel/
 │   │   │   ├── posts/            # Post CRUD + approval
 │   │   │   ├── articles/         # Article + carousel generation
 │   │   │   ├── runs/             # Generation run management
+│   │   │   ├── stripe/           # Billing (checkout, portal, webhook)
 │   │   │   └── voice-profiles/   # Voice profile CRUD
 │   │   ├── generate/             # Input form page
 │   │   ├── results/              # Results dashboard
-│   │   └── settings/             # User settings + voice profiles
+│   │   ├── pricing/              # Pricing page
+│   │   └── settings/             # User settings + subscription
 │   ├── components/
 │   │   ├── landing/              # Landing page sections
+│   │   ├── subscription/         # Subscription status component
 │   │   ├── post-card.tsx         # Post display with image
-│   │   ├── article-card.tsx      # Article with carousel
-│   │   └── content-tabs.tsx      # Posts/Articles tab switcher
+│   │   └── article-card.tsx      # Article with carousel
 │   ├── db/
 │   │   └── schema.ts             # Drizzle schema definitions
 │   └── lib/
-│       ├── agents/               # LangChain agent definitions
+│       ├── llm/                  # LLM provider abstraction
+│       ├── t2i/                  # Text-to-image providers
+│       ├── stripe/               # Stripe client + helpers
 │       ├── prompts/              # System prompts for each angle
-│       ├── voice/                # Voice profile matching
-│       └── fal/                  # Flux.1 image generation
+│       └── usage.ts              # Usage tracking + gating
 ├── public/
 │   └── promo/                    # AI-generated landing page images
-├── scripts/
-│   └── generate-all-decorations.ts  # Landing page image generator
-├── e2e/                          # Playwright E2E tests
-└── drizzle/                      # Generated migrations
+├── supabase/
+│   └── migrations/               # Supabase migrations
+└── drizzle/                      # Drizzle migrations
 ```
 
 ---
@@ -470,12 +479,14 @@ At 90 posts per run, that's **$0.03 per post with image**.
 
 ### ✅ Shipped
 
-- [x] Multi-angle post generation (6 angles × 5 versions)
-- [x] AI cover image generation (Flux.1)
-- [x] 5-slide carousels with per-slide images
-- [x] Long-form articles (4 types)
+- [x] Multi-angle post generation (7 angles × 2 versions)
+- [x] AI cover image generation (Flux.1 via FAL.ai)
+- [x] Long-form articles (4 types: Deep Dive, Contrarian, How-To, Case Study)
 - [x] Voice profiles for style matching
 - [x] PWA with install prompt
+- [x] **Stripe subscription billing** (Free tier + Pro @ $29/mo)
+- [x] Usage gating with upgrade prompts
+- [x] Supabase authentication
 
 ### 🎨 Brand Style Profiles
 *Voice profiles, but for visuals*
