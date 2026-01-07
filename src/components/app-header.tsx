@@ -33,49 +33,51 @@ export function AppHeader() {
   const isActive = (path: string) => pathname === path;
 
   return (
-    <header className="sticky top-0 z-50 bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm border-b border-slate-200 dark:border-slate-800">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-14">
+    <header className="sticky top-0 z-50 bg-white/90 dark:bg-zinc-900/90 backdrop-blur-xl border-b border-zinc-200/50 dark:border-zinc-800/50">
+      <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-10">
+        <div className="flex justify-between items-center h-16">
           {/* Logo */}
-          <Link href="/" className="flex items-center gap-2 group">
-            <div className="relative w-8 h-8 rounded-full overflow-hidden ring-2 ring-purple-500/30 group-hover:ring-purple-500/60 transition-all duration-300 shadow-lg shadow-purple-500/20 group-hover:shadow-purple-500/40">
+          <Link href="/" className="flex items-center gap-2.5 group">
+            <div className="relative w-9 h-9 rounded-full overflow-hidden ring-2 ring-blue-500/20 group-hover:ring-blue-500/40 transition-all duration-300 shadow-md shadow-blue-500/10 group-hover:shadow-blue-500/20">
               <Image
                 src="/logo.png"
                 alt="LinWheel"
-                width={32}
-                height={32}
+                width={36}
+                height={36}
                 className="object-cover scale-110"
                 priority
               />
               <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-700 bg-gradient-to-r from-transparent via-white/20 to-transparent" />
             </div>
-            <span className="font-semibold text-base bg-gradient-to-r from-indigo-600 to-purple-600 dark:from-indigo-400 dark:to-purple-400 bg-clip-text text-transparent">
+            <span className="font-semibold text-base bg-gradient-to-r from-blue-600 to-sky-500 dark:from-blue-400 dark:to-sky-400 bg-clip-text text-transparent">
               LinWheel
             </span>
           </Link>
 
           {/* Navigation */}
-          <nav className="flex items-center gap-6">
+          <nav className="flex items-center gap-1">
             <Link
               href="/generate"
-              className={`text-sm font-medium transition-colors ${
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                 isActive("/generate")
-                  ? "text-indigo-600 dark:text-indigo-400"
-                  : "text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
+                  ? "text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-500/10"
+                  : "text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:text-white dark:hover:bg-zinc-800"
               }`}
             >
               Generate
             </Link>
             <Link
               href="/results"
-              className={`text-sm font-medium transition-colors ${
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                 isActive("/results") || pathname.startsWith("/results/")
-                  ? "text-indigo-600 dark:text-indigo-400"
-                  : "text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
+                  ? "text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-500/10"
+                  : "text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:text-white dark:hover:bg-zinc-800"
               }`}
             >
               Results
             </Link>
+
+            <div className="w-px h-6 bg-zinc-700 mx-2" />
 
             {/* User Menu */}
             <UserMenu user={user} />

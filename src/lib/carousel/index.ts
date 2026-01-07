@@ -12,6 +12,6 @@
 
 export { analyzeCarouselFormat, getRecommendedFormat, type CarouselFormat, type SlideType } from "./analyzer";
 export { generateCarouselPages } from "./prompts";
-export { generateCarousel, getCarouselStatus, deleteCarousel, regenerateCarouselSlide, type CarouselGenerationResult, type CarouselGenerationOptions, type SlideRegenerationOptions } from "./generator";
+export { generateCarousel, getCarouselStatus, deleteCarousel, regenerateCarouselSlide, getSlideVersions, activateSlideVersion, type CarouselGenerationResult, type CarouselGenerationOptions, type SlideRegenerationOptions } from "./generator";
 export { overlayCarouselText, overlayCarouselTextFromUrl, overlayCoverText, overlayCoverTextFromUrl, generateFallbackSlide } from "./text-overlay-satori";
 export { generateSlideCaptions } from "./captions";

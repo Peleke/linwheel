@@ -6,6 +6,8 @@ import { generateImage } from "@/lib/t2i";
 import type { StylePreset, T2IProviderType } from "@/lib/t2i";
 import { overlayCoverTextFromUrl } from "@/lib/carousel/text-overlay-satori";
 import { uploadImage } from "@/lib/storage";
+import { getCurrentUser } from "@/lib/auth";
+import { incrementImageUsage, canGenerateImages } from "@/lib/usage";
 
 interface RouteParams {
   params: Promise<{ intentId: string }>;
@@ -132,6 +134,25 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       model?: string;
     };
 
+    // Check user and image usage limits
+    const user = await getCurrentUser();
+    if (user) {
+      const { allowed, usage } = await canGenerateImages(user.id);
+      if (!allowed) {
+        return NextResponse.json(
+          {
+            error: "Image generation limit reached",
+            usage: {
+              used: usage.count,
+              limit: usage.limit,
+              remaining: usage.remaining,
+            }
+          },
+          { status: 403 }
+        );
+      }
+    }
+
     // Fetch the intent
     const intent = await db.query.articleImageIntents.findFirst({
       where: eq(articleImageIntents.id, intentId),
@@ -211,6 +232,11 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
         generationError: null,
       })
       .where(eq(articleImageIntents.id, intentId));
+
+    // Increment image usage after successful generation
+    if (user) {
+      await incrementImageUsage(user.id, 1);
+    }
 
     return NextResponse.json({
       success: true,

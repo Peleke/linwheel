@@ -37,7 +37,7 @@ export function RetryButton({ runId }: RetryButtonProps) {
     <button
       onClick={handleRetry}
       disabled={isRetrying}
-      className="px-4 py-2 text-sm font-medium bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50"
+      className="px-4 py-2 text-sm font-medium bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors"
     >
       {isRetrying ? "Retrying..." : "Retry Generation"}
     </button>

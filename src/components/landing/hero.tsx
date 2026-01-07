@@ -1,14 +1,52 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { ParticleBackground } from "./particle-background";
 
+const contentTypes = [
+  "podcast transcripts",
+  "book chapters",
+  "research papers",
+  "meeting notes",
+  "conference talks",
+  "white papers",
+];
+
 export function Hero() {
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [isExiting, setIsExiting] = useState(false);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setIsExiting(true);
+      setTimeout(() => {
+        setCurrentIndex((prev) => (prev + 1) % contentTypes.length);
+        setIsExiting(false);
+      }, 300);
+    }, 3000);
+
+    return () => clearInterval(interval);
+  }, []);
+
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
       {/* Background effects */}
       <div className="absolute inset-0 grid-pattern" />
       <ParticleBackground />
+
+      {/* AI-generated hero visual */}
+      <div className="absolute inset-0 z-0">
+        <Image
+          src="/promo/hero-visual.png"
+          alt=""
+          fill
+          className="object-cover opacity-30 mix-blend-screen"
+          priority
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0a] via-[#0a0a0a]/80 to-transparent" />
+      </div>
 
       {/* Gradient orbs */}
       <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-indigo-600/20 rounded-full blur-3xl animate-pulse-glow" />
@@ -22,23 +60,37 @@ export function Hero() {
           <span className="text-sm text-neutral-300">Now in public beta</span>
         </div>
 
-        {/* Headline */}
-        <h1 className="animate-fade-up-delay-1 text-5xl md:text-7xl font-bold tracking-tight mb-6 leading-tight">
-          Turn podcast noise into
-          <br />
-          <span className="gradient-text">LinkedIn gold.</span>
+        {/* Headline - three lines for clean layout */}
+        <h1 className="animate-fade-up-delay-1 text-4xl sm:text-5xl md:text-7xl font-bold tracking-tight mb-6 leading-[1.15]">
+          {/* Line 1: Turn */}
+          <span className="block">Turn</span>
+          {/* Line 2: [rotating content type] */}
+          <span className="block relative overflow-hidden h-[1.2em] mb-1">
+            <span
+              className={`absolute inset-x-0 text-indigo-400 transition-all duration-300 ease-out ${
+                isExiting
+                  ? "translate-y-full opacity-0"
+                  : "translate-y-0 opacity-100"
+              }`}
+            >
+              {contentTypes[currentIndex]}
+            </span>
+          </span>
+          {/* Line 3: into LinkedIn gold. */}
+          <span className="block">
+            into <span className="gradient-text">LinkedIn gold.</span>
+          </span>
         </h1>
 
         {/* Subheadline */}
-        <p className="animate-fade-up-delay-2 text-xl md:text-2xl text-neutral-400 mb-4 max-w-3xl mx-auto leading-relaxed">
-          Paste a transcript. Get <span className="text-white font-medium">90+ ready-to-post</span> content pieces
-          <br className="hidden md:block" />
-          in <span className="text-white font-medium">6 distinct voices</span>. In under 60 seconds.
+        <p className="animate-fade-up-delay-2 text-lg sm:text-xl md:text-2xl text-neutral-400 mb-4 max-w-3xl mx-auto leading-relaxed">
+          Paste any content. Get <span className="text-white font-medium">90+ ready-to-post</span> pieces{" "}
+          in <span className="text-white font-medium">6 distinct voices</span>—with <span className="text-emerald-400 font-medium">AI cover images</span>.
         </p>
 
         {/* Social proof line */}
         <p className="animate-fade-up-delay-2 text-neutral-500 mb-10">
-          One transcript = a month of LinkedIn content
+          One piece of content <strong className="text-white font-semibold">stops the scroll for a month.</strong>
         </p>
 
         {/* CTAs */}
@@ -64,14 +116,18 @@ export function Hero() {
         </div>
 
         {/* Stats preview */}
-        <div className="animate-fade-up-delay-3 flex flex-wrap justify-center gap-8 md:gap-16 pb-20 md:pb-0">
+        <div className="animate-fade-up-delay-3 flex flex-wrap justify-center gap-6 md:gap-12 pb-20 md:pb-0">
           <div className="text-center">
             <div className="text-3xl md:text-4xl font-bold gradient-text">90+</div>
-            <div className="text-sm text-neutral-500">Posts per transcript</div>
+            <div className="text-sm text-neutral-500">Posts per source</div>
           </div>
           <div className="text-center">
             <div className="text-3xl md:text-4xl font-bold gradient-text">6</div>
             <div className="text-sm text-neutral-500">Distinct angles</div>
+          </div>
+          <div className="text-center">
+            <div className="text-3xl md:text-4xl font-bold text-emerald-400">AI</div>
+            <div className="text-sm text-neutral-500">Cover images</div>
           </div>
           <div className="text-center">
             <div className="text-3xl md:text-4xl font-bold gradient-text">&lt;60s</div>

@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import type { User } from "@supabase/supabase-js";
@@ -33,10 +34,15 @@ export function Header() {
     >
       <div className="max-w-6xl mx-auto px-6 py-4 flex justify-between items-center">
         <Link href="/" className="flex items-center gap-2 group">
-          <div className="relative w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center overflow-hidden">
+          <div className="relative w-8 h-8 rounded-lg overflow-hidden">
+            <Image
+              src="/logo.png"
+              alt="LinWheel"
+              fill
+              className="object-cover"
+            />
             {/* Shimmer effect */}
             <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-700 bg-gradient-to-r from-transparent via-white/30 to-transparent" />
-            <span className="relative text-white font-bold text-sm">L</span>
           </div>
           <span className="font-semibold text-lg gradient-text">LinWheel</span>
         </Link>
@@ -47,6 +53,12 @@ export function Header() {
             className="text-sm text-neutral-400 hover:text-white transition-colors"
           >
             How it works
+          </Link>
+          <Link
+            href="#visuals"
+            className="text-sm text-neutral-400 hover:text-white transition-colors"
+          >
+            Visual Content
           </Link>
           <Link
             href="#angles"

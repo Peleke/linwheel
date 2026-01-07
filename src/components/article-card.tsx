@@ -75,115 +75,110 @@ export function ArticleCard({
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3 }}
-      className="group relative"
+      initial={{ opacity: 0, y: 20, scale: 0.98 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      transition={{
+        duration: 0.35,
+        ease: [0.25, 0.46, 0.45, 0.94],
+      }}
+      whileHover={{
+        y: -3,
+        transition: { duration: 0.2, ease: "easeOut" }
+      }}
+      className="group relative min-w-0"
     >
-      {/* Glow effect */}
-      <div
-        className={`absolute -inset-0.5 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 blur-sm ${
-          article.approved
-            ? "bg-gradient-to-r from-emerald-500/30 via-green-500/30 to-emerald-500/30"
-            : "bg-gradient-to-r from-blue-500/20 via-indigo-500/20 to-blue-500/20"
-        }`}
-      />
-
-      <div
-        className={`relative border rounded-xl overflow-hidden transition-all duration-300 group-hover:scale-[1.01] ${
-          article.approved
-            ? "border-emerald-300 dark:border-emerald-700 bg-gradient-to-br from-emerald-50 via-white to-green-50/50 dark:from-emerald-900/20 dark:via-slate-900 dark:to-green-900/10"
-            : "border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900"
-        }`}
+      <motion.div
+        className="relative rounded-xl overflow-hidden bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800"
+        whileHover={{
+          boxShadow: "0 16px 32px -8px rgba(0, 0, 0, 0.1), 0 8px 16px -8px rgba(0, 0, 0, 0.06)",
+        }}
+        transition={{ duration: 0.2 }}
       >
-        {/* Minimal top bar */}
-        <div
-          className={`h-0.5 w-full ${
-            article.approved
-              ? "bg-gradient-to-r from-emerald-400 via-green-500 to-emerald-400"
-              : "bg-gradient-to-r from-blue-400 via-indigo-500 to-blue-400"
-          }`}
-        />
+        {/* Accent top bar - sky for articles */}
+        <div className={`h-1 w-full ${article.approved ? "bg-gradient-to-r from-emerald-400 to-emerald-500" : "bg-gradient-to-r from-sky-400 to-sky-500"}`} />
 
-        {/* Card header - title prominent */}
-        <div className="px-4 py-3">
+        {/* Card header */}
+        <div className="px-5 py-4">
           <div className="flex items-start justify-between gap-3">
             <div className="flex-1 min-w-0">
-              <h3 className="font-bold text-lg text-slate-900 dark:text-white leading-tight">
+              <h3 className="font-bold text-lg text-zinc-900 dark:text-zinc-100 leading-tight">
                 {article.title}
               </h3>
               {article.subtitle && (
-                <p className="text-sm text-slate-500 dark:text-slate-400 mt-1 line-clamp-1">
+                <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-1 line-clamp-1">
                   {article.subtitle}
                 </p>
               )}
               <div className="flex items-center gap-3 mt-2">
-                <span className="text-xs text-slate-400 dark:text-slate-500">
+                <span className="inline-flex items-center gap-1 text-xs text-zinc-500 dark:text-zinc-400">
+                  <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A2 2 0 013 12V7a4 4 0 014-4z" />
+                  </svg>
                   v{article.versionNumber ?? 1}
                 </span>
-                <span className="text-xs text-slate-400 dark:text-slate-500">
-                  {wordCount} words
+                <span className="inline-flex items-center gap-1 text-xs text-zinc-500 dark:text-zinc-400">
+                  <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                  {wordCount}
                 </span>
                 {hasImage && (
-                  <span className="text-xs text-blue-500 dark:text-blue-400 flex items-center gap-1">
-                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  <span className="inline-flex items-center gap-1 text-xs text-emerald-600 dark:text-emerald-400">
+                    <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                     </svg>
-                    Cover ready
+                    <span className="sr-only">Cover ready</span>
                   </span>
                 )}
               </div>
             </div>
             {article.approved && (
-              <motion.span
-                initial={{ scale: 0.8, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                className="shrink-0 px-2 py-0.5 text-xs font-medium rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300"
-              >
-                Approved
-              </motion.span>
+              <span className="shrink-0 inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded-full bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400">
+                <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                </svg>
+              </span>
             )}
           </div>
         </div>
 
-        {/* Integrated cover image (always visible when available) */}
+        {/* Integrated cover image */}
         {hasImage && (
-          <div className="px-4 pb-3">
+          <div className="px-5 pb-3 overflow-hidden">
             <div
-              className="relative aspect-[1.91/1] rounded-lg overflow-hidden bg-slate-100 dark:bg-slate-800 cursor-pointer group/img"
+              className="relative w-full aspect-[1.91/1] rounded-lg overflow-hidden bg-zinc-100 dark:bg-zinc-800 cursor-pointer group/img"
               onClick={() => setIsExpanded(!isExpanded)}
             >
               <Image
                 src={article.imageIntent!.generatedImageUrl!}
                 alt={article.imageIntent!.headlineText || "Article cover"}
                 fill
-                className="object-cover transition-transform duration-300 group-hover/img:scale-105"
-                sizes="(max-width: 768px) 100vw, 600px"
+                className="object-cover transition-transform duration-500 group-hover/img:scale-105"
+                sizes="(max-width: 768px) 90vw, 600px"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
-              <div className="absolute bottom-3 left-3 right-3">
-                <p className="text-white text-sm font-medium drop-shadow-lg line-clamp-2">
-                  {article.imageIntent!.headlineText}
-                </p>
-              </div>
+              <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent opacity-0 group-hover/img:opacity-100 transition-opacity duration-300" />
             </div>
           </div>
         )}
 
         {/* Expand button */}
-        <div className="px-4 pb-3">
+        <div className="px-5 pb-4">
           <button
             onClick={() => setIsExpanded(!isExpanded)}
-            className="text-sm text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 transition-colors flex items-center gap-1"
+            className="inline-flex items-center gap-1.5 text-xs font-medium text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors"
           >
-            <motion.span
+            <motion.svg
               animate={{ rotate: isExpanded ? 180 : 0 }}
               transition={{ duration: 0.2 }}
-              className="text-xs"
+              className="w-3.5 h-3.5"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={2}
             >
-              ▼
-            </motion.span>
-            {isExpanded ? "Collapse" : "Read full article"}
+              <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+            </motion.svg>
+            {isExpanded ? "Less" : "Read"}
           </button>
         </div>
 
@@ -194,16 +189,16 @@ export function ArticleCard({
               initial={{ height: 0, opacity: 0 }}
               animate={{ height: "auto", opacity: 1 }}
               exit={{ height: 0, opacity: 0 }}
-              transition={{ duration: 0.3, ease: "easeInOut" }}
+              transition={{ duration: 0.25, ease: "easeOut" }}
               className="overflow-hidden"
             >
-              <div className="px-4 pb-4 space-y-5 border-t border-slate-100 dark:border-slate-800 pt-4">
+              <div className="px-5 pb-5 space-y-6 border-t border-zinc-100 dark:border-zinc-800 pt-5">
                 {/* Introduction */}
                 <div>
                   <h4 className="text-xs font-semibold uppercase tracking-wider text-blue-600 dark:text-blue-400 mb-2">
                     Introduction
                   </h4>
-                  <div className="prose prose-sm prose-slate dark:prose-invert max-w-none prose-p:my-2 prose-p:leading-relaxed">
+                  <div className="prose prose-sm prose-zinc dark:prose-invert max-w-none prose-p:my-2 prose-p:leading-relaxed">
                     <ReactMarkdown>{fixMarkdown(article.introduction)}</ReactMarkdown>
                   </div>
                 </div>
@@ -218,11 +213,11 @@ export function ArticleCard({
                   return (
                     <div key={i}>
                       {heading && (
-                        <h4 className="font-semibold text-slate-900 dark:text-white mb-2">
+                        <h4 className="font-semibold text-zinc-900 dark:text-zinc-100 mb-2">
                           {heading}
                         </h4>
                       )}
-                      <div className="prose prose-sm prose-slate dark:prose-invert max-w-none prose-p:my-2 prose-p:leading-relaxed prose-headings:font-semibold">
+                      <div className="prose prose-sm prose-zinc dark:prose-invert max-w-none prose-p:my-2 prose-p:leading-relaxed prose-headings:font-semibold">
                         <ReactMarkdown>{fixMarkdown(content)}</ReactMarkdown>
                       </div>
                     </div>
@@ -234,29 +229,34 @@ export function ArticleCard({
                   <h4 className="text-xs font-semibold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 mb-2">
                     Conclusion
                   </h4>
-                  <div className="prose prose-sm prose-slate dark:prose-invert max-w-none prose-p:my-2 prose-p:leading-relaxed">
+                  <div className="prose prose-sm prose-zinc dark:prose-invert max-w-none prose-p:my-2 prose-p:leading-relaxed">
                     <ReactMarkdown>{fixMarkdown(article.conclusion)}</ReactMarkdown>
                   </div>
                 </div>
 
                 {/* Image details (tucked away) */}
                 {article.imageIntent && (
-                  <div className="pt-3 border-t border-slate-100 dark:border-slate-800">
+                  <div className="pt-4 border-t border-zinc-100 dark:border-zinc-800">
                     <div className="flex items-center justify-between">
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
                           setShowImageDetails(!showImageDetails);
                         }}
-                        className="text-xs text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300 flex items-center gap-1"
+                        className="inline-flex items-center gap-1 text-xs text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-300 transition-colors"
                       >
-                        <motion.span
+                        <motion.svg
                           animate={{ rotate: showImageDetails ? 90 : 0 }}
                           transition={{ duration: 0.15 }}
+                          className="w-3 h-3"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                          strokeWidth={2}
                         >
-                          ›
-                        </motion.span>
-                        Cover image prompt
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                        </motion.svg>
+                        Prompt
                       </button>
                       <RegeneratePromptButton
                         id={article.id}
@@ -273,7 +273,7 @@ export function ArticleCard({
                           exit={{ height: 0, opacity: 0 }}
                           className="overflow-hidden"
                         >
-                          <div className="mt-2 p-2 bg-slate-50 dark:bg-slate-800/50 rounded text-xs font-mono text-slate-600 dark:text-slate-400">
+                          <div className="mt-2 p-3 bg-zinc-50 dark:bg-zinc-800/50 rounded-lg text-xs font-mono text-zinc-600 dark:text-zinc-400">
                             <p className="break-words">
                               <span className="text-emerald-600 dark:text-emerald-400">+</span> {article.imageIntent.prompt}
                             </p>
@@ -281,7 +281,7 @@ export function ArticleCard({
                               <span className="text-rose-600 dark:text-rose-400">−</span> {article.imageIntent.negativePrompt}
                             </p>
                           </div>
-                          <div className="mt-2">
+                          <div className="mt-3">
                             <ImagePreview
                               intentId={article.imageIntent.id}
                               isArticle={true}
@@ -306,8 +306,8 @@ export function ArticleCard({
           isApproved={article.approved ?? false}
         />
 
-        {/* Actions */}
-        <div className="px-4 py-2 border-t border-slate-100 dark:border-slate-800 flex justify-between items-center bg-slate-50/50 dark:bg-slate-800/30">
+        {/* Action bar - icon-based */}
+        <div className="px-4 py-2.5 border-t border-zinc-100 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/50 flex items-center justify-between gap-2">
           <ApprovalButtons
             postId={article.id}
             approved={article.approved ?? false}
@@ -318,7 +318,7 @@ export function ArticleCard({
           />
           <CopyButton text={article.fullText} />
         </div>
-      </div>
+      </motion.div>
     </motion.div>
   );
 }

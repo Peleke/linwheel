@@ -58,14 +58,14 @@ export function DeleteRunButton({ runId, redirectAfter = false }: DeleteRunButto
         <button
           onClick={handleDelete}
           disabled={isDeleting}
-          className="px-3 py-1.5 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-lg disabled:opacity-50"
+          className="px-3 py-1.5 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-lg disabled:opacity-50 transition-colors"
         >
           {isDeleting ? "Deleting..." : "Confirm"}
         </button>
         <button
           onClick={handleCancel}
           disabled={isDeleting}
-          className="px-3 py-1.5 text-sm font-medium text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-white"
+          className="px-3 py-1.5 text-sm font-medium text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white transition-colors"
         >
           Cancel
         </button>
@@ -76,7 +76,7 @@ export function DeleteRunButton({ runId, redirectAfter = false }: DeleteRunButto
   return (
     <button
       onClick={handleDelete}
-      className="text-sm text-neutral-500 hover:text-red-600 dark:text-neutral-400 dark:hover:text-red-400 transition-colors"
+      className="text-sm text-zinc-500 hover:text-red-600 dark:text-zinc-400 dark:hover:text-red-400 transition-colors"
     >
       Delete
     </button>

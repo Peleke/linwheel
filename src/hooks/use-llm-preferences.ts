@@ -16,7 +16,7 @@ export interface LLMPreferences {
 const STORAGE_KEY = "linwheel_llm_preferences";
 
 const DEFAULT_PREFERENCES: LLMPreferences = {
-  provider: "openai", // Default to OpenAI for reliability
+  provider: "claude", // Default to Claude for better writing quality
   claudeModel: "claude-sonnet-4-20250514",
   openaiModel: "gpt-4o",
 };

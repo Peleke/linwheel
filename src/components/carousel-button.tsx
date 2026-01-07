@@ -4,6 +4,7 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { getStoredPreferences } from "@/hooks/use-image-preferences";
 import { CarouselPreview } from "./carousel-preview";
+import { SlideVersionHistory } from "./slide-version-history";
 
 interface CarouselButtonProps {
   articleId: string;
@@ -17,6 +18,8 @@ interface CarouselPage {
   headlineText: string;
   bodyText?: string;
   imageUrl?: string;
+  activeVersionId?: string;
+  versionCount?: number;
 }
 
 interface CarouselStatus {
@@ -37,6 +40,7 @@ export function CarouselButton({ articleId, isApproved }: CarouselButtonProps) {
   const [error, setError] = useState<string | null>(null);
   const [isExpanded, setIsExpanded] = useState(false);
   const [regeneratingSlide, setRegeneratingSlide] = useState<number | null>(null);
+  const [versionHistorySlide, setVersionHistorySlide] = useState<number | null>(null);
 
   // Fetch carousel status
   const fetchStatus = async () => {
@@ -213,7 +217,7 @@ export function CarouselButton({ articleId, isApproved }: CarouselButtonProps) {
                 <div className="flex items-center justify-center py-8">
                   <div className="flex flex-col items-center gap-3">
                     <div className="animate-spin h-8 w-8 border-3 border-amber-500 border-t-transparent rounded-full" />
-                    <p className="text-sm text-slate-500 dark:text-slate-400">
+                    <p className="text-sm text-zinc-500 dark:text-zinc-400">
                       Loading carousel...
                     </p>
                   </div>
@@ -229,12 +233,12 @@ export function CarouselButton({ articleId, isApproved }: CarouselButtonProps) {
                 <div className="space-y-4 relative">
                   {/* Generating overlay */}
                   {isGenerating && (
-                    <div className="absolute inset-0 bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm z-10 rounded-lg flex flex-col items-center justify-center">
+                    <div className="absolute inset-0 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-sm z-10 rounded-lg flex flex-col items-center justify-center">
                       <div className="animate-spin text-3xl mb-3">🎨</div>
                       <p className="text-sm font-medium text-amber-600 dark:text-amber-400">
                         Regenerating carousel...
                       </p>
-                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                      <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">
                         Generating 5 background images + text overlays
                       </p>
                     </div>
@@ -282,6 +286,7 @@ export function CarouselButton({ articleId, isApproved }: CarouselButtonProps) {
                     articleId={articleId}
                     onRegenerateSlide={handleRegenerateSlide}
                     regeneratingSlide={regeneratingSlide}
+                    onViewVersions={(slideNumber) => setVersionHistorySlide(slideNumber)}
                   />
                 </div>
               ) : !isLoading && isApproved ? (
@@ -326,6 +331,15 @@ export function CarouselButton({ articleId, isApproved }: CarouselButtonProps) {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Slide Version History Modal */}
+      <SlideVersionHistory
+        articleId={articleId}
+        slideNumber={versionHistorySlide || 1}
+        isOpen={versionHistorySlide !== null}
+        onClose={() => setVersionHistorySlide(null)}
+        onVersionActivated={fetchStatus}
+      />
     </div>
   );
 }
