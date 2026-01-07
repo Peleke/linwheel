@@ -3,6 +3,7 @@ export { Hero } from "./hero";
 export { PainPoints } from "./pain-points";
 export { HowItWorks } from "./how-it-works";
 export { AnglesGrid } from "./angles-grid";
+export { Pricing } from "./pricing";
 export { CTASection } from "./cta-section";
 export { Footer } from "./footer";
 export { ParticleBackground } from "./particle-background";

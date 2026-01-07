@@ -4,6 +4,7 @@ import {
   PainPoints,
   HowItWorks,
   AnglesGrid,
+  Pricing,
   CTASection,
   Footer,
 } from "@/components/landing";
@@ -17,6 +18,7 @@ export default function Home() {
         <PainPoints />
         <HowItWorks />
         <AnglesGrid />
+        <Pricing />
         <CTASection />
       </main>
       <Footer />

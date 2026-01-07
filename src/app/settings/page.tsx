@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from "react";
 import { useImagePreferences, type ImagePreferences } from "@/hooks/use-image-preferences";
 import { useLLMPreferences, type LLMPreferences, type LLMProvider } from "@/hooks/use-llm-preferences";
 import { AppHeader } from "@/components/app-header";
+import { SubscriptionStatus } from "@/components/subscription/subscription-status";
 import type { T2IProviderType } from "@/lib/t2i/types";
 
 interface ProviderStatus {
@@ -599,12 +600,10 @@ export default function SettingsPage() {
           </div>
         </section>
 
-        {/* Account Section (Placeholder) */}
-        <section className="bg-white dark:bg-neutral-800 rounded-xl border border-neutral-200 dark:border-neutral-700 p-6 opacity-50">
-          <h2 className="text-lg font-semibold mb-2">Account</h2>
-          <p className="text-sm text-neutral-500">
-            Coming soon with Supabase authentication.
-          </p>
+        {/* Subscription Section */}
+        <section className="bg-white dark:bg-neutral-800 rounded-xl border border-neutral-200 dark:border-neutral-700 p-6 mb-6">
+          <h2 className="text-lg font-semibold mb-4">Subscription</h2>
+          <SubscriptionStatus />
         </section>
 
         {/* Current Config Debug */}
