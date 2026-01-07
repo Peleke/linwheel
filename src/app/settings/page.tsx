@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from "react";
 import { useImagePreferences, type ImagePreferences } from "@/hooks/use-image-preferences";
 import { useLLMPreferences, type LLMPreferences, type LLMProvider } from "@/hooks/use-llm-preferences";
 import { AppHeader } from "@/components/app-header";
+import { SubscriptionStatus } from "@/components/subscription/subscription-status";
 
 interface LLMProviderStatus {
   claude: boolean;
@@ -539,24 +540,16 @@ export default function SettingsPage() {
                   })()}
                 </div>
               </div>
-
-              {/* Subscription Status */}
-              <div className="pt-2 border-t border-zinc-100 dark:border-zinc-800">
-                <div className="flex items-center justify-between py-1">
-                  <span className="text-sm text-zinc-500">Plan</span>
-                  <span className={`text-sm font-medium px-2.5 py-0.5 rounded-full ${
-                    userInfo.subscriptionStatus === "pro"
-                      ? "bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300"
-                      : "bg-zinc-100 text-zinc-600 dark:bg-zinc-700 dark:text-zinc-300"
-                  }`}>
-                    {userInfo.subscriptionStatus === "pro" ? "Pro" : "Free"}
-                  </span>
-                </div>
-              </div>
             </div>
           ) : (
             <p className="text-sm text-zinc-500">Loading account info...</p>
           )}
+        </section>
+
+        {/* Subscription Section */}
+        <section className="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 p-6 mb-6">
+          <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100 mb-4">Subscription</h2>
+          <SubscriptionStatus />
         </section>
 
         {/* Current Config Debug */}

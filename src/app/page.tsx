@@ -5,6 +5,7 @@ import {
   HowItWorks,
   VisualFeatures,
   AnglesGrid,
+  Pricing,
   CTASection,
   Footer,
 } from "@/components/landing";
@@ -19,6 +20,7 @@ export default function Home() {
         <HowItWorks />
         <VisualFeatures />
         <AnglesGrid />
+        <Pricing />
         <CTASection />
       </main>
       <Footer />

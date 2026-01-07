@@ -6,6 +6,129 @@ import { motion, AnimatePresence } from "framer-motion";
 import { AppHeader } from "@/components/app-header";
 import { getStoredLLMPreferences } from "@/hooks/use-llm-preferences";
 
+// Upgrade modal component
+function UpgradeModal({
+  isOpen,
+  onClose,
+  usage
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  usage?: { count: number; limit: number };
+}) {
+  const [isRedirecting, setIsRedirecting] = useState(false);
+
+  const handleUpgrade = async () => {
+    setIsRedirecting(true);
+    try {
+      const response = await fetch("/api/stripe/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ billingCycle: "monthly" }),
+      });
+
+      if (response.ok) {
+        const { url } = await response.json();
+        window.location.href = url;
+      } else {
+        console.error("Failed to create checkout session");
+        setIsRedirecting(false);
+      }
+    } catch (error) {
+      console.error("Error creating checkout:", error);
+      setIsRedirecting(false);
+    }
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center">
+      {/* Backdrop */}
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        onClick={onClose}
+        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+      />
+
+      {/* Modal */}
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95, y: 20 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.95, y: 20 }}
+        className="relative w-full max-w-md mx-4 p-8 bg-white dark:bg-neutral-900 rounded-2xl shadow-2xl border border-neutral-200 dark:border-neutral-700"
+      >
+        {/* Close button */}
+        <button
+          onClick={onClose}
+          className="absolute top-4 right-4 p-2 rounded-full hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
+        >
+          <svg className="w-5 h-5 text-neutral-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+
+        {/* Content */}
+        <div className="text-center">
+          <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center">
+            <span className="text-3xl">🚀</span>
+          </div>
+
+          <h2 className="text-2xl font-bold text-neutral-900 dark:text-white mb-2">
+            You&apos;ve Hit Your Limit!
+          </h2>
+
+          <p className="text-neutral-600 dark:text-neutral-400 mb-6">
+            {usage
+              ? `You've used all ${usage.limit} free generations this month.`
+              : "You've used all your free generations this month."
+            }
+            {" "}Upgrade to Pro for unlimited content generation.
+          </p>
+
+          {/* Benefits */}
+          <div className="text-left mb-6 p-4 bg-neutral-50 dark:bg-neutral-800/50 rounded-xl">
+            <ul className="space-y-2">
+              {[
+                "Unlimited content generations",
+                "Priority processing",
+                "Advanced analytics",
+                "Early access to new features"
+              ].map((benefit, i) => (
+                <li key={i} className="flex items-center gap-2 text-sm text-neutral-700 dark:text-neutral-300">
+                  <svg className="w-4 h-4 text-green-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                  {benefit}
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Buttons */}
+          <div className="flex flex-col gap-3">
+            <button
+              onClick={handleUpgrade}
+              disabled={isRedirecting}
+              className="w-full px-6 py-3 bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-semibold rounded-xl hover:from-indigo-600 hover:to-purple-700 disabled:opacity-50 transition-all"
+            >
+              {isRedirecting ? "Redirecting..." : "Upgrade to Pro — $29/month"}
+            </button>
+            <button
+              onClick={onClose}
+              className="w-full px-6 py-3 text-neutral-600 dark:text-neutral-400 font-medium hover:text-neutral-900 dark:hover:text-white transition-colors"
+            >
+              Maybe later
+            </button>
+          </div>
+        </div>
+      </motion.div>
+    </div>
+  );
+}
+
 // Post angle configuration
 const POST_ANGLES = [
   { id: "contrarian", label: "Contrarian", description: "Challenges widely-held beliefs", emoji: "🔥" },
@@ -38,6 +161,10 @@ export default function GeneratePage() {
   const [selectedArticleAngles, setSelectedArticleAngles] = useState<ArticleAngleId[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Upgrade modal state
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const [quotaUsage, setQuotaUsage] = useState<{ count: number; limit: number } | undefined>();
 
   // Collapsible state
   const [postsExpanded, setPostsExpanded] = useState(true);
@@ -104,7 +231,16 @@ export default function GeneratePage() {
 
       if (!response.ok) {
         const data = await response.json();
-        throw new Error(data.error || "Generation failed");
+
+        // Check if quota exceeded - show upgrade modal
+        if (data.error === "quota_exceeded") {
+          setQuotaUsage(data.usage);
+          setShowUpgradeModal(true);
+          setIsSubmitting(false);
+          return;
+        }
+
+        throw new Error(data.message || data.error || "Generation failed");
       }
 
       const data = await response.json();
@@ -535,6 +671,17 @@ export default function GeneratePage() {
           </form>
         </div>
       </main>
+
+      {/* Upgrade Modal */}
+      <AnimatePresence>
+        {showUpgradeModal && (
+          <UpgradeModal
+            isOpen={showUpgradeModal}
+            onClose={() => setShowUpgradeModal(false)}
+            usage={quotaUsage}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 }

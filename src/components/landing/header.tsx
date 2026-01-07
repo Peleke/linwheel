@@ -66,6 +66,12 @@ export function Header() {
           >
             The 6 Angles
           </Link>
+          <Link
+            href="#pricing"
+            className="text-sm text-neutral-400 hover:text-white transition-colors"
+          >
+            Pricing
+          </Link>
           {user ? (
             <Link
               href="/generate"
