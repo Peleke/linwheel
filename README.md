@@ -468,17 +468,71 @@ At 90 posts per run, that's **$0.03 per post with image**.
 
 ## 🗺️ Roadmap
 
-- [x] Multi-angle post generation
+### ✅ Shipped
+
+- [x] Multi-angle post generation (6 angles × 5 versions)
 - [x] AI cover image generation (Flux.1)
 - [x] 5-slide carousels with per-slide images
 - [x] Long-form articles (4 types)
 - [x] Voice profiles for style matching
 - [x] PWA with install prompt
-- [ ] Brand style profiles for image consistency
-- [ ] Podscribe API integration
-- [ ] Scheduling integration (Buffer, Typefully)
-- [ ] Analytics dashboard
-- [ ] Team workspaces
+
+### 🎨 Brand Style Profiles
+*Voice profiles, but for visuals*
+
+> Your posts already match your voice. Soon your images will match your brand.
+
+- Upload brand guidelines, color palette, visual references
+- AI learns your aesthetic across all generated images
+- Consistent visual identity without a design team
+
+### 🔒 Self-Hosted / Private Cloud
+*Your content never leaves your servers*
+
+> Swap in Ollama, local Stable Diffusion, or your own fine-tuned models.
+
+- Full air-gapped deployment option
+- Bring your own LLM (Claude, GPT, Llama, Mistral)
+- Custom T2I pipelines for compliance-heavy industries (healthcare, finance, gov)
+
+### 📅 Direct Publishing + Scheduling
+*From paste to posted, zero friction*
+
+> Connect LinkedIn directly. Schedule a month of content in one session.
+
+- Native LinkedIn API integration
+- Calendar view of scheduled posts
+- Optimal timing suggestions based on your audience
+- Integrations: Buffer, Typefully, native LinkedIn
+
+### 👥 Team & Agency Mode
+*One dashboard, infinite brands*
+
+> Manage multiple clients/brands from a single workspace.
+
+- Per-client voice profiles + brand styles
+- Team member permissions & roles
+- Client approval workflows
+- White-label option for agencies
+
+### 📊 Performance Analytics
+*Know what's working*
+
+> Track which angles, topics, and image styles drive engagement.
+
+- Post performance tracking (impressions, engagement, clicks)
+- Angle effectiveness scoring
+- "More like this" regeneration based on winners
+
+### 🔌 API Access
+*Plug LinWheel into your stack*
+
+> Programmatic content generation for power users.
+
+- REST API for generation
+- Webhooks for completion events
+- Zapier/Make integration
+- Podcast RSS → LinkedIn automation
 
 ---
 
