@@ -87,11 +87,12 @@ export async function createCheckoutSession(
   userId: string,
   email: string,
   priceId?: string,
-  billingCycle: "monthly" | "yearly" = "monthly"
+  billingCycle: "monthly" | "yearly" = "monthly",
+  baseUrl?: string
 ): Promise<string> {
   const stripe = getStripe();
   const customerId = await getOrCreateCustomer(userId, email);
-  const appUrl = getAppUrl();
+  const appUrl = baseUrl || getAppUrl();
 
   // Use provided price ID or default based on billing cycle
   const finalPriceId =
@@ -139,10 +140,10 @@ export async function createCheckoutSession(
 /**
  * Create a billing portal session for subscription management
  */
-export async function createPortalSession(userId: string): Promise<string> {
+export async function createPortalSession(userId: string, baseUrl?: string): Promise<string> {
   const stripe = getStripe();
   const supabase = await createAdminClient();
-  const appUrl = getAppUrl();
+  const appUrl = baseUrl || getAppUrl();
 
   // Get customer ID
   const { data: profile } = await supabase

@@ -31,12 +31,17 @@ export async function POST(request: NextRequest) {
     const billingCycle = body.billingCycle === "yearly" ? "yearly" : "monthly";
     const priceId = body.priceId;
 
+    // Get base URL from request origin (handles dynamic ports in dev)
+    const origin = request.headers.get("origin") || request.headers.get("referer");
+    const baseUrl = origin ? new URL(origin).origin : undefined;
+
     // Create checkout session
     const checkoutUrl = await createCheckoutSession(
       user.id,
       user.email!,
       priceId,
-      billingCycle
+      billingCycle,
+      baseUrl
     );
 
     return NextResponse.json({ url: checkoutUrl });

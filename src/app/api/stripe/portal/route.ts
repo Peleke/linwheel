@@ -4,11 +4,11 @@
  * Creates a billing portal session for subscription management.
  */
 
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { requireAuth } from "@/lib/auth";
 import { createPortalSession, isStripeConfigured } from "@/lib/stripe";
 
-export async function POST() {
+export async function POST(request: NextRequest) {
   try {
     // Check Stripe configuration
     if (!isStripeConfigured()) {
@@ -26,8 +26,12 @@ export async function POST() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    // Get base URL from request origin (handles dynamic ports in dev)
+    const origin = request.headers.get("origin") || request.headers.get("referer");
+    const baseUrl = origin ? new URL(origin).origin : undefined;
+
     // Create portal session
-    const portalUrl = await createPortalSession(user.id);
+    const portalUrl = await createPortalSession(user.id, baseUrl);
 
     return NextResponse.json({ url: portalUrl });
   } catch (error) {
