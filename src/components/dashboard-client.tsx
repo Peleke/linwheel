@@ -46,37 +46,34 @@ export function DashboardClient({ content }: DashboardClientProps) {
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [schedulingItem, setSchedulingItem] = useState<string | null>(null);
   const [isScheduling, setIsScheduling] = useState(false);
-  const [weekOffset, setWeekOffset] = useState(0);
+  const [dayOffset, setDayOffset] = useState(0); // Days offset from today (for day-by-day nav)
   const { isSupported, isSubscribed, isLoading: pushLoading, subscribe, unsubscribe } = usePushNotifications();
 
-  // Scroll to today on mount (mobile)
+  // Scroll to center day on mount/change (mobile)
   useEffect(() => {
     if (scrollContainerRef.current) {
-      const today = new Date();
-      const dayOfWeek = today.getDay(); // 0 = Sunday, 1 = Monday, etc.
-      // Each card is 85vw wide, scroll to today's position
+      // Center on the middle day (index 3) of the 7-day view
       const cardWidth = window.innerWidth * 0.85;
-      const scrollPosition = dayOfWeek * cardWidth;
+      const scrollPosition = 3 * cardWidth;
       scrollContainerRef.current.scrollTo({ left: scrollPosition, behavior: "instant" });
     }
-  }, [weekOffset]); // Re-scroll when week changes
+  }, [dayOffset]); // Re-scroll when day offset changes
 
   // Split content
   const scheduled = content.filter(c => c.scheduledAt);
   const unscheduled = content.filter(c => !c.scheduledAt);
 
-  // Get current week dates
+  // Get 7 days centered on today + dayOffset (3 days before, center day, 3 days after)
   const weekDates = useMemo(() => {
-    const today = new Date();
-    const startOfWeek = new Date(today);
-    startOfWeek.setDate(today.getDate() - today.getDay() + (weekOffset * 7));
+    const centerDate = new Date();
+    centerDate.setDate(centerDate.getDate() + dayOffset);
 
     return Array.from({ length: 7 }, (_, i) => {
-      const date = new Date(startOfWeek);
-      date.setDate(startOfWeek.getDate() + i);
+      const date = new Date(centerDate);
+      date.setDate(centerDate.getDate() + (i - 3)); // -3 to +3 from center
       return date;
     });
-  }, [weekOffset]);
+  }, [dayOffset]);
 
   // Group scheduled content by date (using local timezone)
   const contentByDate = useMemo(() => {
@@ -205,25 +202,27 @@ export function DashboardClient({ content }: DashboardClientProps) {
             </button>
           )}
 
-          {/* Week navigation */}
+          {/* Day-by-day navigation */}
           <div className="flex items-center gap-2">
           <button
-            onClick={() => setWeekOffset(w => w - 1)}
+            onClick={() => setDayOffset(d => d - 1)}
             className="p-2 hover:bg-zinc-200 dark:hover:bg-zinc-800 rounded-lg transition-colors"
+            title="Previous day"
           >
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
             </svg>
           </button>
           <button
-            onClick={() => setWeekOffset(0)}
+            onClick={() => setDayOffset(0)}
             className="px-3 py-1.5 text-sm font-medium hover:bg-zinc-200 dark:hover:bg-zinc-800 rounded-lg transition-colors"
           >
             Today
           </button>
           <button
-            onClick={() => setWeekOffset(w => w + 1)}
+            onClick={() => setDayOffset(d => d + 1)}
             className="p-2 hover:bg-zinc-200 dark:hover:bg-zinc-800 rounded-lg transition-colors"
+            title="Next day"
           >
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
@@ -332,18 +331,40 @@ export function DashboardClient({ content }: DashboardClientProps) {
                 );
               })}
             </div>
-            {/* Scroll indicator */}
-            <div className="flex justify-center gap-1.5 py-3 border-t border-zinc-200 dark:border-zinc-800">
-              {weekDates.map((date, i) => (
-                <div
-                  key={i}
-                  className={`w-2 h-2 rounded-full transition-colors ${
-                    isToday(date)
-                      ? "bg-blue-500"
-                      : "bg-zinc-300 dark:bg-zinc-600"
-                  }`}
-                />
-              ))}
+            {/* Scroll indicator with navigation carets */}
+            <div className="flex items-center justify-center gap-3 py-3 border-t border-zinc-200 dark:border-zinc-800">
+              <button
+                onClick={() => setDayOffset(d => d - 1)}
+                className="p-1 hover:bg-zinc-200 dark:hover:bg-zinc-800 rounded transition-colors"
+                title="Previous day"
+              >
+                <svg className="w-4 h-4 text-zinc-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+                </svg>
+              </button>
+              <div className="flex gap-1.5">
+                {weekDates.map((date, i) => (
+                  <div
+                    key={i}
+                    className={`w-2 h-2 rounded-full transition-colors ${
+                      isToday(date)
+                        ? "bg-blue-500"
+                        : i === 3
+                        ? "bg-zinc-500 dark:bg-zinc-400"
+                        : "bg-zinc-300 dark:bg-zinc-600"
+                    }`}
+                  />
+                ))}
+              </div>
+              <button
+                onClick={() => setDayOffset(d => d + 1)}
+                className="p-1 hover:bg-zinc-200 dark:hover:bg-zinc-800 rounded transition-colors"
+                title="Next day"
+              >
+                <svg className="w-4 h-4 text-zinc-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                </svg>
+              </button>
             </div>
           </div>
 

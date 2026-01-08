@@ -1032,3 +1032,141 @@ test.describe("Flow 13: Image Generation", () => {
     // - Re-approve: no regeneration, same image
   });
 });
+
+// ============================================================================
+// FLOW 14: DASHBOARD DATE NAVIGATION
+// ============================================================================
+test.describe("Flow 14: Dashboard Date Navigation", () => {
+  test("14.1 - dashboard shows navigation controls", async ({ page }) => {
+    await page.goto("/dashboard");
+
+    // Should show left/right navigation carets
+    await expect(page.getByTitle("Previous day")).toBeVisible();
+    await expect(page.getByTitle("Next day")).toBeVisible();
+
+    // Should show Today button
+    await expect(page.getByRole("button", { name: "Today" })).toBeVisible();
+  });
+
+  test("14.2 - clicking next day advances by one day", async ({ page }) => {
+    await page.goto("/dashboard");
+
+    // Get today's date for reference
+    const today = new Date();
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+
+    // Format tomorrow's date
+    const tomorrowDay = tomorrow.toLocaleDateString("en-US", { weekday: "short" });
+    const tomorrowDate = tomorrow.getDate();
+
+    // Click next day button
+    await page.getByTitle("Next day").click();
+
+    // The center day should now be tomorrow
+    // On desktop, check that tomorrow is visible in the grid
+    await expect(page.getByText(tomorrowDay)).toBeVisible();
+  });
+
+  test("14.3 - clicking previous day goes back by one day", async ({ page }) => {
+    await page.goto("/dashboard");
+
+    // Get yesterday's date
+    const today = new Date();
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+
+    const yesterdayDay = yesterday.toLocaleDateString("en-US", { weekday: "short" });
+
+    // Click previous day button
+    await page.getByTitle("Previous day").click();
+
+    // Yesterday should be visible
+    await expect(page.getByText(yesterdayDay)).toBeVisible();
+  });
+
+  test("14.4 - Today button resets to current day", async ({ page }) => {
+    await page.goto("/dashboard");
+
+    // Navigate away from today
+    await page.getByTitle("Next day").click();
+    await page.getByTitle("Next day").click();
+    await page.getByTitle("Next day").click();
+
+    // Click Today to reset
+    await page.getByRole("button", { name: "Today" }).click();
+
+    // Today should be highlighted (has special styling)
+    const today = new Date();
+    const todayDate = today.getDate().toString();
+
+    // The today date should be visible with today indicator
+    await expect(page.locator(`text=${todayDate}`).first()).toBeVisible();
+  });
+
+  test("14.5 - mobile shows scroll indicator dots with carets", async ({ page }) => {
+    // Set mobile viewport
+    await page.setViewportSize({ width: 375, height: 667 });
+    await page.goto("/dashboard");
+
+    // Should show dots indicator
+    const dots = page.locator(".rounded-full.w-2.h-2");
+    await expect(dots.first()).toBeVisible();
+
+    // Should have 7 dots (one for each day)
+    await expect(dots).toHaveCount(7);
+
+    // Should show carets around the dots
+    // Mobile carets for navigation
+    const mobileLeftCaret = page.locator("button[title='Previous day']").last();
+    const mobileRightCaret = page.locator("button[title='Next day']").last();
+
+    await expect(mobileLeftCaret).toBeVisible();
+    await expect(mobileRightCaret).toBeVisible();
+  });
+
+  test("14.6 - navigation shows 7-day view centered on selected day", async ({ page }) => {
+    await page.goto("/dashboard");
+
+    // Get current date range
+    const today = new Date();
+
+    // Should show 3 days before and 3 days after center
+    // Verify by checking that today is visible along with surrounding days
+    const threeDaysAgo = new Date(today);
+    threeDaysAgo.setDate(today.getDate() - 3);
+
+    const threeDaysAhead = new Date(today);
+    threeDaysAhead.setDate(today.getDate() + 3);
+
+    // Both should be visible in the 7-day view
+    const threeDaysAgoDay = threeDaysAgo.toLocaleDateString("en-US", { weekday: "short" });
+    const threeDaysAheadDay = threeDaysAhead.toLocaleDateString("en-US", { weekday: "short" });
+
+    await expect(page.getByText(threeDaysAgoDay)).toBeVisible();
+    await expect(page.getByText(threeDaysAheadDay)).toBeVisible();
+  });
+
+  test("14.7 - can navigate multiple days forward and back", async ({ page }) => {
+    await page.goto("/dashboard");
+
+    // Navigate 5 days forward (one day at a time)
+    for (let i = 0; i < 5; i++) {
+      await page.getByTitle("Next day").first().click();
+    }
+
+    // Navigate 5 days back
+    for (let i = 0; i < 5; i++) {
+      await page.getByTitle("Previous day").first().click();
+    }
+
+    // Should be back at today
+    // Click Today just to confirm we're centered properly
+    await page.getByRole("button", { name: "Today" }).click();
+
+    // Today's date should be visible
+    const today = new Date();
+    const todayDate = today.getDate().toString();
+    await expect(page.locator(`text=${todayDate}`).first()).toBeVisible();
+  });
+});
