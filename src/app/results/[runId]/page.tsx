@@ -183,7 +183,7 @@ export default async function ResultsDashboardPage({ params }: Props) {
       </header>
 
       <main className="flex-1">
-        <div className="max-w-6xl mx-auto px-6 py-8">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
           {/* Run header */}
           <div className="mb-8">
             <div className="flex justify-between items-start mb-4">
@@ -300,37 +300,39 @@ function AngleBucket({
       {/* Gradient slice bar at top */}
       <div className="h-1 w-full bg-gradient-to-r from-indigo-400 via-violet-500 to-indigo-400" />
 
-      <summary className="px-6 py-5 bg-gradient-to-r from-indigo-50/80 via-slate-50/50 to-indigo-50/80 dark:from-indigo-950/40 dark:via-slate-900/50 dark:to-indigo-950/40 cursor-pointer hover:from-indigo-100/80 hover:via-slate-100/50 hover:to-indigo-100/80 dark:hover:from-indigo-950/60 dark:hover:via-slate-800/50 dark:hover:to-indigo-950/60 list-none transition-all duration-300">
-        <div className="flex justify-between items-center">
-          <div className="flex items-center gap-3">
-            <span className="text-xl">📝</span>
-            <span className="text-lg font-bold capitalize bg-clip-text text-transparent bg-gradient-to-r from-indigo-700 to-violet-600 dark:from-indigo-300 dark:to-violet-400">
+      <summary className="px-4 sm:px-6 py-4 sm:py-5 bg-gradient-to-r from-indigo-50/80 via-slate-50/50 to-indigo-50/80 dark:from-indigo-950/40 dark:via-slate-900/50 dark:to-indigo-950/40 cursor-pointer hover:from-indigo-100/80 hover:via-slate-100/50 hover:to-indigo-100/80 dark:hover:from-indigo-950/60 dark:hover:via-slate-800/50 dark:hover:to-indigo-950/60 list-none transition-all duration-300">
+        <div className="flex justify-between items-center gap-2">
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
+            <span className="text-lg sm:text-xl flex-shrink-0">📝</span>
+            <span className="text-base sm:text-lg font-bold capitalize bg-clip-text text-transparent bg-gradient-to-r from-indigo-700 to-violet-600 dark:from-indigo-300 dark:to-violet-400 truncate">
               {angle.replace("_", " ")}
             </span>
-            <span className="text-sm text-indigo-500 dark:text-indigo-400 hidden sm:inline">
+            <span className="text-sm text-indigo-500 dark:text-indigo-400 hidden lg:inline truncate">
               {ANGLE_DESCRIPTIONS[angle]}
             </span>
           </div>
-          <div className="flex items-center gap-4">
-            <GenerateMoreButton runId={runId} angle={angle} />
-            <div className="flex items-center gap-2">
-              <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300">
-                {posts.length} version{posts.length !== 1 ? "s" : ""}
+          <div className="flex items-center gap-2 sm:gap-4 flex-shrink-0">
+            <div className="hidden sm:block">
+              <GenerateMoreButton runId={runId} angle={angle} />
+            </div>
+            <div className="flex items-center gap-1 sm:gap-2">
+              <span className="px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full text-xs font-semibold bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300 whitespace-nowrap">
+                {posts.length}
               </span>
               {approvedCount > 0 && (
-                <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-gradient-to-r from-emerald-500 to-green-500 text-white shadow-sm">
-                  {approvedCount} approved
+                <span className="px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full text-xs font-bold bg-gradient-to-r from-emerald-500 to-green-500 text-white shadow-sm whitespace-nowrap">
+                  ✓{approvedCount}
                 </span>
               )}
             </div>
-            <span className="text-indigo-400 group-open:rotate-180 transition-transform duration-300">
+            <span className="text-indigo-400 group-open:rotate-180 transition-transform duration-300 flex-shrink-0">
               ▼
             </span>
           </div>
         </div>
       </summary>
 
-      <div className="p-6 bg-gradient-to-b from-slate-50/50 to-white dark:from-slate-900/50 dark:to-slate-900 grid gap-5 md:grid-cols-2 lg:grid-cols-3">
+      <div className="p-4 sm:p-6 bg-gradient-to-b from-slate-50/50 to-white dark:from-slate-900/50 dark:to-slate-900 grid gap-4 sm:gap-5 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
         {posts.map((post) => (
           <PostCard key={post.id} post={post} runId={runId} />
         ))}
@@ -355,37 +357,39 @@ function ArticleBucket({
       {/* Gradient slice bar at top */}
       <div className="h-1 w-full bg-gradient-to-r from-blue-400 via-indigo-500 to-blue-400" />
 
-      <summary className="px-6 py-5 bg-gradient-to-r from-blue-50/80 via-indigo-50/50 to-blue-50/80 dark:from-blue-950/40 dark:via-indigo-950/30 dark:to-blue-950/40 cursor-pointer hover:from-blue-100/80 hover:via-indigo-100/50 hover:to-blue-100/80 dark:hover:from-blue-950/60 dark:hover:via-indigo-950/40 dark:hover:to-blue-950/60 list-none transition-all duration-300">
-        <div className="flex justify-between items-center">
-          <div className="flex items-center gap-3">
-            <span className="text-xl">📄</span>
-            <span className="text-lg font-bold capitalize bg-clip-text text-transparent bg-gradient-to-r from-blue-700 to-indigo-600 dark:from-blue-300 dark:to-indigo-400">
+      <summary className="px-4 sm:px-6 py-4 sm:py-5 bg-gradient-to-r from-blue-50/80 via-indigo-50/50 to-blue-50/80 dark:from-blue-950/40 dark:via-indigo-950/30 dark:to-blue-950/40 cursor-pointer hover:from-blue-100/80 hover:via-indigo-100/50 hover:to-blue-100/80 dark:hover:from-blue-950/60 dark:hover:via-indigo-950/40 dark:hover:to-blue-950/60 list-none transition-all duration-300">
+        <div className="flex justify-between items-center gap-2">
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
+            <span className="text-lg sm:text-xl flex-shrink-0">📄</span>
+            <span className="text-base sm:text-lg font-bold capitalize bg-clip-text text-transparent bg-gradient-to-r from-blue-700 to-indigo-600 dark:from-blue-300 dark:to-indigo-400 truncate">
               {angle.replace("_", " ")}
             </span>
-            <span className="text-sm text-blue-600 dark:text-blue-400 hidden sm:inline">
+            <span className="text-sm text-blue-600 dark:text-blue-400 hidden lg:inline truncate">
               {ARTICLE_ANGLE_DESCRIPTIONS[angle]}
             </span>
           </div>
-          <div className="flex items-center gap-4">
-            <GenerateMoreArticlesButton runId={runId} angle={angle} />
-            <div className="flex items-center gap-2">
-              <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300">
-                {articles.length} version{articles.length !== 1 ? "s" : ""}
+          <div className="flex items-center gap-2 sm:gap-4 flex-shrink-0">
+            <div className="hidden sm:block">
+              <GenerateMoreArticlesButton runId={runId} angle={angle} />
+            </div>
+            <div className="flex items-center gap-1 sm:gap-2">
+              <span className="px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full text-xs font-semibold bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 whitespace-nowrap">
+                {articles.length}
               </span>
               {approvedCount > 0 && (
-                <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-gradient-to-r from-emerald-500 to-green-500 text-white shadow-sm">
-                  {approvedCount} approved
+                <span className="px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full text-xs font-bold bg-gradient-to-r from-emerald-500 to-green-500 text-white shadow-sm whitespace-nowrap">
+                  ✓{approvedCount}
                 </span>
               )}
             </div>
-            <span className="text-blue-400 group-open:rotate-180 transition-transform duration-300">
+            <span className="text-blue-400 group-open:rotate-180 transition-transform duration-300 flex-shrink-0">
               ▼
             </span>
           </div>
         </div>
       </summary>
 
-      <div className="p-6 bg-gradient-to-b from-blue-50/30 to-white dark:from-blue-950/20 dark:to-slate-900 grid gap-5 md:grid-cols-2">
+      <div className="p-4 sm:p-6 bg-gradient-to-b from-blue-50/30 to-white dark:from-blue-950/20 dark:to-slate-900 grid gap-4 sm:gap-5 grid-cols-1 md:grid-cols-2">
         {articles.map((article) => (
           <ArticleCard key={article.id} article={article} runId={runId} />
         ))}
