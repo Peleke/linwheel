@@ -1,10 +1,11 @@
 "use client";
 
-import { useState, useMemo, useRef, useEffect } from "react";
+import { useState, useMemo, useRef, useEffect, useCallback } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { usePushNotifications } from "@/hooks/use-push-notifications";
+import { ScheduledPostModal } from "./scheduled-post-modal";
 
 // Get local date key (YYYY-MM-DD) respecting user's timezone
 function getLocalDateKey(date: Date): string {
@@ -48,6 +49,10 @@ export function DashboardClient({ content }: DashboardClientProps) {
   const [isScheduling, setIsScheduling] = useState(false);
   const [weekOffset, setWeekOffset] = useState(0);
   const { isSupported, isSubscribed, isLoading: pushLoading, subscribe, unsubscribe } = usePushNotifications();
+
+  // Modal state for viewing scheduled post details
+  const [selectedItem, setSelectedItem] = useState<ContentItem | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   // Scroll to today on mount (mobile)
   useEffect(() => {
@@ -126,6 +131,50 @@ export function DashboardClient({ content }: DashboardClientProps) {
       setSchedulingItem(null);
     }
   };
+
+  // Open modal to view scheduled post details
+  const handleItemClick = useCallback((item: ContentItem) => {
+    setSelectedItem(item);
+    setIsModalOpen(true);
+  }, []);
+
+  // Reschedule a post to a new date
+  const handleReschedule = useCallback(async (id: string, type: "post" | "article", newDate: Date) => {
+    const endpoint = type === "post"
+      ? `/api/posts/${id}/schedule`
+      : `/api/articles/${id}/schedule`;
+
+    const res = await fetch(endpoint, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ scheduledAt: newDate.toISOString() }),
+    });
+
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.error || "Failed to reschedule");
+    }
+
+    router.refresh();
+  }, [router]);
+
+  // Unschedule a post (remove from calendar)
+  const handleUnschedule = useCallback(async (id: string, type: "post" | "article") => {
+    const endpoint = type === "post"
+      ? `/api/posts/${id}/schedule`
+      : `/api/articles/${id}/schedule`;
+
+    const res = await fetch(endpoint, {
+      method: "DELETE",
+    });
+
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.error || "Failed to unschedule");
+    }
+
+    router.refresh();
+  }, [router]);
 
   const isToday = (date: Date) => {
     const today = new Date();
@@ -310,7 +359,7 @@ export function DashboardClient({ content }: DashboardClientProps) {
                         </div>
                       ) : (
                         dayContent.map((item) => (
-                          <CalendarItem key={item.id} item={item} />
+                          <CalendarItem key={item.id} item={item} onClick={() => handleItemClick(item)} />
                         ))
                       )}
                     </div>
@@ -416,7 +465,7 @@ export function DashboardClient({ content }: DashboardClientProps) {
                   >
                     <div className="space-y-2">
                       {dayContent.map((item) => (
-                        <CalendarItem key={item.id} item={item} />
+                        <CalendarItem key={item.id} item={item} onClick={() => handleItemClick(item)} />
                       ))}
                     </div>
 
@@ -470,18 +519,43 @@ export function DashboardClient({ content }: DashboardClientProps) {
           </div>
         </div>
       </div>
+
+      {/* Scheduled post detail modal */}
+      <ScheduledPostModal
+        isOpen={isModalOpen}
+        onClose={() => {
+          setIsModalOpen(false);
+          setSelectedItem(null);
+        }}
+        item={selectedItem ? {
+          id: selectedItem.id,
+          type: selectedItem.type,
+          title: selectedItem.title,
+          fullText: selectedItem.fullText,
+          imageUrl: selectedItem.imageUrl || undefined,
+          scheduledAt: selectedItem.scheduledAt ? new Date(selectedItem.scheduledAt) : new Date(),
+          runId: selectedItem.runId,
+          sourceLabel: selectedItem.runLabel,
+        } : null}
+        onReschedule={handleReschedule}
+        onUnschedule={handleUnschedule}
+      />
     </div>
   );
 }
 
-function CalendarItem({ item }: { item: ContentItem }) {
+function CalendarItem({ item, onClick }: { item: ContentItem; onClick?: () => void }) {
   const isPost = item.type === "post";
   return (
-    <div className={`group relative rounded-lg p-2 transition-colors border-l-3 ${
-      isPost
-        ? "bg-blue-50 dark:bg-blue-900/20 border-l-blue-500 hover:bg-blue-100 dark:hover:bg-blue-900/30"
-        : "bg-purple-50 dark:bg-purple-900/20 border-l-purple-500 hover:bg-purple-100 dark:hover:bg-purple-900/30"
-    }`}>
+    <button
+      data-testid="calendar-item"
+      onClick={onClick}
+      className={`group relative rounded-lg p-2 transition-colors border-l-3 w-full text-left cursor-pointer ${
+        isPost
+          ? "bg-blue-50 dark:bg-blue-900/20 border-l-blue-500 hover:bg-blue-100 dark:hover:bg-blue-900/30"
+          : "bg-purple-50 dark:bg-purple-900/20 border-l-purple-500 hover:bg-purple-100 dark:hover:bg-purple-900/30"
+      }`}
+    >
       <div className="flex items-start gap-2">
         {item.imageUrl ? (
           <div className="relative w-8 h-8 rounded overflow-hidden flex-shrink-0">
@@ -509,7 +583,7 @@ function CalendarItem({ item }: { item: ContentItem }) {
           </p>
         </div>
       </div>
-    </div>
+    </button>
   );
 }
 
