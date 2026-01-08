@@ -1,6 +1,6 @@
 ---
 theme: seriph
-background: https://images.unsplash.com/photo-1611162617474-5b21e879e113?w=1920
+background: https://images.unsplash.com/photo-1557683316-973673baf926?w=1920
 title: LinWheel — AI Content Engine for LinkedIn
 info: |
   ## LinWheel
@@ -8,82 +8,95 @@ info: |
 
   A presentation for investors, partners, and customers.
 class: text-center
+highlighter: shiki
 drawings:
   persist: false
 transition: slide-left
 mdc: true
+css: unocss
 ---
 
-# LinWheel
+<div class="absolute inset-0 bg-gradient-to-br from-indigo-900/90 via-purple-900/80 to-black/90" />
 
-### Turn Any Content Into a Month of LinkedIn Posts
+<div class="relative">
+
+# <span class="bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">LinWheel</span>
+
+<div class="text-2xl text-white/90 font-light mt-4">
+Turn Any Content Into a Month of LinkedIn Posts
+</div>
 
 <div class="pt-12">
-  <span class="px-2 py-1 rounded bg-white/10">
-    90+ posts. 7 angles. AI-generated images. Under 60 seconds.
+  <span class="px-6 py-3 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 text-lg">
+    ✨ 90+ posts · 7 angles · AI images · 60 seconds
   </span>
 </div>
 
-<div class="abs-br m-6 flex gap-2">
-  <a href="https://linwheel.ai" target="_blank" class="slidev-icon-btn">
-    🚀
-  </a>
-  <a href="https://github.com/Peleke/linwheel" target="_blank" class="slidev-icon-btn">
-    <carbon:logo-github />
-  </a>
+<div class="mt-16 flex justify-center gap-8">
+  <div class="text-center">
+    <div class="text-5xl font-bold text-indigo-400">90+</div>
+    <div class="text-sm text-white/60">posts generated</div>
+  </div>
+  <div class="text-center">
+    <div class="text-5xl font-bold text-purple-400">7</div>
+    <div class="text-sm text-white/60">content angles</div>
+  </div>
+  <div class="text-center">
+    <div class="text-5xl font-bold text-pink-400">&lt;60s</div>
+    <div class="text-sm text-white/60">generation time</div>
+  </div>
 </div>
 
-<!--
-Agenda:
-- Part I: The Problem (content creation is broken)
-- Part II: The Solution (live demo)
-- Part III: Business Model (pricing, market)
-- Part IV: The Ask (next steps)
--->
+</div>
+
+<div class="abs-br m-6 flex gap-2">
+  <a href="https://linwheel.ai" target="_blank" class="text-white/80 hover:text-white">
+    linwheel.ai →
+  </a>
+</div>
 
 ---
 layout: center
 class: text-center
+background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%)
 ---
 
-# Agenda
+<div class="grid grid-cols-4 gap-6">
 
-<div class="grid grid-cols-4 gap-4 pt-8">
-
-<div class="p-4 bg-white/5 rounded-lg">
+<div class="p-6 rounded-2xl bg-gradient-to-br from-rose-500/20 to-orange-500/20 border border-rose-500/30 backdrop-blur-sm transform hover:scale-105 transition-all">
+<div class="text-4xl mb-4">🔥</div>
 
 ### Part I
 **The Problem**
 
-Why content creation is broken
-
+<div class="text-sm text-white/60 mt-2">Why content creation is broken</div>
 </div>
 
-<div class="p-4 bg-white/5 rounded-lg">
+<div class="p-6 rounded-2xl bg-gradient-to-br from-blue-500/20 to-cyan-500/20 border border-blue-500/30 backdrop-blur-sm transform hover:scale-105 transition-all">
+<div class="text-4xl mb-4">⚡</div>
 
 ### Part II
 **The Solution**
 
-LinWheel demo
-
+<div class="text-sm text-white/60 mt-2">LinWheel live demo</div>
 </div>
 
-<div class="p-4 bg-white/5 rounded-lg">
+<div class="p-6 rounded-2xl bg-gradient-to-br from-emerald-500/20 to-teal-500/20 border border-emerald-500/30 backdrop-blur-sm transform hover:scale-105 transition-all">
+<div class="text-4xl mb-4">💰</div>
 
 ### Part III
-**Business Model**
+**Business**
 
-Pricing & market
-
+<div class="text-sm text-white/60 mt-2">Pricing & market</div>
 </div>
 
-<div class="p-4 bg-white/5 rounded-lg">
+<div class="p-6 rounded-2xl bg-gradient-to-br from-violet-500/20 to-purple-500/20 border border-violet-500/30 backdrop-blur-sm transform hover:scale-105 transition-all">
+<div class="text-4xl mb-4">🚀</div>
 
 ### Part IV
 **The Ask**
 
-Next steps
-
+<div class="text-sm text-white/60 mt-2">Next steps</div>
 </div>
 
 </div>
@@ -92,116 +105,174 @@ Next steps
 layout: center
 class: text-center
 ---
+
+<div class="absolute inset-0 bg-gradient-to-br from-rose-900/40 via-red-900/30 to-orange-900/40" />
+
+<div class="relative">
 
 # Part I
 
-## The Problem
+<div class="text-5xl font-bold mt-4 bg-gradient-to-r from-rose-400 to-orange-400 bg-clip-text text-transparent">
+The Problem
+</div>
 
-*Why LinkedIn content creation is broken*
-
----
-transition: fade-out
----
-
-# The Problem
-
-Brilliant insights die in Google Docs.
-
-<v-clicks>
-
-- You record an **amazing podcast** — 2 hours of gold
-- You come out of a **conference** with pages of notes
-- You finish a **client project** with hard-won lessons
-
-</v-clicks>
-
-<br>
-
-<v-click>
-
-**Then what?**
-
-You write *one* LinkedIn post. Maybe two.
-
-The rest? Forgotten.
-
-</v-click>
-
----
-
-# The Content Creation Grind
-
-Turning insights into LinkedIn content is **painful**.
-
-<div class="grid grid-cols-2 gap-8 pt-8">
-
-<div v-click>
-
-### The Manual Process
-
-1. Read through 20-page transcript
-2. Highlight quotable moments
-3. Rewrite for LinkedIn format
-4. Think of a hook
-5. Open Canva, make an image
-6. Schedule the post
-7. **Repeat 90 times**
+<div class="mt-6 text-xl text-white/70">
+Why LinkedIn content creation is broken
+</div>
 
 </div>
 
-<div v-click>
+---
+background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)
+---
 
-### The Reality
+# <span class="text-rose-400">Brilliant ideas die in Google Docs.</span>
 
-- **4-6 hours** per piece of content
-- Most creators give up after **3 posts**
-- Algorithm wants **variety** — you have **one voice**
-- Images take **longer than writing**
+<div class="grid grid-cols-3 gap-6 mt-12">
 
+<div v-click class="p-6 rounded-2xl bg-gradient-to-br from-amber-500/10 to-orange-500/10 border border-amber-500/30">
+<div class="text-5xl mb-4">🎙️</div>
+<div class="font-bold text-lg">Podcast Recording</div>
+<div class="text-white/60 mt-2">2 hours of brilliant insights, hard-won stories, real expertise</div>
+</div>
+
+<div v-click class="p-6 rounded-2xl bg-gradient-to-br from-blue-500/10 to-indigo-500/10 border border-blue-500/30">
+<div class="text-5xl mb-4">📝</div>
+<div class="font-bold text-lg">Conference Notes</div>
+<div class="text-white/60 mt-2">Pages of connections, ideas, and inspiration</div>
+</div>
+
+<div v-click class="p-6 rounded-2xl bg-gradient-to-br from-emerald-500/10 to-teal-500/10 border border-emerald-500/30">
+<div class="text-5xl mb-4">🏆</div>
+<div class="font-bold text-lg">Client Wins</div>
+<div class="text-white/60 mt-2">Hard-won lessons that could help thousands</div>
 </div>
 
 </div>
 
 <v-click>
 
-<div class="pt-8 text-center text-xl">
-
-**Result:** 95% of your best ideas never see LinkedIn.
-
+<div class="mt-12 text-center">
+<div class="text-3xl font-bold text-rose-400">Then what?</div>
+<div class="text-xl text-white/70 mt-2">You write <span class="text-white font-bold">one</span> post. Maybe two. The rest? <span class="text-rose-400">Forgotten.</span></div>
 </div>
 
 </v-click>
 
 ---
+background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)
+---
 
-# The Market Gap
+# The <span class="text-rose-400">Content Creation Grind</span>
 
-<div class="pt-8">
+<div class="grid grid-cols-2 gap-12 mt-8">
+
+<div v-click>
+
+<div class="p-6 rounded-2xl bg-gradient-to-br from-red-500/10 to-rose-500/10 border border-red-500/30">
+
+### 😩 The Manual Process
+
+<div class="space-y-3 mt-4 text-white/80">
+
+1. Read 20-page transcript 📖
+2. Highlight quotable moments ✨
+3. Rewrite for LinkedIn format ✍️
+4. Think of a killer hook 🎣
+5. Open Canva, struggle with design 🎨
+6. Schedule the post 📅
+7. **Repeat 90 times** 🔄
+
+</div>
+
+<div class="mt-4 p-3 rounded-lg bg-red-500/20 text-rose-300 font-bold">
+⏱️ 4-6 hours per piece of content
+</div>
+
+</div>
+
+</div>
+
+<div v-click>
+
+<div class="p-6 rounded-2xl bg-gradient-to-br from-orange-500/10 to-amber-500/10 border border-orange-500/30">
+
+### 📊 The Reality
+
+<div class="space-y-4 mt-4">
+
+<div class="flex items-center gap-4">
+<div class="text-3xl">😫</div>
+<div>Most creators give up after <span class="text-orange-400 font-bold">3 posts</span></div>
+</div>
+
+<div class="flex items-center gap-4">
+<div class="text-3xl">🤖</div>
+<div>Algorithm wants <span class="text-orange-400 font-bold">variety</span> — you have <span class="text-white/60">one voice</span></div>
+</div>
+
+<div class="flex items-center gap-4">
+<div class="text-3xl">🖼️</div>
+<div>Images take <span class="text-orange-400 font-bold">longer</span> than writing</div>
+</div>
+
+<div class="flex items-center gap-4">
+<div class="text-3xl">📉</div>
+<div>Inconsistent posting <span class="text-orange-400 font-bold">kills reach</span></div>
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+<v-click>
+
+<div class="mt-8 text-center text-2xl">
+<span class="text-rose-400 font-bold">Result:</span> 95% of your best ideas never see LinkedIn.
+</div>
+
+</v-click>
+
+---
+background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)
+---
+
+# The <span class="text-purple-400">Market Gap</span>
+
+<div class="mt-8 p-8 rounded-2xl bg-white/5 border border-white/10">
 
 ```
-QUALITY                                 SPEED
-    ◄─────────────────────────────────────►
+       QUALITY                                              SPEED
+          ◄──────────────────────────────────────────────────────►
 
-    Copywriters         ???          AI Slop
-    Ghostwriters                     ChatGPT dumps
-    Agencies                         Template tools
 
-    ✓ Great writing                  ✓ Fast
-    ✓ Your voice                     ✓ Cheap
-    ✗ $$$$ expensive                 ✗ Generic
-    ✗ Slow turnaround                ✗ "Obviously AI"
+    🎩 Copywriters            ┌─────────────┐            🤖 AI Slop
+    👻 Ghostwriters           │             │            💩 ChatGPT dumps
+    🏢 Agencies               │     ???     │            📝 Template tools
+                              │             │
+                              └─────────────┘
+
+    ✓ Great writing                                      ✓ Fast
+    ✓ Your voice                                         ✓ Cheap
+    ✗ $$$$ expensive                                     ✗ Generic
+    ✗ Slow turnaround                                    ✗ "Obviously AI"
 ```
 
 </div>
 
 <v-click>
 
-<div class="pt-8 text-center text-xl">
-
-**LinWheel fills the gap.**
-
-Quality of a ghostwriter. Speed of AI. Your voice.
-
+<div class="mt-8 text-center">
+<div class="inline-block px-8 py-4 rounded-2xl bg-gradient-to-r from-indigo-500/30 to-purple-500/30 border border-indigo-500/50">
+<div class="text-2xl font-bold bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">
+LinWheel fills the gap.
+</div>
+<div class="text-white/70 mt-2">Quality of a ghostwriter. Speed of AI. Your voice.</div>
+</div>
 </div>
 
 </v-click>
@@ -210,49 +281,106 @@ Quality of a ghostwriter. Speed of AI. Your voice.
 layout: center
 class: text-center
 ---
+
+<div class="absolute inset-0 bg-gradient-to-br from-blue-900/40 via-indigo-900/30 to-cyan-900/40" />
+
+<div class="relative">
 
 # Part II
 
-## The Solution
+<div class="text-5xl font-bold mt-4 bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">
+The Solution
+</div>
 
-*Live demo: From transcript to 90+ posts*
+<div class="mt-6 text-xl text-white/70">
+From transcript to 90+ posts in under 60 seconds
+</div>
+
+</div>
 
 ---
+background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%)
+---
 
-# LinWheel in 60 Seconds
+# <span class="bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">LinWheel in 60 Seconds</span>
 
-<div class="grid grid-cols-2 gap-8 pt-4">
+<div class="grid grid-cols-2 gap-8 mt-8">
 
 <div>
 
-### Input
-- Paste **any content** (transcript, notes, article)
-- Select your **angles** (7 options)
-- Click **Generate**
+<div class="space-y-6">
 
-### Output (< 60 seconds)
-- **90+ LinkedIn posts**
-- **AI-generated cover images**
-- **Long-form articles**
-- Ready to copy, edit, schedule
+<div v-click class="p-4 rounded-xl bg-gradient-to-r from-blue-500/20 to-blue-500/10 border border-blue-500/30 flex items-center gap-4">
+<div class="text-3xl">1️⃣</div>
+<div>
+<div class="font-bold">Paste any content</div>
+<div class="text-sm text-white/60">Transcript, notes, article, research</div>
+</div>
+</div>
+
+<div v-click class="p-4 rounded-xl bg-gradient-to-r from-indigo-500/20 to-indigo-500/10 border border-indigo-500/30 flex items-center gap-4">
+<div class="text-3xl">2️⃣</div>
+<div>
+<div class="font-bold">Select your angles</div>
+<div class="text-sm text-white/60">7 distinct content perspectives</div>
+</div>
+</div>
+
+<div v-click class="p-4 rounded-xl bg-gradient-to-r from-cyan-500/20 to-cyan-500/10 border border-cyan-500/30 flex items-center gap-4">
+<div class="text-3xl">3️⃣</div>
+<div>
+<div class="font-bold">Click Generate</div>
+<div class="text-sm text-white/60">Watch the magic happen</div>
+</div>
+</div>
 
 </div>
 
-<div class="p-4 bg-white/5 rounded-lg">
+<v-click>
+
+<div class="mt-8 p-4 rounded-xl bg-gradient-to-br from-emerald-500/20 to-teal-500/20 border border-emerald-500/30">
+<div class="text-lg font-bold text-emerald-400 flex items-center gap-2">
+<span class="text-2xl">✨</span> Output in &lt;60 seconds:
+</div>
+<div class="mt-2 grid grid-cols-2 gap-2 text-sm">
+<div>📝 90+ LinkedIn posts</div>
+<div>🖼️ AI cover images</div>
+<div>📄 Long-form articles</div>
+<div>📋 Ready to copy</div>
+</div>
+</div>
+
+</v-click>
+
+</div>
+
+<div v-click class="p-6 rounded-2xl bg-gradient-to-br from-slate-800/50 to-slate-900/50 border border-slate-700/50">
+
+<div class="text-sm text-white/40 mb-4">LinWheel Interface</div>
 
 ```
-┌────────────────────────────────────┐
-│                                    │
-│   [Paste transcript here...]       │
-│                                    │
-│   📝 Posts  ☑ All 7 angles         │
-│   📄 Articles  ☑ Deep Dive         │
-│                                    │
-│   ┌────────────────────────────┐   │
-│   │   ⚡ Generate Content      │   │
-│   └────────────────────────────┘   │
-│                                    │
-└────────────────────────────────────┘
+┌──────────────────────────────────────┐
+│  📥 Paste your content               │
+│  ┌────────────────────────────────┐  │
+│  │                                │  │
+│  │  [Your podcast transcript,    │  │
+│  │   meeting notes, or any       │  │
+│  │   content goes here...]       │  │
+│  │                                │  │
+│  └────────────────────────────────┘  │
+│                                      │
+│  🎭 Select Angles                    │
+│  ┌──────────────────────────────┐    │
+│  │ ☑ Contrarian   ☑ Field Note │    │
+│  │ ☑ Demystify    ☑ Identity   │    │
+│  │ ☑ Provocateur  ☑ Synthesizer│    │
+│  │ ☑ Curious Cat               │    │
+│  └──────────────────────────────┘    │
+│                                      │
+│  ┌────────────────────────────────┐  │
+│  │   ⚡ Generate Content          │  │
+│  └────────────────────────────────┘  │
+└──────────────────────────────────────┘
 ```
 
 </div>
@@ -260,223 +388,202 @@ class: text-center
 </div>
 
 ---
-
-# The 7 Angles
-
-Every insight gets rewritten in **7 distinct voices**.
-
-<div class="grid grid-cols-4 gap-4 pt-6 text-sm">
-
-<div v-click class="p-3 bg-red-500/10 rounded-lg border border-red-500/30">
-
-### 🔥 Contrarian
-
-"Everyone's wrong about AI. Here's why."
-
-*Challenges consensus*
-
-</div>
-
-<div v-click class="p-3 bg-blue-500/10 rounded-lg border border-blue-500/30">
-
-### 📝 Field Note
-
-"Spent 6 months testing this."
-
-*Firsthand observations*
-
-</div>
-
-<div v-click class="p-3 bg-yellow-500/10 rounded-lg border border-yellow-500/30">
-
-### 💡 Demystify
-
-"The 'overnight success' story nobody tells."
-
-*Strips glamour*
-
-</div>
-
-<div v-click class="p-3 bg-purple-500/10 rounded-lg border border-purple-500/30">
-
-### 🎯 Identity
-
-"If you've ever felt like a fraud..."
-
-*Makes outliers feel seen*
-
-</div>
-
-</div>
-
-<div class="grid grid-cols-3 gap-4 pt-4 text-sm">
-
-<div v-click class="p-3 bg-orange-500/10 rounded-lg border border-orange-500/30">
-
-### ⚡ Provocateur
-
-"Hot take: Your KPIs are lying."
-
-*Stirs debate*
-
-</div>
-
-<div v-click class="p-3 bg-green-500/10 rounded-lg border border-green-500/30">
-
-### 🧩 Synthesizer
-
-"What jazz teaches us about hiring."
-
-*Connects dots*
-
-</div>
-
-<div v-click class="p-3 bg-pink-500/10 rounded-lg border border-pink-500/30">
-
-### 🐱 Curious Cat
-
-"What if everything you know is wrong?"
-
-*Leads with questions*
-
-</div>
-
-</div>
-
+background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%)
 ---
 
-# AI-Generated Images
+# The <span class="bg-gradient-to-r from-violet-400 to-purple-400 bg-clip-text text-transparent">7 Angles</span>
 
-Every post gets a **Flux.1** cover image.
+<div class="text-white/60 mb-6">Every insight gets rewritten in 7 distinct voices</div>
 
-<div class="grid grid-cols-2 gap-8 pt-4">
+<div class="grid grid-cols-4 gap-4">
+
+<div v-click class="p-4 rounded-xl bg-gradient-to-br from-red-500/20 to-rose-500/20 border border-red-500/40 hover:border-red-400 transition-all hover:scale-105">
+<div class="text-3xl mb-2">🔥</div>
+<div class="font-bold text-red-400">Contrarian</div>
+<div class="text-sm text-white/60 mt-1">"Everyone's wrong about AI."</div>
+</div>
+
+<div v-click class="p-4 rounded-xl bg-gradient-to-br from-blue-500/20 to-indigo-500/20 border border-blue-500/40 hover:border-blue-400 transition-all hover:scale-105">
+<div class="text-3xl mb-2">📝</div>
+<div class="font-bold text-blue-400">Field Note</div>
+<div class="text-sm text-white/60 mt-1">"6 months testing this."</div>
+</div>
+
+<div v-click class="p-4 rounded-xl bg-gradient-to-br from-amber-500/20 to-yellow-500/20 border border-amber-500/40 hover:border-amber-400 transition-all hover:scale-105">
+<div class="text-3xl mb-2">💡</div>
+<div class="font-bold text-amber-400">Demystify</div>
+<div class="text-sm text-white/60 mt-1">"The story nobody tells."</div>
+</div>
+
+<div v-click class="p-4 rounded-xl bg-gradient-to-br from-purple-500/20 to-violet-500/20 border border-purple-500/40 hover:border-purple-400 transition-all hover:scale-105">
+<div class="text-3xl mb-2">🎯</div>
+<div class="font-bold text-purple-400">Identity</div>
+<div class="text-sm text-white/60 mt-1">"If you've felt like a fraud..."</div>
+</div>
+
+</div>
+
+<div class="grid grid-cols-3 gap-4 mt-4">
+
+<div v-click class="p-4 rounded-xl bg-gradient-to-br from-orange-500/20 to-red-500/20 border border-orange-500/40 hover:border-orange-400 transition-all hover:scale-105">
+<div class="text-3xl mb-2">⚡</div>
+<div class="font-bold text-orange-400">Provocateur</div>
+<div class="text-sm text-white/60 mt-1">"Hot take: Your KPIs are lying."</div>
+</div>
+
+<div v-click class="p-4 rounded-xl bg-gradient-to-br from-emerald-500/20 to-teal-500/20 border border-emerald-500/40 hover:border-emerald-400 transition-all hover:scale-105">
+<div class="text-3xl mb-2">🧩</div>
+<div class="font-bold text-emerald-400">Synthesizer</div>
+<div class="text-sm text-white/60 mt-1">"What jazz teaches about hiring."</div>
+</div>
+
+<div v-click class="p-4 rounded-xl bg-gradient-to-br from-pink-500/20 to-rose-500/20 border border-pink-500/40 hover:border-pink-400 transition-all hover:scale-105">
+<div class="text-3xl mb-2">🐱</div>
+<div class="font-bold text-pink-400">Curious Cat</div>
+<div class="text-sm text-white/60 mt-1">"What if everything is wrong?"</div>
+</div>
+
+</div>
+
+<v-click>
+
+<div class="mt-6 text-center text-lg text-white/70">
+<span class="text-violet-400 font-bold">7 angles × 2 versions × 3 insights</span> = <span class="text-white font-bold">42+ unique posts</span> from one transcript
+</div>
+
+</v-click>
+
+---
+background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%)
+---
+
+# <span class="bg-gradient-to-r from-pink-400 to-rose-400 bg-clip-text text-transparent">AI-Generated Images</span>
+
+<div class="text-white/60 mb-6">Every post gets a Flux.1 cover image — one click, 3 seconds</div>
+
+<div class="grid grid-cols-2 gap-8">
 
 <div>
 
-### How It Works
+<div class="space-y-4">
 
-1. AI analyzes your post content
-2. Generates optimized image prompt
-3. Flux.1 creates LinkedIn-ready image
-4. **One click** — 3 seconds
+<div v-click class="p-4 rounded-xl bg-white/5 border border-white/10 flex items-center gap-4">
+<div class="w-12 h-12 rounded-xl bg-gradient-to-br from-pink-500 to-rose-500 flex items-center justify-center text-2xl">🧠</div>
+<div>
+<div class="font-bold">Smart Prompts</div>
+<div class="text-sm text-white/60">AI analyzes your post content</div>
+</div>
+</div>
 
-### Why It Matters
+<div v-click class="p-4 rounded-xl bg-white/5 border border-white/10 flex items-center gap-4">
+<div class="w-12 h-12 rounded-xl bg-gradient-to-br from-violet-500 to-purple-500 flex items-center justify-center text-2xl">🎨</div>
+<div>
+<div class="font-bold">Flux.1 Generation</div>
+<div class="text-sm text-white/60">High-quality, LinkedIn-optimized</div>
+</div>
+</div>
 
-- Posts with images get **2x engagement**
-- No more Canva struggles
-- Consistent visual brand
-- Regenerate until you love it
+<div v-click class="p-4 rounded-xl bg-white/5 border border-white/10 flex items-center gap-4">
+<div class="w-12 h-12 rounded-xl bg-gradient-to-br from-cyan-500 to-blue-500 flex items-center justify-center text-2xl">🔄</div>
+<div>
+<div class="font-bold">Regenerate Anytime</div>
+<div class="text-sm text-white/60">Not happy? Try again instantly</div>
+</div>
+</div>
 
 </div>
 
-<div class="p-4 bg-white/5 rounded-lg">
+<v-click>
 
-```
-┌────────────────────────────────────┐
-│  ┌──────────────────────────────┐  │
-│  │                              │  │
-│  │     [AI-Generated Image]     │  │
-│  │                              │  │
-│  │     Abstract visualization   │  │
-│  │     of "disrupting the       │  │
-│  │     status quo"              │  │
-│  │                              │  │
-│  └──────────────────────────────┘  │
-│                                    │
-│  "Everyone's wrong about AI..."    │
-│                                    │
-│  [🔄 Regenerate] [⬇️ Download]     │
-└────────────────────────────────────┘
-```
+<div class="mt-6 p-4 rounded-xl bg-gradient-to-r from-pink-500/20 to-rose-500/20 border border-pink-500/30">
+<div class="text-2xl font-bold text-pink-400">2x engagement</div>
+<div class="text-sm text-white/60">Posts with images get double the reach</div>
+</div>
+
+</v-click>
+
+</div>
+
+<div v-click class="relative">
+
+<div class="absolute -inset-4 bg-gradient-to-r from-pink-500/20 via-purple-500/20 to-blue-500/20 rounded-3xl blur-2xl" />
+
+<div class="relative p-6 rounded-2xl bg-slate-900/80 border border-white/10">
+
+<div class="aspect-video rounded-xl bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-600 mb-4 flex items-center justify-center">
+<div class="text-white/40 text-sm">AI-Generated Cover Image</div>
+</div>
+
+<div class="text-sm font-medium">"Everyone's wrong about AI. Here's why."</div>
+<div class="text-xs text-white/40 mt-2">🔥 Contrarian angle</div>
+
+<div class="flex gap-2 mt-4">
+<button class="px-3 py-1.5 rounded-lg bg-white/10 text-sm flex items-center gap-1">🔄 Regenerate</button>
+<button class="px-3 py-1.5 rounded-lg bg-white/10 text-sm flex items-center gap-1">⬇️ Download</button>
+</div>
+
+</div>
 
 </div>
 
 </div>
 
 ---
+background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%)
+---
 
-# Voice Profiles
+# <span class="bg-gradient-to-r from-emerald-400 to-teal-400 bg-clip-text text-transparent">Voice Profiles</span>
 
-LinWheel learns **your** writing style.
+<div class="text-white/60 mb-6">LinWheel learns YOUR writing style</div>
 
-<div class="grid grid-cols-2 gap-8 pt-4">
+<div class="grid grid-cols-2 gap-8">
 
 <div>
 
-### Setup (2 minutes)
+<div v-click class="p-6 rounded-2xl bg-gradient-to-br from-emerald-500/10 to-teal-500/10 border border-emerald-500/30 mb-6">
 
-1. Paste 2-3 examples of your writing
-2. Add optional style notes
-3. Save profile
+### ⚡ Setup (2 minutes)
 
-### Result
+<div class="space-y-2 mt-4 text-white/80">
+<div class="flex items-center gap-2"><span class="text-emerald-400">1.</span> Paste 2-3 examples of your writing</div>
+<div class="flex items-center gap-2"><span class="text-emerald-400">2.</span> Add optional style notes</div>
+<div class="flex items-center gap-2"><span class="text-emerald-400">3.</span> Save profile</div>
+</div>
 
-- Generated content matches **your voice**
-- No more "sounds like AI" problem
-- Multiple profiles for different personas
-- Switch between client voices
+</div>
+
+<v-click>
+
+<div class="p-6 rounded-2xl bg-gradient-to-br from-teal-500/10 to-cyan-500/10 border border-teal-500/30">
+
+### 🎯 Benefits
+
+<div class="space-y-2 mt-4 text-white/80">
+<div>✓ Generated content matches <span class="text-teal-400 font-bold">your voice</span></div>
+<div>✓ No more "sounds like AI" problem</div>
+<div>✓ Multiple profiles for different personas</div>
+<div>✓ Switch between client voices</div>
+</div>
+
+</div>
+
+</v-click>
 
 </div>
 
 <div v-click>
 
-### Before vs After
+<div class="text-sm text-white/40 mb-2">Before vs After</div>
 
-**Generic AI:**
-> "In today's fast-paced business environment, it's crucial to leverage synergies..."
-
-**With Voice Profile:**
-> "I used to think you needed a big team. I was wrong. Here's the thing about scaling..."
-
+<div class="p-4 rounded-xl bg-red-500/10 border border-red-500/30 mb-4">
+<div class="text-xs text-red-400 mb-2">❌ Generic AI</div>
+<div class="text-sm italic text-white/70">"In today's fast-paced business environment, it's crucial to leverage synergies and optimize strategic initiatives for maximum stakeholder value..."</div>
 </div>
 
+<div class="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/30">
+<div class="text-xs text-emerald-400 mb-2">✓ With Voice Profile</div>
+<div class="text-sm italic text-white/90">"I used to think you needed a big team to scale. I was dead wrong.<br><br>Here's the thing about building in 2025..."</div>
 </div>
-
----
-
-# Long-Form Articles
-
-Not just posts — **full 500-750 word articles**.
-
-<div class="grid grid-cols-4 gap-4 pt-8">
-
-<div v-click class="p-4 bg-blue-500/10 rounded-lg">
-
-### 🌊 Deep Dive
-
-Comprehensive exploration with nuance.
-
-*"The complete guide to..."*
-
-</div>
-
-<div v-click class="p-4 bg-red-500/10 rounded-lg">
-
-### 🔥 Contrarian
-
-Extended argument challenging convention.
-
-*"Why everything you know about X is wrong..."*
-
-</div>
-
-<div v-click class="p-4 bg-green-500/10 rounded-lg">
-
-### 📋 How-To
-
-Step-by-step actionable guide.
-
-*"7 steps to..."*
-
-</div>
-
-<div v-click class="p-4 bg-purple-500/10 rounded-lg">
-
-### 📊 Case Study
-
-Story-driven analysis with lessons.
-
-*"How we achieved X..."*
 
 </div>
 
@@ -486,48 +593,78 @@ Story-driven analysis with lessons.
 layout: center
 class: text-center
 ---
+
+<div class="absolute inset-0 bg-gradient-to-br from-emerald-900/40 via-teal-900/30 to-green-900/40" />
+
+<div class="relative">
 
 # Part III
 
-## Business Model
+<div class="text-5xl font-bold mt-4 bg-gradient-to-r from-emerald-400 to-teal-400 bg-clip-text text-transparent">
+Business Model
+</div>
 
-*Pricing, market, and traction*
-
----
-
-# Pricing
-
-<div class="grid grid-cols-2 gap-12 pt-8">
-
-<div class="p-8 bg-white/5 rounded-lg border border-white/10">
-
-### Free Tier
-
-**$0/month**
-
-- 10 content generations
-- All 7 post angles
-- All 4 article types
-- AI image generation
-- Voice profiles
-
-*Try before you buy*
+<div class="mt-6 text-xl text-white/70">
+Pricing, market, and competitive advantage
+</div>
 
 </div>
 
-<div v-click class="p-8 bg-gradient-to-br from-indigo-500/20 to-purple-500/20 rounded-lg border border-indigo-500/50">
+---
+background: linear-gradient(135deg, #0f172a 0%, #064e3b 100%)
+---
 
-### Pro
+# <span class="bg-gradient-to-r from-emerald-400 to-teal-400 bg-clip-text text-transparent">Pricing</span>
 
-**$29/month**
+<div class="grid grid-cols-2 gap-12 mt-12">
 
-- **Unlimited** generations
-- Priority processing
-- Advanced analytics
-- Early access to new features
-- Email support
+<div v-click class="relative group">
 
-*For serious creators*
+<div class="absolute -inset-1 bg-gradient-to-r from-slate-500/20 to-slate-600/20 rounded-3xl blur-lg group-hover:blur-xl transition-all" />
+
+<div class="relative p-8 rounded-2xl bg-slate-900/80 border border-slate-700/50">
+
+<div class="text-slate-400 font-medium">Free Tier</div>
+<div class="text-5xl font-bold mt-2">$0<span class="text-lg text-slate-500">/mo</span></div>
+
+<div class="mt-6 space-y-3">
+<div class="flex items-center gap-2 text-white/80"><span class="text-emerald-400">✓</span> 10 content generations</div>
+<div class="flex items-center gap-2 text-white/80"><span class="text-emerald-400">✓</span> All 7 post angles</div>
+<div class="flex items-center gap-2 text-white/80"><span class="text-emerald-400">✓</span> All 4 article types</div>
+<div class="flex items-center gap-2 text-white/80"><span class="text-emerald-400">✓</span> AI image generation</div>
+<div class="flex items-center gap-2 text-white/80"><span class="text-emerald-400">✓</span> Voice profiles</div>
+</div>
+
+<div class="mt-6 text-sm text-slate-500">Try before you buy</div>
+
+</div>
+
+</div>
+
+<div v-click class="relative group">
+
+<div class="absolute -inset-1 bg-gradient-to-r from-indigo-500/40 via-purple-500/40 to-pink-500/40 rounded-3xl blur-lg group-hover:blur-xl transition-all animate-pulse" />
+
+<div class="relative p-8 rounded-2xl bg-gradient-to-br from-indigo-900/80 to-purple-900/80 border border-indigo-500/50">
+
+<div class="absolute -top-3 -right-3 px-3 py-1 rounded-full bg-gradient-to-r from-amber-400 to-orange-400 text-black text-xs font-bold">
+MOST POPULAR
+</div>
+
+<div class="text-indigo-300 font-medium">Pro</div>
+<div class="text-5xl font-bold mt-2 bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">$29<span class="text-lg text-indigo-400">/mo</span></div>
+
+<div class="mt-6 space-y-3">
+<div class="flex items-center gap-2 text-white"><span class="text-emerald-400">✓</span> <span class="font-bold">Unlimited</span> generations</div>
+<div class="flex items-center gap-2 text-white"><span class="text-emerald-400">✓</span> Priority processing</div>
+<div class="flex items-center gap-2 text-white"><span class="text-emerald-400">✓</span> Advanced analytics</div>
+<div class="flex items-center gap-2 text-white"><span class="text-emerald-400">✓</span> Early access features</div>
+<div class="flex items-center gap-2 text-white"><span class="text-emerald-400">✓</span> Email support</div>
+</div>
+
+<div class="mt-6 text-sm text-indigo-300">For serious creators</div>
+
+</div>
 
 </div>
 
@@ -535,38 +672,59 @@ class: text-center
 
 <v-click>
 
-<div class="pt-8 text-center">
-
-**Unit economics:** ~$3 cost per generation run → **90%+ margin at Pro tier**
-
+<div class="mt-8 text-center">
+<div class="inline-block px-6 py-3 rounded-xl bg-white/5 border border-white/10">
+<span class="text-white/60">Unit economics:</span> <span class="text-emerald-400 font-bold">~$3 cost/run</span> → <span class="text-white font-bold">90%+ margin</span> at Pro tier
+</div>
 </div>
 
 </v-click>
 
 ---
+background: linear-gradient(135deg, #0f172a 0%, #064e3b 100%)
+---
 
-# The Market
+# The <span class="bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">Market</span>
 
-<div class="grid grid-cols-2 gap-8 pt-8">
+<div class="grid grid-cols-2 gap-8 mt-8">
 
 <div>
 
+<div class="p-6 rounded-2xl bg-white/5 border border-white/10">
+
 ### LinkedIn by Numbers
 
-- **1B+** members
-- **310M** monthly active users
-- **3M+** posting weekly
-- **40M** using for job search monthly
-- **Highest organic reach** of any social platform
+<div class="grid grid-cols-2 gap-4 mt-4">
+
+<div class="text-center p-4 rounded-xl bg-blue-500/10">
+<div class="text-3xl font-bold text-blue-400">1B+</div>
+<div class="text-sm text-white/60">members</div>
+</div>
+
+<div class="text-center p-4 rounded-xl bg-cyan-500/10">
+<div class="text-3xl font-bold text-cyan-400">310M</div>
+<div class="text-sm text-white/60">monthly active</div>
+</div>
+
+<div class="text-center p-4 rounded-xl bg-teal-500/10">
+<div class="text-3xl font-bold text-teal-400">3M+</div>
+<div class="text-sm text-white/60">posting weekly</div>
+</div>
+
+<div class="text-center p-4 rounded-xl bg-emerald-500/10">
+<div class="text-3xl font-bold text-emerald-400">#1</div>
+<div class="text-sm text-white/60">organic reach</div>
+</div>
+
+</div>
+
+</div>
 
 <v-click>
 
-<div class="pt-4 p-4 bg-amber-500/10 rounded-lg">
-
-**The algorithm rewards volume + variety.**
-
-LinWheel delivers both.
-
+<div class="mt-6 p-4 rounded-xl bg-gradient-to-r from-amber-500/20 to-orange-500/20 border border-amber-500/30">
+<div class="font-bold text-amber-400">The algorithm rewards volume + variety.</div>
+<div class="text-sm text-white/70 mt-1">LinWheel delivers both.</div>
 </div>
 
 </v-click>
@@ -575,213 +733,296 @@ LinWheel delivers both.
 
 <div v-click>
 
+<div class="p-6 rounded-2xl bg-white/5 border border-white/10">
+
 ### Target Segments
 
-| Segment | Size | Pain Level |
-|---------|------|------------|
-| Founders/CEOs | 10M+ | High |
-| Consultants | 20M+ | Very High |
-| Coaches | 5M+ | Very High |
-| B2B Marketers | 15M+ | High |
-| Podcasters | 2M+ | Extreme |
+<div class="space-y-3 mt-4">
+
+<div class="flex items-center justify-between p-3 rounded-lg bg-white/5">
+<div class="flex items-center gap-3">
+<span class="text-2xl">👔</span>
+<span>Founders/CEOs</span>
+</div>
+<span class="text-emerald-400">10M+</span>
+</div>
+
+<div class="flex items-center justify-between p-3 rounded-lg bg-white/5">
+<div class="flex items-center gap-3">
+<span class="text-2xl">💼</span>
+<span>Consultants</span>
+</div>
+<span class="text-emerald-400">20M+</span>
+</div>
+
+<div class="flex items-center justify-between p-3 rounded-lg bg-white/5">
+<div class="flex items-center gap-3">
+<span class="text-2xl">🎯</span>
+<span>Coaches</span>
+</div>
+<span class="text-emerald-400">5M+</span>
+</div>
+
+<div class="flex items-center justify-between p-3 rounded-lg bg-white/5">
+<div class="flex items-center gap-3">
+<span class="text-2xl">🎙️</span>
+<span>Podcasters</span>
+</div>
+<span class="text-rose-400 font-bold">Extreme pain</span>
+</div>
+
+</div>
+
+</div>
 
 </div>
 
 </div>
 
 ---
+background: linear-gradient(135deg, #0f172a 0%, #064e3b 100%)
+---
 
-# Competitive Advantage
+# <span class="bg-gradient-to-r from-violet-400 to-purple-400 bg-clip-text text-transparent">Competitive Advantage</span>
 
-<div class="pt-4">
+<div class="mt-8 p-6 rounded-2xl bg-white/5 border border-white/10 overflow-hidden">
 
-| | ChatGPT | Jasper | Copy.ai | **LinWheel** |
-|---|:---:|:---:|:---:|:---:|
-| LinkedIn-specific | No | Some | Some | **Yes** |
-| Multi-angle output | No | No | No | **7 angles** |
-| Voice matching | No | Weak | Weak | **Yes** |
-| AI images included | No | No | No | **Yes** |
-| One-click workflow | No | No | No | **Yes** |
-| Podcast → posts | No | No | No | **Yes** |
+<table class="w-full text-sm">
+<thead>
+<tr class="border-b border-white/10">
+<th class="text-left p-3"></th>
+<th class="p-3 text-white/60">ChatGPT</th>
+<th class="p-3 text-white/60">Jasper</th>
+<th class="p-3 text-white/60">Copy.ai</th>
+<th class="p-3 text-indigo-400 font-bold">LinWheel</th>
+</tr>
+</thead>
+<tbody>
+<tr class="border-b border-white/5">
+<td class="p-3 text-white/80">LinkedIn-specific</td>
+<td class="p-3 text-center text-rose-400">✗</td>
+<td class="p-3 text-center text-amber-400">~</td>
+<td class="p-3 text-center text-amber-400">~</td>
+<td class="p-3 text-center text-emerald-400 font-bold">✓</td>
+</tr>
+<tr class="border-b border-white/5">
+<td class="p-3 text-white/80">Multi-angle output</td>
+<td class="p-3 text-center text-rose-400">✗</td>
+<td class="p-3 text-center text-rose-400">✗</td>
+<td class="p-3 text-center text-rose-400">✗</td>
+<td class="p-3 text-center text-emerald-400 font-bold">7 angles</td>
+</tr>
+<tr class="border-b border-white/5">
+<td class="p-3 text-white/80">Voice matching</td>
+<td class="p-3 text-center text-rose-400">✗</td>
+<td class="p-3 text-center text-amber-400">Weak</td>
+<td class="p-3 text-center text-amber-400">Weak</td>
+<td class="p-3 text-center text-emerald-400 font-bold">✓</td>
+</tr>
+<tr class="border-b border-white/5">
+<td class="p-3 text-white/80">AI images included</td>
+<td class="p-3 text-center text-rose-400">✗</td>
+<td class="p-3 text-center text-rose-400">✗</td>
+<td class="p-3 text-center text-rose-400">✗</td>
+<td class="p-3 text-center text-emerald-400 font-bold">✓</td>
+</tr>
+<tr>
+<td class="p-3 text-white/80">Podcast → posts</td>
+<td class="p-3 text-center text-rose-400">✗</td>
+<td class="p-3 text-center text-rose-400">✗</td>
+<td class="p-3 text-center text-rose-400">✗</td>
+<td class="p-3 text-center text-emerald-400 font-bold">✓</td>
+</tr>
+</tbody>
+</table>
 
 </div>
 
 <v-click>
 
-<div class="pt-8 text-center text-xl">
-
-**We're not "AI writing." We're a LinkedIn content factory.**
-
+<div class="mt-8 text-center text-xl">
+<span class="bg-gradient-to-r from-violet-400 to-purple-400 bg-clip-text text-transparent font-bold">We're not "AI writing." We're a LinkedIn content factory.</span>
 </div>
 
 </v-click>
 
 ---
-
-# Tech Stack
-
-Built for speed, quality, and scale.
-
-<div class="grid grid-cols-3 gap-6 pt-8">
-
-<div class="p-4 bg-white/5 rounded-lg">
-
-### AI Layer
-
-- **Claude** (Anthropic) for writing
-- **Flux.1** (FAL.ai) for images
-- Multi-provider fallback
-- Voice profile injection
-
-</div>
-
-<div class="p-4 bg-white/5 rounded-lg">
-
-### Infrastructure
-
-- **Next.js 16** (App Router)
-- **Turso** (edge SQLite)
-- **Supabase** (auth)
-- **Stripe** (billing)
-
-</div>
-
-<div class="p-4 bg-white/5 rounded-lg">
-
-### Performance
-
-- 90+ posts in **< 60s**
-- Image gen in **3s**
-- Edge-optimized DB
-- PWA for mobile
-
-</div>
-
-</div>
-
----
 layout: center
 class: text-center
 ---
+
+<div class="absolute inset-0 bg-gradient-to-br from-violet-900/40 via-purple-900/30 to-indigo-900/40" />
+
+<div class="relative">
 
 # Part IV
 
-## The Ask
-
-*What's next*
-
----
-
-# Roadmap
-
-<div class="grid grid-cols-3 gap-6 pt-8">
-
-<div class="p-6 bg-green-500/10 rounded-lg border border-green-500/30">
-
-### ✅ Shipped
-
-- Multi-angle generation
-- AI cover images
-- Long-form articles
-- Voice profiles
-- Stripe billing
-- PWA
-
-*Ready for users*
-
+<div class="text-5xl font-bold mt-4 bg-gradient-to-r from-violet-400 to-purple-400 bg-clip-text text-transparent">
+The Ask
 </div>
 
-<div v-click class="p-6 bg-blue-500/10 rounded-lg border border-blue-500/30">
-
-### 🔨 Next 30 Days
-
-- 5-slide carousels
-- Direct LinkedIn posting
-- Scheduling calendar
-- Analytics dashboard
-
-*Reduce friction to zero*
-
-</div>
-
-<div v-click class="p-6 bg-purple-500/10 rounded-lg border border-purple-500/30">
-
-### 🚀 Next 90 Days
-
-- Team/Agency mode
-- White-label option
-- API access
-- Mobile app
-
-*Scale the business*
-
+<div class="mt-6 text-xl text-white/70">
+What's next
 </div>
 
 </div>
 
 ---
+background: linear-gradient(135deg, #1e1b4b 0%, #312e81 100%)
+---
 
-# The Opportunity
+# <span class="bg-gradient-to-r from-violet-400 to-purple-400 bg-clip-text text-transparent">Roadmap</span>
 
-<div class="pt-8 text-xl text-center">
+<div class="grid grid-cols-3 gap-6 mt-8">
 
-**LinkedIn is the last platform with organic reach.**
+<div v-click class="p-6 rounded-2xl bg-gradient-to-br from-emerald-500/20 to-teal-500/20 border border-emerald-500/30">
+
+<div class="text-emerald-400 text-sm font-bold mb-2">✅ SHIPPED</div>
+
+<div class="space-y-2 text-sm">
+<div class="flex items-center gap-2"><span class="text-emerald-400">✓</span> Multi-angle generation</div>
+<div class="flex items-center gap-2"><span class="text-emerald-400">✓</span> AI cover images</div>
+<div class="flex items-center gap-2"><span class="text-emerald-400">✓</span> Long-form articles</div>
+<div class="flex items-center gap-2"><span class="text-emerald-400">✓</span> Voice profiles</div>
+<div class="flex items-center gap-2"><span class="text-emerald-400">✓</span> Stripe billing</div>
+<div class="flex items-center gap-2"><span class="text-emerald-400">✓</span> PWA</div>
+</div>
+
+<div class="mt-4 text-xs text-emerald-300">Ready for users</div>
 
 </div>
 
-<div class="pt-8">
+<div v-click class="p-6 rounded-2xl bg-gradient-to-br from-blue-500/20 to-indigo-500/20 border border-blue-500/30">
 
-<v-clicks>
+<div class="text-blue-400 text-sm font-bold mb-2">🔨 NEXT 30 DAYS</div>
 
-- Every founder, consultant, and coach **knows** they should post more
-- They don't because it's **too hard** and **too slow**
-- LinWheel makes it **effortless**
-- At **$29/mo**, it's a no-brainer vs hiring a ghostwriter ($2K+/mo)
+<div class="space-y-2 text-sm">
+<div class="flex items-center gap-2"><span class="text-blue-400">○</span> 5-slide carousels</div>
+<div class="flex items-center gap-2"><span class="text-blue-400">○</span> Direct LinkedIn posting</div>
+<div class="flex items-center gap-2"><span class="text-blue-400">○</span> Scheduling calendar</div>
+<div class="flex items-center gap-2"><span class="text-blue-400">○</span> Analytics dashboard</div>
+</div>
 
-</v-clicks>
+<div class="mt-4 text-xs text-blue-300">Reduce friction to zero</div>
 
 </div>
+
+<div v-click class="p-6 rounded-2xl bg-gradient-to-br from-purple-500/20 to-violet-500/20 border border-purple-500/30">
+
+<div class="text-purple-400 text-sm font-bold mb-2">🚀 NEXT 90 DAYS</div>
+
+<div class="space-y-2 text-sm">
+<div class="flex items-center gap-2"><span class="text-purple-400">○</span> Team/Agency mode</div>
+<div class="flex items-center gap-2"><span class="text-purple-400">○</span> White-label option</div>
+<div class="flex items-center gap-2"><span class="text-purple-400">○</span> API access</div>
+<div class="flex items-center gap-2"><span class="text-purple-400">○</span> Mobile app</div>
+</div>
+
+<div class="mt-4 text-xs text-purple-300">Scale the business</div>
+
+</div>
+
+</div>
+
+---
+background: linear-gradient(135deg, #1e1b4b 0%, #312e81 100%)
+---
+
+# The <span class="bg-gradient-to-r from-amber-400 to-orange-400 bg-clip-text text-transparent">Opportunity</span>
+
+<div class="mt-12 space-y-8">
 
 <v-click>
 
-<div class="pt-8 text-center text-2xl">
-
-**One podcast episode. A month of content. 60 seconds.**
-
+<div class="p-6 rounded-2xl bg-gradient-to-r from-amber-500/20 to-orange-500/20 border border-amber-500/30 flex items-center gap-6">
+<div class="text-5xl">🎯</div>
+<div>
+<div class="text-xl font-bold">LinkedIn is the last platform with organic reach.</div>
+<div class="text-white/70 mt-1">Every other platform is pay-to-play. LinkedIn still rewards good content.</div>
+</div>
 </div>
 
 </v-click>
+
+<v-click>
+
+<div class="p-6 rounded-2xl bg-gradient-to-r from-blue-500/20 to-indigo-500/20 border border-blue-500/30 flex items-center gap-6">
+<div class="text-5xl">😩</div>
+<div>
+<div class="text-xl font-bold">Everyone knows they should post more.</div>
+<div class="text-white/70 mt-1">They don't because it's too hard and too slow.</div>
+</div>
+</div>
+
+</v-click>
+
+<v-click>
+
+<div class="p-6 rounded-2xl bg-gradient-to-r from-emerald-500/20 to-teal-500/20 border border-emerald-500/30 flex items-center gap-6">
+<div class="text-5xl">💡</div>
+<div>
+<div class="text-xl font-bold">LinWheel makes it effortless.</div>
+<div class="text-white/70 mt-1">$29/mo vs $2,000+/mo for a ghostwriter. No brainer.</div>
+</div>
+</div>
+
+</v-click>
+
+</div>
 
 ---
 layout: center
 class: text-center
 ---
 
-# Try It Now
+<div class="absolute inset-0 bg-gradient-to-br from-indigo-900/90 via-purple-900/80 to-pink-900/90" />
 
-<div class="pt-8">
+<div class="relative">
 
-## [linwheel.ai](https://linwheel.ai)
+<div class="text-6xl font-bold bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
+One podcast episode.
+</div>
+
+<div class="text-5xl font-bold text-white mt-4">
+A month of content.
+</div>
+
+<div class="text-4xl font-bold text-white/60 mt-4">
+60 seconds.
+</div>
+
+<div class="mt-16">
+<a href="https://linwheel.ai" class="inline-block px-12 py-5 rounded-2xl bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white text-xl font-bold hover:scale-105 transition-transform">
+Try LinWheel Free →
+</a>
+</div>
+
+<div class="mt-8 text-white/60">
+linwheel.ai
+</div>
 
 </div>
 
-<div class="pt-8 text-gray-400">
+---
+layout: center
+class: text-center
+background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%)
+---
 
-**Built for creators who'd rather ship ideas than fight with formatting.**
+<div class="text-4xl font-bold text-white/90">Questions?</div>
 
+<div class="mt-8 text-white/40">
+Built for creators who'd rather ship ideas than fight with formatting.
 </div>
 
-<div class="pt-12">
+<div class="mt-12 flex justify-center gap-8">
 
-Questions?
+<a href="https://linwheel.ai" class="px-6 py-3 rounded-xl bg-white/10 border border-white/20 hover:bg-white/20 transition-all">
+🚀 linwheel.ai
+</a>
 
-</div>
+<a href="https://github.com/Peleke/linwheel" class="px-6 py-3 rounded-xl bg-white/10 border border-white/20 hover:bg-white/20 transition-all">
+<carbon:logo-github class="inline mr-2" /> GitHub
+</a>
 
-<div class="abs-br m-6 flex gap-2">
-  <a href="https://linwheel.ai" target="_blank" class="slidev-icon-btn">
-    🚀
-  </a>
-  <a href="https://github.com/Peleke/linwheel" target="_blank" class="slidev-icon-btn">
-    <carbon:logo-github />
-  </a>
 </div>
