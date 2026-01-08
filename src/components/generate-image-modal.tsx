@@ -18,6 +18,7 @@ interface GenerateImageModalProps {
   isOpen: boolean;
   onClose: () => void;
   intentId: string;
+  contentId: string; // The post or article ID (for feedback regeneration)
   type: "post" | "article";
   onImageGenerated?: (imageUrl: string) => void;
 }
@@ -34,6 +35,7 @@ export function GenerateImageModal({
   isOpen,
   onClose,
   intentId,
+  contentId,
   type,
   onImageGenerated,
 }: GenerateImageModalProps) {
@@ -52,6 +54,11 @@ export function GenerateImageModal({
   const [generatedImageUrl, setGeneratedImageUrl] = useState<string | null>(null);
   const [hasChanges, setHasChanges] = useState(false);
 
+  // Feedback state (for AI-powered refinement)
+  const [feedback, setFeedback] = useState("");
+  const [refining, setRefining] = useState(false);
+  const [showFeedbackSection, setShowFeedbackSection] = useState(false);
+
   // Portal mount point
   const [mounted, setMounted] = useState(false);
 
@@ -62,6 +69,10 @@ export function GenerateImageModal({
   const apiBase = type === "post"
     ? `/api/posts/image-intents/${intentId}`
     : `/api/articles/image-intents/${intentId}`;
+
+  const regenerateApiBase = type === "post"
+    ? `/api/posts/${contentId}/regenerate-prompt`
+    : `/api/articles/${contentId}/regenerate-prompt`;
 
   // Fetch intent data
   const fetchIntent = useCallback(async () => {
@@ -126,6 +137,57 @@ export function GenerateImageModal({
       setHasChanges(false);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to save");
+    }
+  };
+
+  // Refine prompt with AI using feedback
+  const handleRefineWithFeedback = async () => {
+    if (!feedback.trim()) return;
+
+    try {
+      setRefining(true);
+      setError(null);
+
+      const res = await fetch(regenerateApiBase, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ feedback: feedback.trim() }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || "Failed to refine prompt");
+      }
+
+      const data = await res.json();
+
+      // Update the form with the new intent
+      setPrompt(data.intent.prompt || "");
+      setNegativePrompt(data.intent.negativePrompt || "");
+      setHeadlineText(data.intent.headlineText || "");
+      setStylePreset(data.intent.stylePreset || "typographic_minimal");
+
+      // Update the intent state
+      setIntent(prev => prev ? {
+        ...prev,
+        prompt: data.intent.prompt,
+        negativePrompt: data.intent.negativePrompt,
+        headlineText: data.intent.headlineText,
+        stylePreset: data.intent.stylePreset,
+        generatedImageUrl: null, // Clear since prompt changed
+      } : prev);
+
+      // Clear the generated image since prompt changed
+      setGeneratedImageUrl(null);
+
+      // Clear feedback and collapse section
+      setFeedback("");
+      setShowFeedbackSection(false);
+      setHasChanges(false);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to refine");
+    } finally {
+      setRefining(false);
     }
   };
 
@@ -220,6 +282,75 @@ export function GenerateImageModal({
                       Generated
                     </span>
                   </div>
+                </div>
+              )}
+
+              {/* AI Feedback Section - for refining existing prompts */}
+              {intent && (
+                <div className="border border-purple-200 dark:border-purple-800/50 rounded-xl overflow-hidden">
+                  <button
+                    onClick={() => setShowFeedbackSection(!showFeedbackSection)}
+                    className="w-full px-4 py-3 flex items-center justify-between bg-purple-50 dark:bg-purple-900/20 hover:bg-purple-100 dark:hover:bg-purple-900/30 transition-colors"
+                  >
+                    <div className="flex items-center gap-2">
+                      <svg className="w-4 h-4 text-purple-600 dark:text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                      </svg>
+                      <span className="text-sm font-medium text-purple-700 dark:text-purple-300">
+                        Refine with AI
+                      </span>
+                    </div>
+                    <svg
+                      className={`w-4 h-4 text-purple-600 dark:text-purple-400 transition-transform ${showFeedbackSection ? "rotate-180" : ""}`}
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </button>
+
+                  {showFeedbackSection && (
+                    <div className="p-4 space-y-3 bg-white dark:bg-neutral-900">
+                      <p className="text-xs text-neutral-500">
+                        Describe what you want to change. For example: &quot;make it bluer&quot;, &quot;less busy&quot;, &quot;more professional&quot;, &quot;darker background&quot;
+                      </p>
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          value={feedback}
+                          onChange={(e) => setFeedback(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter" && feedback.trim()) {
+                              handleRefineWithFeedback();
+                            }
+                          }}
+                          placeholder="e.g., make it more blue and less busy"
+                          className="flex-1 px-3 py-2 text-sm rounded-lg border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 text-neutral-900 dark:text-white placeholder-neutral-400 focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-shadow"
+                          disabled={refining}
+                        />
+                        <button
+                          onClick={handleRefineWithFeedback}
+                          disabled={refining || !feedback.trim()}
+                          className="px-4 py-2 text-sm font-medium text-white bg-purple-600 hover:bg-purple-700 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
+                        >
+                          {refining ? (
+                            <>
+                              <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white" />
+                              Refining...
+                            </>
+                          ) : (
+                            <>
+                              <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                              </svg>
+                              Apply
+                            </>
+                          )}
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
 
