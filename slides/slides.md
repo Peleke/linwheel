@@ -176,79 +176,42 @@ background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)
 
 # The <span class="text-rose-400">Content Creation Grind</span>
 
-<div class="grid grid-cols-3 gap-8 mt-8">
+<div class="grid grid-cols-3 gap-6 mt-6">
 
 <div class="col-span-1 flex items-center">
 <img src="/embedded/grind-hamster-wheel.png" class="rounded-2xl shadow-2xl shadow-rose-500/20" alt="The grind" />
 </div>
 
-<div class="col-span-2 grid grid-cols-2 gap-6">
+<div v-click class="p-5 rounded-2xl bg-gradient-to-br from-red-500/10 to-rose-500/10 border border-red-500/30">
 
-<div v-click>
+### The Manual Process
 
-<div class="p-5 rounded-2xl bg-gradient-to-br from-red-500/10 to-rose-500/10 border border-red-500/30">
+1. Read 20-page transcript
+2. Highlight quotable moments
+3. Rewrite for LinkedIn format
+4. Think of a killer hook
+5. Open Canva, struggle with design
+6. Schedule the post
+7. **Repeat 90 times**
 
-### <lucide:frown class="inline text-rose-400" /> The Manual Process
-
-<div class="space-y-3 mt-4 text-white/80">
-
-1. Read 20-page transcript 📖
-2. Highlight quotable moments ✨
-3. Rewrite for LinkedIn format ✍️
-4. Think of a killer hook 🎣
-5. Open Canva, struggle with design 🎨
-6. Schedule the post 📅
-7. **Repeat 90 times** 🔄
-
-</div>
-
-<div class="mt-4 p-3 rounded-lg bg-red-500/20 text-rose-300 font-bold">
+<div class="mt-4 p-3 rounded-lg bg-red-500/20 text-rose-300 font-bold text-sm">
 ⏱️ 4-6 hours per piece of content
 </div>
 
 </div>
 
-</div>
+<div v-click class="p-5 rounded-2xl bg-gradient-to-br from-orange-500/10 to-amber-500/10 border border-orange-500/30">
 
-<div v-click>
+### The Reality
 
-<div class="p-6 rounded-2xl bg-gradient-to-br from-orange-500/10 to-amber-500/10 border border-orange-500/30">
-
-### <lucide:bar-chart-3 class="inline text-orange-400" /> The Reality
-
-<div class="space-y-4 mt-4">
-
-<div class="flex items-center gap-4">
-<div class="text-3xl">😫</div>
-<div>Most creators give up after <span class="text-orange-400 font-bold">3 posts</span></div>
-</div>
-
-<div class="flex items-center gap-4">
-<div class="text-3xl">🤖</div>
-<div>Algorithm wants <span class="text-orange-400 font-bold">variety</span> — you have <span class="text-white/60">one voice</span></div>
-</div>
-
-<div class="flex items-center gap-4">
-<div class="text-3xl">🖼️</div>
-<div>Images take <span class="text-orange-400 font-bold">longer</span> than writing</div>
-</div>
-
-<div class="flex items-center gap-4">
-<div class="text-3xl">📉</div>
-<div>Inconsistent posting <span class="text-orange-400 font-bold">kills reach</span></div>
-</div>
+- 😫 Most creators give up after **3 posts**
+- 🤖 Algorithm wants **variety**
+- 🖼️ Images take **longer** than writing
+- 📉 Inconsistent posting **kills reach**
 
 </div>
 
 </div>
-
-</div>
-
-</div>
-
-</div><!-- close col-span-2 -->
-
-</div><!-- close 3-col grid -->
 
 <v-click>
 
