@@ -6,6 +6,7 @@ import { useLLMPreferences, type LLMPreferences, type LLMProvider } from "@/hook
 import { usePushNotifications } from "@/hooks/use-push-notifications";
 import { AppHeader } from "@/components/app-header";
 import { SubscriptionStatus } from "@/components/subscription/subscription-status";
+import { LinkedInConnection } from "@/components/settings/linkedin-connection";
 
 // Common timezones for scheduling content
 const COMMON_TIMEZONES = [
@@ -684,6 +685,17 @@ export default function SettingsPage() {
               <p className="text-sm text-zinc-400">Create a profile with your writing samples to match your style</p>
             </div>
           ) : null}
+        </section>
+
+        {/* LinkedIn Integration Section */}
+        <section className="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 p-6 mb-6">
+          <div className="mb-4">
+            <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">LinkedIn</h2>
+            <p className="text-sm text-zinc-500 mt-1">
+              Connect your LinkedIn account to publish posts directly
+            </p>
+          </div>
+          <LinkedInConnection />
         </section>
 
         {/* Account Section */}
