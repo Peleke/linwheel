@@ -71,6 +71,10 @@ export const linkedinPosts = sqliteTable("linkedin_posts", {
   // Scheduling
   scheduledAt: integer("scheduled_at", { mode: "timestamp" }),
   scheduledPosition: integer("scheduled_position"),
+  // LinkedIn publishing
+  linkedinPostUrn: text("linkedin_post_urn"),
+  linkedinPublishedAt: integer("linkedin_published_at", { mode: "timestamp" }),
+  linkedinPublishError: text("linkedin_publish_error"),
 });
 
 // Image intents table (ComfyUI-optimized)
