@@ -15,7 +15,7 @@ import { test, expect } from "@playwright/test";
  *
  * 1. SETTINGS PAGE ACCESS
  *    - Navigate to /settings
- *    - See Brand Management section
+ *    - See Brand Style section
  *
  * 2. QUICK START PRESETS
  *    - See all 4 preset buttons
@@ -37,7 +37,7 @@ import { test, expect } from "@playwright/test";
  *    - Confirm deletion
  *    - Cannot delete active profile
  *
- * 6. EDIT PROFILE FIELDS
+ * 6. FORM FIELDS
  *    - Add/remove colors
  *    - Change imagery approach
  *    - Add optional fields
@@ -47,25 +47,25 @@ import { test, expect } from "@playwright/test";
 // FLOW 1: SETTINGS PAGE ACCESS
 // ============================================================================
 test.describe("Flow 1: Settings Page Access", () => {
-  test("1.1 - settings page shows Brand Management section", async ({ page }) => {
+  test("1.1 - settings page shows Brand Style section", async ({ page }) => {
     await page.goto("/settings");
 
-    // Should show Brand Management heading
-    await expect(page.getByRole("heading", { name: "Brand Management" })).toBeVisible();
+    // Should show Brand Style heading
+    await expect(page.getByRole("heading", { name: "Brand Style" })).toBeVisible();
 
     // Should show description text
     await expect(
-      page.getByText(/Control the visual style of your generated images/i)
+      page.getByText(/Define your visual identity for AI-generated images/i)
     ).toBeVisible();
   });
 
-  test("1.2 - Brand Management section appears between Writing Voice and Account", async ({ page }) => {
+  test("1.2 - Brand Style section appears between Writing Voice and Account", async ({ page }) => {
     await page.goto("/settings");
 
     // Get all section headings
     const headings = page.locator("h2");
 
-    // Verify order: Writing Voice should come before Brand Management
+    // Verify order: Writing Voice should come before Brand Style
     const writingVoiceIndex = await headings
       .filter({ hasText: "Writing Voice" })
       .first()
@@ -74,23 +74,23 @@ test.describe("Flow 1: Settings Page Access", () => {
         return Array.from(sections).findIndex((s) => s.contains(el));
       });
 
-    const brandManagementIndex = await headings
-      .filter({ hasText: "Brand Management" })
+    const brandStyleIndex = await headings
+      .filter({ hasText: "Brand Style" })
       .first()
       .evaluate((el) => {
-        const sections = document.querySelectorAll("section, .brand-styles-section");
+        const sections = document.querySelectorAll("section");
         return Array.from(sections).findIndex((s) => s.contains(el));
       });
 
-    // Brand Management should appear after Writing Voice
-    expect(brandManagementIndex).toBeGreaterThan(writingVoiceIndex);
+    // Brand Style should appear after Writing Voice
+    expect(brandStyleIndex).toBeGreaterThan(writingVoiceIndex);
   });
 
-  test("1.3 - New Profile button is visible", async ({ page }) => {
+  test("1.3 - New Style button is visible", async ({ page }) => {
     await page.goto("/settings");
 
-    // Should show New Profile button
-    await expect(page.getByRole("button", { name: /New Profile|New Brand Style/i })).toBeVisible();
+    // Should show "+ New Style" button
+    await expect(page.getByRole("button", { name: /\+ New Style/i })).toBeVisible();
   });
 });
 
@@ -101,11 +101,11 @@ test.describe("Flow 2: Quick Start Presets", () => {
   test("2.1 - shows all 4 preset buttons", async ({ page }) => {
     await page.goto("/settings");
 
-    // Click "New Profile" to show the form
-    await page.getByRole("button", { name: /New Profile|New Brand Style/i }).click();
+    // Click "+ New Style" to show the form
+    await page.getByRole("button", { name: /\+ New Style/i }).click();
 
-    // Should show Quick Start section
-    await expect(page.getByText(/Quick Start/i)).toBeVisible();
+    // Should show Quick Start Presets section
+    await expect(page.getByText(/Quick Start Presets/i)).toBeVisible();
 
     // Should show all 4 presets
     await expect(page.getByRole("button", { name: /Corporate Professional/i })).toBeVisible();
@@ -118,35 +118,35 @@ test.describe("Flow 2: Quick Start Presets", () => {
     await page.goto("/settings");
 
     // Open form
-    await page.getByRole("button", { name: /New Profile|New Brand Style/i }).click();
+    await page.getByRole("button", { name: /\+ New Style/i }).click();
 
     // Click preset
     await page.getByRole("button", { name: /Corporate Professional/i }).click();
 
-    // Form should be populated
-    const nameInput = page.locator('input[placeholder*="name" i], input[name="name"]').first();
+    // Form should be populated - the name input has placeholder "e.g., Tech Innovator"
+    const nameInput = page.locator('input[placeholder*="Tech Innovator" i]').first();
     await expect(nameInput).toHaveValue(/Corporate Professional/i);
   });
 
-  test("2.3 - clicking Creative Bold preset shows vivid colors", async ({ page }) => {
+  test("2.3 - clicking Creative Bold preset populates form", async ({ page }) => {
     await page.goto("/settings");
 
-    await page.getByRole("button", { name: /New Profile|New Brand Style/i }).click();
+    await page.getByRole("button", { name: /\+ New Style/i }).click();
     await page.getByRole("button", { name: /Creative Bold/i }).click();
 
     // Should show form with Creative Bold preset values
-    const nameInput = page.locator('input[placeholder*="name" i], input[name="name"]').first();
+    const nameInput = page.locator('input[placeholder*="Tech Innovator" i]').first();
     await expect(nameInput).toHaveValue(/Creative Bold/i);
   });
 
   test("2.4 - can modify preset values before saving", async ({ page }) => {
     await page.goto("/settings");
 
-    await page.getByRole("button", { name: /New Profile|New Brand Style/i }).click();
+    await page.getByRole("button", { name: /\+ New Style/i }).click();
     await page.getByRole("button", { name: /Tech Minimal/i }).click();
 
     // Modify the name
-    const nameInput = page.locator('input[placeholder*="name" i], input[name="name"]').first();
+    const nameInput = page.locator('input[placeholder*="Tech Innovator" i]').first();
     await nameInput.clear();
     await nameInput.fill("My Custom Tech Style");
 
@@ -163,57 +163,47 @@ test.describe("Flow 3: Create Brand Style", () => {
     await page.goto("/settings");
 
     // Open form
-    await page.getByRole("button", { name: /New Profile|New Brand Style/i }).click();
+    await page.getByRole("button", { name: /\+ New Style/i }).click();
 
-    // Fill required fields
-    const nameInput = page.locator('input[placeholder*="name" i], input[name="name"]').first();
+    // Fill required fields - name input has placeholder "e.g., Tech Innovator"
+    const nameInput = page.locator('input[placeholder*="Tech Innovator" i]').first();
     await nameInput.fill("E2E Test Brand");
 
-    // Select imagery approach if not already selected
-    const imagerySelect = page.locator('select, [role="combobox"]').first();
-    if (await imagerySelect.isVisible()) {
-      await imagerySelect.selectOption({ label: /Photography/i });
-    }
+    // Imagery approach select is present - it's already defaulted to Photography
+    // Submit - button says "Create Brand Style"
+    await page.getByRole("button", { name: /Create Brand Style/i }).click();
 
-    // Submit
-    await page.getByRole("button", { name: /Create|Save/i }).click();
-
-    // Should see success or the new profile in the list
+    // Should see the new profile in the list
     await expect(page.getByText("E2E Test Brand")).toBeVisible({ timeout: 5000 });
   });
 
-  test("3.2 - form shows validation errors for missing fields", async ({ page }) => {
+  test("3.2 - form shows validation via disabled button for missing fields", async ({ page }) => {
     await page.goto("/settings");
 
-    await page.getByRole("button", { name: /New Profile|New Brand Style/i }).click();
+    await page.getByRole("button", { name: /\+ New Style/i }).click();
 
-    // Try to submit without filling required fields
-    const submitButton = page.getByRole("button", { name: /Create|Save/i });
+    // Clear the name input
+    const nameInput = page.locator('input[placeholder*="Tech Innovator" i]').first();
+    await nameInput.clear();
 
-    // Button might be disabled or clicking shows error
-    if (await submitButton.isEnabled()) {
-      await submitButton.click();
-      // Should show error message
-      await expect(page.getByText(/required|error|invalid/i)).toBeVisible({ timeout: 3000 });
-    } else {
-      // Button is disabled - that's also valid behavior
-      await expect(submitButton).toBeDisabled();
-    }
+    // Submit button should be disabled without name
+    const submitButton = page.getByRole("button", { name: /Create Brand Style/i });
+    await expect(submitButton).toBeDisabled();
   });
 
   test("3.3 - cancel button closes form", async ({ page }) => {
     await page.goto("/settings");
 
-    await page.getByRole("button", { name: /New Profile|New Brand Style/i }).click();
+    await page.getByRole("button", { name: /\+ New Style/i }).click();
 
     // Form should be visible
-    await expect(page.getByText(/Quick Start/i)).toBeVisible();
+    await expect(page.getByText(/Quick Start Presets/i)).toBeVisible();
 
     // Click cancel
     await page.getByRole("button", { name: /Cancel/i }).click();
 
     // Form should be hidden
-    await expect(page.getByText(/Quick Start/i)).not.toBeVisible();
+    await expect(page.getByText(/Quick Start Presets/i)).not.toBeVisible();
   });
 });
 
@@ -225,41 +215,41 @@ test.describe("Flow 4: Activate/Deactivate", () => {
     // Create a profile first
     await page.goto("/settings");
 
-    await page.getByRole("button", { name: /New Profile|New Brand Style/i }).click();
+    await page.getByRole("button", { name: /\+ New Style/i }).click();
     await page.getByRole("button", { name: /Corporate Professional/i }).click();
 
     // Modify name to be unique
-    const nameInput = page.locator('input[placeholder*="name" i], input[name="name"]').first();
+    const nameInput = page.locator('input[placeholder*="Tech Innovator" i]').first();
     await nameInput.clear();
     await nameInput.fill(`Test Profile ${Date.now()}`);
 
-    await page.getByRole("button", { name: /Create|Save/i }).click();
+    await page.getByRole("button", { name: /Create Brand Style/i }).click();
 
     // Wait for profile to appear
     await page.waitForTimeout(1000);
   });
 
   test("4.1 - can activate a profile", async ({ page }) => {
-    // Find the activate/use button for our profile
-    const activateButton = page.getByRole("button", { name: /Activate|Use/i }).first();
+    // Find the Activate button for our profile
+    const activateButton = page.getByRole("button", { name: /^Activate$/i }).first();
 
     if (await activateButton.isVisible()) {
       await activateButton.click();
 
       // Should show "Active" badge
-      await expect(page.getByText(/Active/i)).toBeVisible({ timeout: 3000 });
+      await expect(page.getByText(/^Active$/)).toBeVisible({ timeout: 3000 });
     }
   });
 
-  test("4.2 - active profile shows badge", async ({ page }) => {
+  test("4.2 - active profile shows purple border and badge", async ({ page }) => {
     // Activate the profile
-    const activateButton = page.getByRole("button", { name: /Activate|Use/i }).first();
+    const activateButton = page.getByRole("button", { name: /^Activate$/i }).first();
 
     if (await activateButton.isVisible()) {
       await activateButton.click();
 
-      // Should show "Active" badge on the profile card
-      await expect(page.locator(".bg-emerald-100, .bg-green-100, [class*='active']").first()).toBeVisible({
+      // Should show "Active" badge on the profile card (purple styling)
+      await expect(page.locator(".border-purple-500").first()).toBeVisible({
         timeout: 3000,
       });
     }
@@ -267,19 +257,19 @@ test.describe("Flow 4: Activate/Deactivate", () => {
 
   test("4.3 - can deactivate a profile", async ({ page }) => {
     // First activate
-    const activateButton = page.getByRole("button", { name: /Activate|Use/i }).first();
+    const activateButton = page.getByRole("button", { name: /^Activate$/i }).first();
 
     if (await activateButton.isVisible()) {
       await activateButton.click();
       await page.waitForTimeout(500);
 
       // Now deactivate
-      const deactivateButton = page.getByRole("button", { name: /Deactivate|Stop Using/i }).first();
+      const deactivateButton = page.getByRole("button", { name: /^Deactivate$/i }).first();
       if (await deactivateButton.isVisible()) {
         await deactivateButton.click();
 
-        // Active badge should be gone or show inactive state
-        await page.waitForTimeout(500);
+        // Active badge should be gone - Activate button should reappear
+        await expect(page.getByRole("button", { name: /^Activate$/i }).first()).toBeVisible({ timeout: 3000 });
       }
     }
   });
@@ -293,34 +283,33 @@ test.describe("Flow 5: Delete Profile", () => {
     // Create an inactive profile
     await page.goto("/settings");
 
-    await page.getByRole("button", { name: /New Profile|New Brand Style/i }).click();
+    await page.getByRole("button", { name: /\+ New Style/i }).click();
     await page.getByRole("button", { name: /Tech Minimal/i }).click();
 
-    const nameInput = page.locator('input[placeholder*="name" i], input[name="name"]').first();
+    const nameInput = page.locator('input[placeholder*="Tech Innovator" i]').first();
     await nameInput.clear();
     await nameInput.fill(`To Delete ${Date.now()}`);
 
-    await page.getByRole("button", { name: /Create|Save/i }).click();
+    await page.getByRole("button", { name: /Create Brand Style/i }).click();
     await page.waitForTimeout(1000);
   });
 
   test("5.1 - delete button visible on inactive profiles", async ({ page }) => {
-    const deleteButton = page.getByRole("button", { name: /Delete/i }).first();
+    // Delete button should be visible for inactive profiles
+    const deleteButton = page.getByRole("button", { name: /^Delete$/i }).first();
     await expect(deleteButton).toBeVisible();
   });
 
-  test("5.2 - clicking delete removes the profile", async ({ page }) => {
+  test("5.2 - clicking delete removes the profile (with confirm dialog)", async ({ page }) => {
     const profileName = page.getByText(/To Delete/i).first();
     const profileText = await profileName.textContent();
 
-    const deleteButton = page.getByRole("button", { name: /Delete/i }).first();
-    await deleteButton.click();
+    const deleteButton = page.getByRole("button", { name: /^Delete$/i }).first();
 
-    // May need to confirm
-    const confirmButton = page.getByRole("button", { name: /Confirm|Yes/i });
-    if (await confirmButton.isVisible({ timeout: 1000 })) {
-      await confirmButton.click();
-    }
+    // Setup dialog handler for the confirm dialog
+    page.on("dialog", (dialog) => dialog.accept());
+
+    await deleteButton.click();
 
     // Profile should be gone
     await expect(page.getByText(profileText!)).not.toBeVisible({ timeout: 3000 });
@@ -333,72 +322,70 @@ test.describe("Flow 5: Delete Profile", () => {
 test.describe("Flow 6: Form Fields", () => {
   test.beforeEach(async ({ page }) => {
     await page.goto("/settings");
-    await page.getByRole("button", { name: /New Profile|New Brand Style/i }).click();
+    await page.getByRole("button", { name: /\+ New Style/i }).click();
   });
 
-  test("6.1 - can add multiple colors", async ({ page }) => {
-    // Fill name first
-    const nameInput = page.locator('input[placeholder*="name" i], input[name="name"]').first();
-    await nameInput.fill("Multi Color Brand");
+  test("6.1 - can add multiple colors (up to 3)", async ({ page }) => {
+    // Look for "+ Add color" text link
+    const addColorButton = page.getByText(/\+ Add color/i).first();
+    await expect(addColorButton).toBeVisible();
+    await addColorButton.click();
 
-    // Look for add color button
-    const addColorButton = page.getByRole("button", { name: /Add Color|\+/i }).first();
-    if (await addColorButton.isVisible()) {
-      await addColorButton.click();
+    // Should now have 2 color pickers
+    const colorInputs = page.locator('input[type="color"]');
+    await expect(colorInputs).toHaveCount(2);
 
-      // Should now have 2 color inputs
-      const colorInputs = page.locator('input[type="color"], input[placeholder*="hex" i]');
-      await expect(colorInputs).toHaveCount(2);
-    }
+    // Add one more
+    await addColorButton.click();
+    await expect(colorInputs).toHaveCount(3);
+
+    // Add color button should be hidden now (max 3)
+    await expect(addColorButton).not.toBeVisible();
   });
 
-  test("6.2 - imagery approach selector shows all options", async ({ page }) => {
-    const imagerySelect = page.locator('select, [role="listbox"]').first();
+  test("6.2 - imagery approach selector shows all 5 options", async ({ page }) => {
+    const imagerySelect = page.locator("select").first();
 
-    if (await imagerySelect.isVisible()) {
-      // Get all options
-      const options = await imagerySelect.locator("option").allTextContents();
+    // Get all options
+    const options = await imagerySelect.locator("option").allTextContents();
 
-      // Should include key approaches
-      expect(options.some((o) => /photography/i.test(o))).toBe(true);
-      expect(options.some((o) => /illustration/i.test(o))).toBe(true);
-    } else {
-      // Check for radio buttons or other selectors
-      await expect(page.getByText(/Photography/i)).toBeVisible();
-      await expect(page.getByText(/Illustration/i)).toBeVisible();
-    }
+    // Should include all 5 approaches
+    expect(options.some((o) => /Photography/i.test(o))).toBe(true);
+    expect(options.some((o) => /Illustration/i.test(o))).toBe(true);
+    expect(options.some((o) => /Abstract/i.test(o))).toBe(true);
+    expect(options.some((o) => /3D Render/i.test(o))).toBe(true);
+    expect(options.some((o) => /Mixed Media/i.test(o))).toBe(true);
   });
 
-  test("6.3 - can fill optional mood descriptors", async ({ page }) => {
-    const moodInput = page.locator('input[placeholder*="mood" i], textarea[placeholder*="mood" i]').first();
+  test("6.3 - can fill optional mood keywords", async ({ page }) => {
+    // The mood input has placeholder "e.g., bold, innovative, sleek"
+    const moodInput = page.locator('input[placeholder*="bold, innovative" i]').first();
+    await expect(moodInput).toBeVisible();
 
-    if (await moodInput.isVisible()) {
-      await moodInput.fill("professional, innovative, trustworthy");
-      await expect(moodInput).toHaveValue("professional, innovative, trustworthy");
-    }
+    await moodInput.fill("professional, innovative, trustworthy");
+    await expect(moodInput).toHaveValue("professional, innovative, trustworthy");
   });
 
-  test("6.4 - color picker allows hex input", async ({ page }) => {
-    const hexInput = page.locator('input[placeholder*="#" i], input[type="text"][maxlength="7"]').first();
+  test("6.4 - color name input is editable", async ({ page }) => {
+    // Color name input has placeholder "Color name (e.g., Brand Blue)"
+    const colorNameInput = page.locator('input[placeholder*="Brand Blue" i]').first();
+    await expect(colorNameInput).toBeVisible();
 
-    if (await hexInput.isVisible()) {
-      await hexInput.clear();
-      await hexInput.fill("#ff5733");
-      await expect(hexInput).toHaveValue("#ff5733");
-    }
+    await colorNameInput.fill("My Primary Color");
+    await expect(colorNameInput).toHaveValue("My Primary Color");
   });
 });
 
 // ============================================================================
-// FLOW 7: LOADING STATES
+// FLOW 7: LOADING AND EMPTY STATES
 // ============================================================================
-test.describe("Flow 7: Loading States", () => {
-  test("7.1 - shows loading state while fetching profiles", async ({ page }) => {
-    // Navigate and look for loading indicator
+test.describe("Flow 7: Loading and Empty States", () => {
+  test("7.1 - shows Brand Style section after loading", async ({ page }) => {
+    // Navigate and look for the section
     await page.goto("/settings");
 
-    // Either shows loading or content quickly
-    const brandSection = page.locator("section").filter({ hasText: /Brand Management/i });
+    // Section should be visible
+    const brandSection = page.locator("section").filter({ hasText: /Brand Style/i });
     await expect(brandSection).toBeVisible({ timeout: 5000 });
   });
 
@@ -407,14 +394,13 @@ test.describe("Flow 7: Loading States", () => {
     await page.goto("/settings");
 
     // Wait for section to load
-    await expect(page.getByRole("heading", { name: "Brand Management" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Brand Style" })).toBeVisible();
 
-    // May show "No brand styles yet" or similar
-    // Or just the create button
-    const hasProfiles = (await page.getByText(/Active|Use/i).count()) > 0;
+    // May show "No brand styles yet" or the create button
+    const hasProfiles = (await page.getByRole("button", { name: /^Activate$/i }).count()) > 0;
     if (!hasProfiles) {
       await expect(
-        page.getByText(/No brand styles|Create your first|Get started/i)
+        page.getByText(/No brand styles yet/i)
       ).toBeVisible();
     }
   });
