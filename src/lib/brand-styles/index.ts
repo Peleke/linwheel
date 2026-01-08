@@ -9,6 +9,9 @@ import { db } from "@/db";
 import { brandStyleProfiles, type BrandStyleProfile, type ColorDefinition } from "@/db/schema";
 import { eq, and } from "drizzle-orm";
 
+// Re-export types for consumers
+export type { BrandStyleProfile, ColorDefinition };
+
 /**
  * Get the active brand style for a user
  */
