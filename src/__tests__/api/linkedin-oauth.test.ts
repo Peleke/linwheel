@@ -81,7 +81,7 @@ describe("LinkedIn OAuth API Routes", () => {
       vi.mocked(requireAuth).mockResolvedValue({
         id: TEST_USER_ID,
         email: "test@example.com",
-      });
+      } as Awaited<ReturnType<typeof requireAuth>>);
 
       const { GET } = await import("@/app/api/auth/linkedin/route");
       const response = await GET();
@@ -222,7 +222,7 @@ describe("LinkedIn OAuth API Routes", () => {
       vi.mocked(requireAuth).mockResolvedValue({
         id: TEST_USER_ID,
         email: "test@example.com",
-      });
+      } as Awaited<ReturnType<typeof requireAuth>>);
 
       const { POST } = await import(
         "@/app/api/auth/linkedin/disconnect/route"
@@ -247,7 +247,7 @@ describe("LinkedIn OAuth API Routes", () => {
       vi.mocked(requireAuth).mockResolvedValue({
         id: TEST_USER_ID,
         email: "test@example.com",
-      });
+      } as Awaited<ReturnType<typeof requireAuth>>);
 
       const { POST } = await import(
         "@/app/api/auth/linkedin/disconnect/route"
@@ -280,7 +280,7 @@ describe("LinkedIn OAuth API Routes", () => {
       vi.mocked(requireAuth).mockResolvedValue({
         id: TEST_USER_ID,
         email: "test@example.com",
-      });
+      } as Awaited<ReturnType<typeof requireAuth>>);
 
       const { GET } = await import("@/app/api/auth/linkedin/status/route");
 
@@ -297,7 +297,7 @@ describe("LinkedIn OAuth API Routes", () => {
       vi.mocked(requireAuth).mockResolvedValue({
         id: TEST_USER_ID,
         email: "test@example.com",
-      });
+      } as Awaited<ReturnType<typeof requireAuth>>);
 
       const { GET } = await import("@/app/api/auth/linkedin/status/route");
 
@@ -327,7 +327,7 @@ describe("LinkedIn OAuth API Routes", () => {
       vi.mocked(requireAuth).mockResolvedValue({
         id: TEST_USER_ID,
         email: "test@example.com",
-      });
+      } as Awaited<ReturnType<typeof requireAuth>>);
 
       const { GET } = await import("@/app/api/auth/linkedin/status/route");
 
