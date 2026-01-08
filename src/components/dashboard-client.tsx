@@ -4,6 +4,7 @@ import { useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
+import { usePushNotifications } from "@/hooks/use-push-notifications";
 
 interface ContentItem {
   id: string;
@@ -25,6 +26,7 @@ export function DashboardClient({ content }: DashboardClientProps) {
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [schedulingItem, setSchedulingItem] = useState<string | null>(null);
   const [weekOffset, setWeekOffset] = useState(0);
+  const { isSupported, isSubscribed, isLoading: pushLoading, subscribe, unsubscribe } = usePushNotifications();
 
   // Split content
   const scheduled = content.filter(c => c.scheduledAt);
@@ -120,8 +122,38 @@ export function DashboardClient({ content }: DashboardClientProps) {
           </p>
         </div>
 
-        {/* Week navigation */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-4">
+          {/* Notification toggle */}
+          {isSupported && (
+            <button
+              onClick={() => isSubscribed ? unsubscribe() : subscribe()}
+              disabled={pushLoading}
+              className={`flex items-center gap-2 px-3 py-1.5 text-sm font-medium rounded-lg transition-colors ${
+                isSubscribed
+                  ? "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300"
+                  : "bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-700"
+              }`}
+              title={isSubscribed ? "Notifications enabled" : "Enable notifications"}
+            >
+              {pushLoading ? (
+                <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+              ) : isSubscribed ? (
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                </svg>
+              ) : (
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                </svg>
+              )}
+              <span className="hidden sm:inline">
+                {isSubscribed ? "Reminders On" : "Enable Reminders"}
+              </span>
+            </button>
+          )}
+
+          {/* Week navigation */}
+          <div className="flex items-center gap-2">
           <button
             onClick={() => setWeekOffset(w => w - 1)}
             className="p-2 hover:bg-zinc-200 dark:hover:bg-zinc-800 rounded-lg transition-colors"
@@ -144,6 +176,7 @@ export function DashboardClient({ content }: DashboardClientProps) {
               <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
             </svg>
           </button>
+          </div>
         </div>
       </div>
 

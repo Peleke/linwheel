@@ -203,6 +203,45 @@ export const voiceProfiles = sqliteTable("voice_profiles", {
   updatedAt: integer("updated_at", { mode: "timestamp" }).$defaultFn(() => new Date()),
 });
 
+// Push notification subscriptions
+export const pushSubscriptions = sqliteTable("push_subscriptions", {
+  id: text("id").primaryKey(),
+  userId: text("user_id").notNull(),
+  endpoint: text("endpoint").notNull(),
+  p256dh: text("p256dh").notNull(), // Public key for encryption
+  auth: text("auth").notNull(), // Auth secret
+  createdAt: integer("created_at", { mode: "timestamp" }).$defaultFn(() => new Date()),
+});
+
+// Content publishing status - tracks what has been posted/reminded
+export const publishingStatus = sqliteTable("publishing_status", {
+  id: text("id").primaryKey(),
+  contentType: text("content_type", { enum: ["post", "article"] }).notNull(),
+  contentId: text("content_id").notNull(),
+  // Reminder status
+  reminderSentAt: integer("reminder_sent_at", { mode: "timestamp" }),
+  // Publishing status (for future LinkedIn integration)
+  publishedAt: integer("published_at", { mode: "timestamp" }),
+  publishedTo: text("published_to", { enum: ["linkedin", "twitter", "manual"] }),
+  publishError: text("publish_error"),
+  // LinkedIn post ID for reference
+  externalPostId: text("external_post_id"),
+  createdAt: integer("created_at", { mode: "timestamp" }).$defaultFn(() => new Date()),
+});
+
+// LinkedIn connections (for future auto-posting)
+export const linkedinConnections = sqliteTable("linkedin_connections", {
+  id: text("id").primaryKey(),
+  userId: text("user_id").notNull(),
+  accessToken: text("access_token").notNull(), // Should be encrypted in production
+  refreshToken: text("refresh_token"),
+  expiresAt: integer("expires_at", { mode: "timestamp" }),
+  linkedinProfileId: text("linkedin_profile_id"),
+  linkedinProfileName: text("linkedin_profile_name"),
+  createdAt: integer("created_at", { mode: "timestamp" }).$defaultFn(() => new Date()),
+  updatedAt: integer("updated_at", { mode: "timestamp" }).$defaultFn(() => new Date()),
+});
+
 // Types
 export type VoiceProfile = typeof voiceProfiles.$inferSelect;
 export type NewVoiceProfile = typeof voiceProfiles.$inferInsert;
@@ -222,3 +261,9 @@ export type ArticleCarouselIntent = typeof articleCarouselIntents.$inferSelect;
 export type NewArticleCarouselIntent = typeof articleCarouselIntents.$inferInsert;
 export type CarouselSlideVersion = typeof carouselSlideVersions.$inferSelect;
 export type NewCarouselSlideVersion = typeof carouselSlideVersions.$inferInsert;
+export type PushSubscription = typeof pushSubscriptions.$inferSelect;
+export type NewPushSubscription = typeof pushSubscriptions.$inferInsert;
+export type PublishingStatus = typeof publishingStatus.$inferSelect;
+export type NewPublishingStatus = typeof publishingStatus.$inferInsert;
+export type LinkedinConnection = typeof linkedinConnections.$inferSelect;
+export type NewLinkedinConnection = typeof linkedinConnections.$inferInsert;
