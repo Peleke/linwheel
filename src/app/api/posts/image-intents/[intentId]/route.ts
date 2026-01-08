@@ -1,13 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
-import { imageIntents } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import { imageIntents, postImageVersions, type TextPosition } from "@/db/schema";
+import { eq, desc, and } from "drizzle-orm";
 import { generateImage } from "@/lib/t2i";
 import type { StylePreset, T2IProviderType } from "@/lib/t2i";
 import { overlayCoverTextFromUrl } from "@/lib/carousel/text-overlay-satori";
 import { uploadImage } from "@/lib/storage";
 import { getCurrentUser } from "@/lib/auth";
 import { incrementImageUsage, canGenerateImages } from "@/lib/usage";
+import { nanoid } from "nanoid";
 
 interface RouteParams {
   params: Promise<{ intentId: string }>;
@@ -16,7 +17,7 @@ interface RouteParams {
 /**
  * GET /api/posts/image-intents/[intentId]
  *
- * Returns the full image intent data including prompts
+ * Returns the full image intent data including prompts and version history
  */
 export async function GET(_request: NextRequest, { params }: RouteParams) {
   try {
@@ -33,6 +34,15 @@ export async function GET(_request: NextRequest, { params }: RouteParams) {
       );
     }
 
+    // Fetch all versions for this intent
+    const versions = await db.query.postImageVersions.findMany({
+      where: eq(postImageVersions.imageIntentId, intentId),
+      orderBy: [desc(postImageVersions.versionNumber)],
+    });
+
+    // Find the active version
+    const activeVersion = versions.find(v => v.isActive) || versions[0];
+
     return NextResponse.json({
       id: intent.id,
       postId: intent.postId,
@@ -44,6 +54,19 @@ export async function GET(_request: NextRequest, { params }: RouteParams) {
       generatedAt: intent.generatedAt,
       generationProvider: intent.generationProvider,
       generationError: intent.generationError,
+      // Version info
+      versionCount: versions.length,
+      activeVersionId: activeVersion?.id || null,
+      activeVersionNumber: activeVersion?.versionNumber || null,
+      versions: versions.map(v => ({
+        id: v.id,
+        versionNumber: v.versionNumber,
+        imageUrl: v.imageUrl,
+        isActive: v.isActive,
+        includeText: v.includeText,
+        textPosition: v.textPosition,
+        generatedAt: v.generatedAt,
+      })),
     });
   } catch (error) {
     console.error("Error fetching image intent:", error);
@@ -124,14 +147,22 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
  *
  * Triggers image generation for the intent.
  * Generates T2I background, overlays headline text with Satori, uploads to storage.
+ * Creates a version entry to track generation history.
  */
 export async function POST(request: NextRequest, { params }: RouteParams) {
   try {
     const { intentId } = await params;
     const body = await request.json();
-    const { provider, model } = body as {
+    const {
+      provider,
+      model,
+      includeText = true,
+      textPosition = "center" as TextPosition,
+    } = body as {
       provider?: T2IProviderType;
       model?: string;
+      includeText?: boolean;
+      textPosition?: TextPosition;
     };
 
     // Check user and image usage limits
@@ -164,6 +195,15 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
         { status: 404 }
       );
     }
+
+    // Get the current max version number
+    const existingVersions = await db.query.postImageVersions.findMany({
+      where: eq(postImageVersions.imageIntentId, intentId),
+      orderBy: [desc(postImageVersions.versionNumber)],
+    });
+    const nextVersionNumber = existingVersions.length > 0
+      ? existingVersions[0].versionNumber + 1
+      : 1;
 
     // Generate the background image (T2I is unreliable with text, so don't pass headline)
     const result = await generateImage(
@@ -202,27 +242,66 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
 
     // Overlay headline text on the background using Satori (works on Vercel)
     let finalImageUrl = result.imageUrl;
+    const shouldOverlayText = includeText && intent.headlineText;
 
-    if (intent.headlineText) {
+    if (shouldOverlayText) {
       try {
-        console.log(`[PostImage] Overlaying text on cover image...`);
+        console.log(`[PostImage] Overlaying text on cover image (position: ${textPosition})...`);
         const compositedBuffer = await overlayCoverTextFromUrl(result.imageUrl, {
           headline: intent.headlineText,
           width: 1200,
           height: 628,
+          position: textPosition,
         });
 
-        // Upload to storage
-        const filename = `post-cover-${intentId}.png`;
+        // Upload to storage with version in filename
+        const filename = `post-cover-${intentId}-v${nextVersionNumber}.png`;
         finalImageUrl = await uploadImage(compositedBuffer, filename, "image/png");
         console.log(`[PostImage] Uploaded composited image: ${finalImageUrl}`);
       } catch (overlayError) {
         // If overlay fails, fall back to the raw T2I image
         console.error("[PostImage] Text overlay failed, using raw T2I image:", overlayError);
       }
+    } else {
+      // No text overlay - just upload the raw image with version in filename
+      const filename = `post-cover-${intentId}-v${nextVersionNumber}-notext.png`;
+      // For raw T2I images, we still need to upload them to our storage
+      try {
+        const response = await fetch(result.imageUrl);
+        const buffer = Buffer.from(await response.arrayBuffer());
+        finalImageUrl = await uploadImage(buffer, filename, "image/png");
+      } catch {
+        // Keep the original URL if upload fails
+        console.error("[PostImage] Failed to re-upload raw image, using original URL");
+      }
     }
 
-    // Update the database with the result
+    // Deactivate all existing versions for this intent
+    if (existingVersions.length > 0) {
+      await db
+        .update(postImageVersions)
+        .set({ isActive: false })
+        .where(eq(postImageVersions.imageIntentId, intentId));
+    }
+
+    // Create a new version entry
+    const versionId = nanoid();
+    await db.insert(postImageVersions).values({
+      id: versionId,
+      imageIntentId: intentId,
+      versionNumber: nextVersionNumber,
+      prompt: intent.prompt,
+      headlineText: intent.headlineText,
+      imageUrl: finalImageUrl,
+      includeText: includeText,
+      textPosition: textPosition,
+      isActive: true,
+      generatedAt: new Date(),
+      generationProvider: result.provider,
+      generationError: null,
+    });
+
+    // Update the main image intent with the latest result
     await db
       .update(imageIntents)
       .set({
@@ -243,6 +322,12 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       imageUrl: finalImageUrl,
       provider: result.provider,
       metadata: result.metadata,
+      version: {
+        id: versionId,
+        versionNumber: nextVersionNumber,
+        includeText,
+        textPosition,
+      },
     });
   } catch (error) {
     console.error("Error generating image:", error);
