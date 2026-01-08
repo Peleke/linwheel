@@ -35,12 +35,14 @@ export function Header() {
       <div className="max-w-6xl mx-auto px-6 py-4 flex justify-between items-center">
         <Link href="/" className="flex items-center gap-2 group">
           <div className="relative w-8 h-8 rounded-lg overflow-hidden">
-            <Image
-              src="/logo.png"
-              alt="LinWheel"
-              fill
-              className="object-cover transition-transform duration-700 ease-in-out group-hover:rotate-[360deg]"
-            />
+            <div className="absolute inset-0 transition-transform duration-700 ease-in-out group-hover:rotate-[360deg]">
+              <Image
+                src="/logo.png"
+                alt="LinWheel"
+                fill
+                className="object-cover"
+              />
+            </div>
             {/* Shimmer effect */}
             <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-700 bg-gradient-to-r from-transparent via-white/30 to-transparent" />
           </div>

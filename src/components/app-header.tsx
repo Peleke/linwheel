@@ -39,14 +39,16 @@ export function AppHeader() {
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2.5 group">
             <div className="relative w-9 h-9 rounded-full overflow-hidden ring-2 ring-blue-500/20 group-hover:ring-blue-500/40 transition-all duration-300 shadow-md shadow-blue-500/10 group-hover:shadow-blue-500/20">
-              <Image
-                src="/logo.png"
-                alt="LinWheel"
-                width={36}
-                height={36}
-                className="object-cover scale-110 transition-transform duration-700 ease-in-out group-hover:rotate-[360deg]"
-                priority
-              />
+              <div className="absolute inset-0 transition-transform duration-700 ease-in-out group-hover:rotate-[360deg]">
+                <Image
+                  src="/logo.png"
+                  alt="LinWheel"
+                  width={36}
+                  height={36}
+                  className="object-cover scale-110"
+                  priority
+                />
+              </div>
               <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-700 bg-gradient-to-r from-transparent via-white/20 to-transparent" />
             </div>
             <span className="font-semibold text-base bg-gradient-to-r from-blue-600 to-sky-500 dark:from-blue-400 dark:to-sky-400 bg-clip-text text-transparent">
