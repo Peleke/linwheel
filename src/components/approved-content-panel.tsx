@@ -3,6 +3,9 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
+import { DayPicker } from "react-day-picker";
+import { format, setHours, setMinutes, addDays, startOfDay, isBefore } from "date-fns";
+import "react-day-picker/style.css";
 
 interface ApprovedPost {
   id: string;
@@ -253,14 +256,32 @@ function SchedulePicker({
   currentDate?: Date | null;
   onClose: () => void;
 }) {
-  const [date, setDate] = useState<string>(
-    currentDate ? new Date(currentDate).toISOString().slice(0, 16) : ""
+  // Initialize with current date in local time
+  const initialDate = currentDate ? new Date(currentDate) : null;
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(
+    initialDate ?? undefined
+  );
+  const [hour, setHour] = useState<string>(
+    initialDate ? String(initialDate.getHours()).padStart(2, "0") : "09"
+  );
+  const [minute, setMinute] = useState<string>(
+    initialDate ? String(initialDate.getMinutes()).padStart(2, "0") : "00"
   );
   const [isSaving, setIsSaving] = useState(false);
 
+  const today = startOfDay(new Date());
+
   const handleSave = async () => {
+    if (!selectedDate) return;
+
     setIsSaving(true);
     try {
+      // Combine date and time in local timezone
+      const scheduledLocal = setMinutes(
+        setHours(selectedDate, parseInt(hour)),
+        parseInt(minute)
+      );
+
       const endpoint = contentType === "post"
         ? `/api/posts/${contentId}/schedule`
         : `/api/articles/${contentId}/schedule`;
@@ -269,7 +290,7 @@ function SchedulePicker({
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          scheduledAt: date ? new Date(date).toISOString() : null,
+          scheduledAt: scheduledLocal.toISOString(),
         }),
       });
 
@@ -282,28 +303,141 @@ function SchedulePicker({
     }
   };
 
+  const handleClear = async () => {
+    setIsSaving(true);
+    try {
+      const endpoint = contentType === "post"
+        ? `/api/posts/${contentId}/schedule`
+        : `/api/articles/${contentId}/schedule`;
+
+      await fetch(endpoint, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ scheduledAt: null }),
+      });
+
+      onClose();
+      window.location.reload();
+    } catch {
+      // Silent fail
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  // Quick date presets
+  const presets = [
+    { label: "Today", date: today },
+    { label: "Tomorrow", date: addDays(today, 1) },
+    { label: "Next Week", date: addDays(today, 7) },
+  ];
+
   return (
-    <div className="p-3 bg-zinc-50 dark:bg-zinc-800/50">
-      <input
-        type="datetime-local"
-        value={date}
-        onChange={(e) => setDate(e.target.value)}
-        min={new Date().toISOString().slice(0, 16)}
-        className="w-full px-2.5 py-1.5 text-sm bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-lg text-zinc-900 dark:text-zinc-100 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
-      />
-      <div className="flex gap-2 mt-2">
+    <div className="p-4 bg-zinc-50 dark:bg-zinc-900/80">
+      {/* Quick presets */}
+      <div className="flex gap-2 mb-3">
+        {presets.map((preset) => (
+          <button
+            key={preset.label}
+            onClick={() => setSelectedDate(preset.date)}
+            className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-all ${
+              selectedDate && format(selectedDate, "yyyy-MM-dd") === format(preset.date, "yyyy-MM-dd")
+                ? "bg-blue-600 text-white"
+                : "bg-zinc-200 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-300 dark:hover:bg-zinc-600"
+            }`}
+          >
+            {preset.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Calendar */}
+      <div className="flex justify-center mb-3">
+        <DayPicker
+          mode="single"
+          selected={selectedDate}
+          onSelect={setSelectedDate}
+          disabled={(date) => isBefore(date, today)}
+          classNames={{
+            root: "!font-sans",
+            months: "flex flex-col",
+            month: "space-y-2",
+            caption: "flex justify-center pt-1 relative items-center text-sm font-semibold text-zinc-900 dark:text-zinc-100",
+            caption_label: "text-sm font-medium",
+            nav: "flex items-center gap-1",
+            nav_button: "h-7 w-7 bg-transparent p-0 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-md inline-flex items-center justify-center",
+            nav_button_previous: "absolute left-1",
+            nav_button_next: "absolute right-1",
+            table: "w-full border-collapse",
+            head_row: "flex",
+            head_cell: "text-zinc-500 dark:text-zinc-400 w-8 font-normal text-[0.65rem] uppercase",
+            row: "flex w-full mt-1",
+            cell: "text-center text-sm relative p-0",
+            day: "h-8 w-8 p-0 font-normal text-zinc-900 dark:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-md inline-flex items-center justify-center transition-colors",
+            day_selected: "!bg-blue-600 !text-white hover:!bg-blue-700",
+            day_today: "bg-zinc-100 dark:bg-zinc-800 font-semibold",
+            day_outside: "text-zinc-400 dark:text-zinc-600 opacity-50",
+            day_disabled: "text-zinc-300 dark:text-zinc-700 cursor-not-allowed hover:bg-transparent",
+          }}
+        />
+      </div>
+
+      {/* Time picker */}
+      <div className="mb-4">
+        <label className="block text-xs font-medium text-zinc-600 dark:text-zinc-400 mb-1.5">
+          Time
+        </label>
+        <div className="flex items-center gap-2">
+          <select
+            value={hour}
+            onChange={(e) => setHour(e.target.value)}
+            className="flex-1 px-3 py-2 text-sm bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg text-zinc-900 dark:text-zinc-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          >
+            {Array.from({ length: 24 }, (_, i) => (
+              <option key={i} value={String(i).padStart(2, "0")}>
+                {String(i).padStart(2, "0")}
+              </option>
+            ))}
+          </select>
+          <span className="text-zinc-400 font-medium">:</span>
+          <select
+            value={minute}
+            onChange={(e) => setMinute(e.target.value)}
+            className="flex-1 px-3 py-2 text-sm bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg text-zinc-900 dark:text-zinc-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          >
+            {["00", "15", "30", "45"].map((m) => (
+              <option key={m} value={m}>{m}</option>
+            ))}
+          </select>
+          <span className="text-xs text-zinc-500 dark:text-zinc-400 ml-1">
+            {parseInt(hour) >= 12 ? "PM" : "AM"}
+          </span>
+        </div>
+      </div>
+
+      {/* Selected datetime display */}
+      {selectedDate && (
+        <div className="mb-4 p-2.5 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+          <p className="text-sm font-medium text-blue-900 dark:text-blue-100">
+            {format(selectedDate, "EEEE, MMMM d, yyyy")} at {hour}:{minute}
+          </p>
+        </div>
+      )}
+
+      {/* Action buttons */}
+      <div className="flex gap-2">
         <button
           onClick={handleSave}
-          disabled={isSaving}
-          className="flex-1 px-3 py-1.5 text-xs font-medium bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white rounded-lg transition-colors"
+          disabled={isSaving || !selectedDate}
+          className="flex-1 px-4 py-2 text-sm font-medium bg-blue-600 hover:bg-blue-500 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg transition-colors"
         >
-          {isSaving ? "..." : "Save"}
+          {isSaving ? "Saving..." : "Save Schedule"}
         </button>
         {currentDate && (
           <button
-            onClick={() => { setDate(""); handleSave(); }}
+            onClick={handleClear}
             disabled={isSaving}
-            className="px-3 py-1.5 text-xs font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+            className="px-4 py-2 text-sm font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg transition-colors"
           >
             Clear
           </button>
