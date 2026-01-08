@@ -404,6 +404,8 @@ background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%)
 
 </div>
 
+</div>
+
 ---
 background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%)
 ---
@@ -441,8 +443,6 @@ background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%)
 <div class="text-3xl mb-2">🎯</div>
 <div class="font-bold text-purple-400">Identity</div>
 <div class="text-sm text-white/60 mt-1">"If you've felt like a fraud..."</div>
-</div>
-
 </div>
 
 <div class="grid grid-cols-3 gap-4 mt-4">
@@ -532,7 +532,7 @@ background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%)
 
 <div v-click class="relative">
 
-<div class="absolute -inset-4 bg-gradient-to-r from-pink-500/20 via-purple-500/20 to-blue-500/20 rounded-3xl blur-2xl" />
+<div class="absolute -inset-4 bg-gradient-to-r from-pink-500/20 via-purple-500/20 to-blue-500/20 rounded-3xl blur-2xl"></div>
 
 <div class="relative p-6 rounded-2xl bg-slate-900/80 border border-white/10">
 
@@ -656,7 +656,7 @@ background: linear-gradient(135deg, #0f172a 0%, #064e3b 100%)
 
 <div v-click class="relative group">
 
-<div class="absolute -inset-1 bg-gradient-to-r from-slate-500/20 to-slate-600/20 rounded-3xl blur-lg group-hover:blur-xl transition-all" />
+<div class="absolute -inset-1 bg-gradient-to-r from-slate-500/20 to-slate-600/20 rounded-3xl blur-lg group-hover:blur-xl transition-all"></div>
 
 <div class="relative p-8 rounded-2xl bg-slate-900/80 border border-slate-700/50">
 
@@ -679,7 +679,7 @@ background: linear-gradient(135deg, #0f172a 0%, #064e3b 100%)
 
 <div v-click class="relative group">
 
-<div class="absolute -inset-1 bg-gradient-to-r from-indigo-500/40 via-purple-500/40 to-pink-500/40 rounded-3xl blur-lg group-hover:blur-xl transition-all animate-pulse" />
+<div class="absolute -inset-1 bg-gradient-to-r from-indigo-500/40 via-purple-500/40 to-pink-500/40 rounded-3xl blur-lg group-hover:blur-xl transition-all animate-pulse"></div>
 
 <div class="relative p-8 rounded-2xl bg-gradient-to-br from-indigo-900/80 to-purple-900/80 border border-indigo-500/50">
 
