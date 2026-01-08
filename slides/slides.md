@@ -176,11 +176,17 @@ background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)
 
 # The <span class="text-rose-400">Content Creation Grind</span>
 
-<div class="grid grid-cols-2 gap-12 mt-8">
+<div class="grid grid-cols-3 gap-8 mt-8">
+
+<div class="col-span-1 flex items-center">
+<img src="/embedded/grind-hamster-wheel.png" class="rounded-2xl shadow-2xl shadow-rose-500/20" alt="The grind" />
+</div>
+
+<div class="col-span-2 grid grid-cols-2 gap-6">
 
 <div v-click>
 
-<div class="p-6 rounded-2xl bg-gradient-to-br from-red-500/10 to-rose-500/10 border border-red-500/30">
+<div class="p-5 rounded-2xl bg-gradient-to-br from-red-500/10 to-rose-500/10 border border-red-500/30">
 
 ### <lucide:frown class="inline text-rose-400" /> The Manual Process
 
@@ -240,9 +246,13 @@ background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)
 
 </div>
 
+</div><!-- close col-span-2 -->
+
+</div><!-- close 3-col grid -->
+
 <v-click>
 
-<div class="mt-8 text-center text-2xl">
+<div class="mt-4 text-center text-xl">
 <span class="text-rose-400 font-bold">Result:</span> 95% of your best ideas never see LinkedIn.
 </div>
 
@@ -254,30 +264,35 @@ background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)
 
 # The <span class="text-purple-400">Market Gap</span>
 
-<div class="mt-8 p-8 rounded-2xl bg-white/5 border border-white/10">
+<div class="grid grid-cols-3 gap-6 mt-6">
+
+<div class="col-span-2 p-6 rounded-2xl bg-white/5 border border-white/10">
 
 ```
-       QUALITY                                              SPEED
-          ◄──────────────────────────────────────────────────────►
+     QUALITY                                        SPEED
+        ◄────────────────────────────────────────────────►
 
+  🎩 Copywriters          ┌───────────┐          🤖 AI Slop
+  👻 Ghostwriters         │    ???    │          💩 ChatGPT
+  🏢 Agencies             └───────────┘          📝 Templates
 
-    🎩 Copywriters            ┌─────────────┐            🤖 AI Slop
-    👻 Ghostwriters           │             │            💩 ChatGPT dumps
-    🏢 Agencies               │     ???     │            📝 Template tools
-                              │             │
-                              └─────────────┘
-
-    ✓ Great writing                                      ✓ Fast
-    ✓ Your voice                                         ✓ Cheap
-    ✗ $$$$ expensive                                     ✗ Generic
-    ✗ Slow turnaround                                    ✗ "Obviously AI"
+  ✓ Great writing                                ✓ Fast
+  ✓ Your voice                                   ✓ Cheap
+  ✗ $$$$ expensive                               ✗ Generic
+  ✗ Slow turnaround                              ✗ "Obviously AI"
 ```
+
+</div>
+
+<div class="col-span-1 flex items-center">
+<img src="/embedded/market-gap-bridge.png" class="rounded-2xl shadow-2xl shadow-purple-500/20" alt="Bridging the gap" />
+</div>
 
 </div>
 
 <v-click>
 
-<div class="mt-8 text-center">
+<div class="mt-6 text-center">
 <div class="inline-block px-8 py-4 rounded-2xl bg-gradient-to-r from-indigo-500/30 to-purple-500/30 border border-indigo-500/50">
 <div class="text-2xl font-bold bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">
 LinWheel fills the gap.
@@ -731,34 +746,34 @@ background: linear-gradient(135deg, #0f172a 0%, #064e3b 100%)
 
 # The <span class="bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">Market</span>
 
-<div class="grid grid-cols-2 gap-8 mt-8">
+<div class="grid grid-cols-3 gap-6 mt-6">
 
 <div>
 
-<div class="p-6 rounded-2xl bg-white/5 border border-white/10">
+<div class="p-5 rounded-2xl bg-white/5 border border-white/10">
 
 ### LinkedIn by Numbers
 
-<div class="grid grid-cols-2 gap-4 mt-4">
+<div class="grid grid-cols-2 gap-3 mt-3">
 
-<div class="text-center p-4 rounded-xl bg-blue-500/10">
-<div class="text-3xl font-bold text-blue-400">1B+</div>
-<div class="text-sm text-white/60">members</div>
+<div class="text-center p-3 rounded-xl bg-blue-500/10">
+<div class="text-2xl font-bold text-blue-400">1B+</div>
+<div class="text-xs text-white/60">members</div>
 </div>
 
-<div class="text-center p-4 rounded-xl bg-cyan-500/10">
-<div class="text-3xl font-bold text-cyan-400">310M</div>
-<div class="text-sm text-white/60">monthly active</div>
+<div class="text-center p-3 rounded-xl bg-cyan-500/10">
+<div class="text-2xl font-bold text-cyan-400">310M</div>
+<div class="text-xs text-white/60">monthly active</div>
 </div>
 
-<div class="text-center p-4 rounded-xl bg-teal-500/10">
-<div class="text-3xl font-bold text-teal-400">3M+</div>
-<div class="text-sm text-white/60">posting weekly</div>
+<div class="text-center p-3 rounded-xl bg-teal-500/10">
+<div class="text-2xl font-bold text-teal-400">3M+</div>
+<div class="text-xs text-white/60">posting weekly</div>
 </div>
 
-<div class="text-center p-4 rounded-xl bg-emerald-500/10">
-<div class="text-3xl font-bold text-emerald-400">#1</div>
-<div class="text-sm text-white/60">organic reach</div>
+<div class="text-center p-3 rounded-xl bg-emerald-500/10">
+<div class="text-2xl font-bold text-emerald-400">#1</div>
+<div class="text-xs text-white/60">organic reach</div>
 </div>
 
 </div>
@@ -767,53 +782,57 @@ background: linear-gradient(135deg, #0f172a 0%, #064e3b 100%)
 
 <v-click>
 
-<div class="mt-6 p-4 rounded-xl bg-gradient-to-r from-amber-500/20 to-orange-500/20 border border-amber-500/30">
-<div class="font-bold text-amber-400">The algorithm rewards volume + variety.</div>
-<div class="text-sm text-white/70 mt-1">LinWheel delivers both.</div>
+<div class="mt-4 p-3 rounded-xl bg-gradient-to-r from-amber-500/20 to-orange-500/20 border border-amber-500/30">
+<div class="font-bold text-amber-400 text-sm">Algorithm rewards volume + variety.</div>
+<div class="text-xs text-white/70 mt-1">LinWheel delivers both.</div>
 </div>
 
 </v-click>
 
 </div>
 
+<div class="flex items-center">
+<img src="/embedded/linkedin-growth.png" class="rounded-2xl shadow-2xl shadow-blue-500/20" alt="LinkedIn growth" />
+</div>
+
 <div v-click>
 
-<div class="p-6 rounded-2xl bg-white/5 border border-white/10">
+<div class="p-5 rounded-2xl bg-white/5 border border-white/10">
 
 ### Target Segments
 
-<div class="space-y-3 mt-4">
+<div class="space-y-2 mt-3">
 
-<div class="flex items-center justify-between p-3 rounded-lg bg-white/5">
-<div class="flex items-center gap-3">
-<span class="text-2xl">👔</span>
-<span>Founders/CEOs</span>
+<div class="flex items-center justify-between p-2 rounded-lg bg-white/5">
+<div class="flex items-center gap-2">
+<lucide:briefcase class="text-blue-400" />
+<span class="text-sm">Founders/CEOs</span>
 </div>
-<span class="text-emerald-400">10M+</span>
-</div>
-
-<div class="flex items-center justify-between p-3 rounded-lg bg-white/5">
-<div class="flex items-center gap-3">
-<span class="text-2xl">💼</span>
-<span>Consultants</span>
-</div>
-<span class="text-emerald-400">20M+</span>
+<span class="text-emerald-400 text-sm">10M+</span>
 </div>
 
-<div class="flex items-center justify-between p-3 rounded-lg bg-white/5">
-<div class="flex items-center gap-3">
-<span class="text-2xl">🎯</span>
-<span>Coaches</span>
+<div class="flex items-center justify-between p-2 rounded-lg bg-white/5">
+<div class="flex items-center gap-2">
+<lucide:users class="text-purple-400" />
+<span class="text-sm">Consultants</span>
 </div>
-<span class="text-emerald-400">5M+</span>
+<span class="text-emerald-400 text-sm">20M+</span>
 </div>
 
-<div class="flex items-center justify-between p-3 rounded-lg bg-white/5">
-<div class="flex items-center gap-3">
-<span class="text-2xl">🎙️</span>
-<span>Podcasters</span>
+<div class="flex items-center justify-between p-2 rounded-lg bg-white/5">
+<div class="flex items-center gap-2">
+<lucide:target class="text-amber-400" />
+<span class="text-sm">Coaches</span>
 </div>
-<span class="text-rose-400 font-bold">Extreme pain</span>
+<span class="text-emerald-400 text-sm">5M+</span>
+</div>
+
+<div class="flex items-center justify-between p-2 rounded-lg bg-white/5">
+<div class="flex items-center gap-2">
+<lucide:mic class="text-rose-400" />
+<span class="text-sm">Podcasters</span>
+</div>
+<span class="text-rose-400 font-bold text-sm">Extreme pain</span>
 </div>
 
 </div>
@@ -1108,30 +1127,34 @@ background: linear-gradient(135deg, #0f172a 0%, #064e3b 100%)
 
 # <span class="bg-gradient-to-r from-violet-400 to-purple-400 bg-clip-text text-transparent">The Bottom Line</span>
 
+<div class="grid grid-cols-3 gap-8 mt-8 items-center">
+
+<div class="col-span-1">
+<img src="/embedded/content-factory.png" class="rounded-2xl shadow-2xl shadow-purple-500/30" alt="Content factory" />
+</div>
+
 <v-click>
 
-<div class="mt-12 text-center">
+<div class="col-span-2 p-8 rounded-3xl bg-gradient-to-br from-indigo-500/20 via-purple-500/20 to-pink-500/20 border border-indigo-500/30">
 
-<div class="inline-block p-8 rounded-3xl bg-gradient-to-br from-indigo-500/20 via-purple-500/20 to-pink-500/20 border border-indigo-500/30">
-
-<div class="text-4xl font-bold bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400 bg-clip-text text-transparent mb-4">
+<div class="text-3xl font-bold bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400 bg-clip-text text-transparent mb-4">
 "We're not AI writing.<br/>We're a LinkedIn content factory."
 </div>
 
-<div class="grid grid-cols-3 gap-8 mt-8">
+<div class="grid grid-cols-3 gap-6 mt-6">
 
 <div class="text-center">
-<div class="text-5xl font-bold text-indigo-400">14</div>
+<div class="text-4xl font-bold text-indigo-400">14</div>
 <div class="text-sm text-white/60">competitors analyzed</div>
 </div>
 
 <div class="text-center">
-<div class="text-5xl font-bold text-purple-400">0</div>
+<div class="text-4xl font-bold text-purple-400">0</div>
 <div class="text-sm text-white/60">with our feature stack</div>
 </div>
 
 <div class="text-center">
-<div class="text-5xl font-bold text-pink-400">$29</div>
+<div class="text-4xl font-bold text-pink-400">$29</div>
 <div class="text-sm text-white/60">vs $65-995/mo</div>
 </div>
 
@@ -1139,9 +1162,9 @@ background: linear-gradient(135deg, #0f172a 0%, #064e3b 100%)
 
 </div>
 
-</div>
-
 </v-click>
+
+</div>
 
 ---
 layout: center
@@ -1173,52 +1196,55 @@ background: linear-gradient(135deg, #1e1b4b 0%, #312e81 100%)
 
 # <span class="bg-gradient-to-r from-violet-400 to-purple-400 bg-clip-text text-transparent">Roadmap</span>
 
-<div class="grid grid-cols-3 gap-6 mt-8">
+<div class="grid grid-cols-4 gap-4 mt-6">
 
-<div v-click class="p-6 rounded-2xl bg-gradient-to-br from-emerald-500/20 to-teal-500/20 border border-emerald-500/30">
+<div class="col-span-1 flex items-center">
+<img src="/embedded/roadmap-journey.png" class="rounded-2xl shadow-2xl shadow-violet-500/20" alt="Journey ahead" />
+</div>
 
-<div class="text-emerald-400 text-sm font-bold mb-2">✅ SHIPPED</div>
+<div v-click class="p-5 rounded-2xl bg-gradient-to-br from-emerald-500/20 to-teal-500/20 border border-emerald-500/30">
 
-<div class="space-y-2 text-sm">
+<div class="text-emerald-400 text-sm font-bold mb-2"><lucide:check-circle class="inline" /> SHIPPED</div>
+
+<div class="space-y-1 text-xs">
 <div class="flex items-center gap-2"><span class="text-emerald-400">✓</span> Multi-angle generation</div>
 <div class="flex items-center gap-2"><span class="text-emerald-400">✓</span> AI cover images</div>
 <div class="flex items-center gap-2"><span class="text-emerald-400">✓</span> Long-form articles</div>
 <div class="flex items-center gap-2"><span class="text-emerald-400">✓</span> Voice profiles</div>
 <div class="flex items-center gap-2"><span class="text-emerald-400">✓</span> Stripe billing</div>
-<div class="flex items-center gap-2"><span class="text-emerald-400">✓</span> PWA</div>
 </div>
 
-<div class="mt-4 text-xs text-emerald-300">Ready for users</div>
+<div class="mt-3 text-xs text-emerald-300">Ready for users</div>
 
 </div>
 
-<div v-click class="p-6 rounded-2xl bg-gradient-to-br from-blue-500/20 to-indigo-500/20 border border-blue-500/30">
+<div v-click class="p-5 rounded-2xl bg-gradient-to-br from-blue-500/20 to-indigo-500/20 border border-blue-500/30">
 
-<div class="text-blue-400 text-sm font-bold mb-2">🔨 NEXT 30 DAYS</div>
+<div class="text-blue-400 text-sm font-bold mb-2"><lucide:hammer class="inline" /> NEXT 30 DAYS</div>
 
-<div class="space-y-2 text-sm">
+<div class="space-y-1 text-xs">
 <div class="flex items-center gap-2"><span class="text-blue-400">○</span> 5-slide carousels</div>
 <div class="flex items-center gap-2"><span class="text-blue-400">○</span> Direct LinkedIn posting</div>
 <div class="flex items-center gap-2"><span class="text-blue-400">○</span> Scheduling calendar</div>
 <div class="flex items-center gap-2"><span class="text-blue-400">○</span> Analytics dashboard</div>
 </div>
 
-<div class="mt-4 text-xs text-blue-300">Reduce friction to zero</div>
+<div class="mt-3 text-xs text-blue-300">Reduce friction to zero</div>
 
 </div>
 
-<div v-click class="p-6 rounded-2xl bg-gradient-to-br from-purple-500/20 to-violet-500/20 border border-purple-500/30">
+<div v-click class="p-5 rounded-2xl bg-gradient-to-br from-purple-500/20 to-violet-500/20 border border-purple-500/30">
 
-<div class="text-purple-400 text-sm font-bold mb-2">🚀 NEXT 90 DAYS</div>
+<div class="text-purple-400 text-sm font-bold mb-2"><lucide:rocket class="inline" /> NEXT 90 DAYS</div>
 
-<div class="space-y-2 text-sm">
+<div class="space-y-1 text-xs">
 <div class="flex items-center gap-2"><span class="text-purple-400">○</span> Team/Agency mode</div>
 <div class="flex items-center gap-2"><span class="text-purple-400">○</span> White-label option</div>
 <div class="flex items-center gap-2"><span class="text-purple-400">○</span> API access</div>
 <div class="flex items-center gap-2"><span class="text-purple-400">○</span> Mobile app</div>
 </div>
 
-<div class="mt-4 text-xs text-purple-300">Scale the business</div>
+<div class="mt-3 text-xs text-purple-300">Scale the business</div>
 
 </div>
 

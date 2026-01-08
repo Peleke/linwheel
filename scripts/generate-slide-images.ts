@@ -218,6 +218,78 @@ const SLIDE_IMAGES: ImageSpec[] = [
     No text, no faces.`,
     size: "square_hd",
   },
+  {
+    name: "grind-hamster-wheel",
+    category: "embedded",
+    prompt: `Abstract visualization of endless repetitive work and burnout.
+    Circular energy pattern suggesting a hamster wheel or infinite loop.
+    Muted gray, burnt orange, and deep red tones.
+    Figure silhouette running endlessly (abstract, not realistic).
+    Scattered clock fragments, calendar pages, exhaustion visualized.
+    Dramatic shadows, cinematic moody lighting.
+    Sense of futility, frustration, being trapped.
+    Dark background with subtle red glow.
+    No text, no realistic faces. Abstract metaphor.`,
+    size: "square_hd",
+  },
+  {
+    name: "market-gap-bridge",
+    category: "embedded",
+    prompt: `Abstract visualization of a gap or chasm being bridged.
+    Two platforms/cliffs on either side - one dark (old way), one glowing (new way).
+    Central bridge made of luminous purple and blue energy connecting them.
+    Left side: scattered gray fragments, chaos.
+    Right side: organized golden light, order.
+    LinWheel as the bridge concept - transformation pathway.
+    Dramatic depth, cinematic scale, premium quality.
+    Dark space background with stars.
+    No text, no faces. Abstract concept art.`,
+    size: "square_hd",
+  },
+  {
+    name: "linkedin-growth",
+    category: "embedded",
+    prompt: `Abstract visualization of professional network growth and reach.
+    Central node expanding outward with connection lines.
+    Blue and teal color scheme (LinkedIn brand adjacent).
+    Network graph pattern with glowing nodes.
+    Exponential growth suggested by expanding rings of light.
+    Professional, clean, business-oriented aesthetic.
+    Premium tech visualization style.
+    Dark background with blue ambient glow.
+    No logos, no text, no faces. Abstract network art.`,
+    size: "square_hd",
+  },
+  {
+    name: "roadmap-journey",
+    category: "embedded",
+    prompt: `Abstract visualization of a product roadmap or journey forward.
+    Glowing pathway stretching into a bright horizon.
+    Milestone markers along the path as luminous orbs.
+    Purple, blue, and golden gradient sky.
+    Sense of progress, momentum, exciting future.
+    Path winds through abstract landscape.
+    Stars and cosmic elements suggesting infinite possibility.
+    Inspiring, forward-looking, optimistic.
+    Premium quality, cinematic lighting.
+    No text, no faces. Abstract journey visualization.`,
+    size: "square_hd",
+  },
+  {
+    name: "content-factory",
+    category: "embedded",
+    prompt: `Abstract visualization of an automated content production system.
+    Central machine or processor glowing with energy.
+    Raw materials (abstract shapes) entering one side.
+    Polished content cards streaming out the other side.
+    Gears, circuits, and energy flows visible.
+    Purple, blue, and emerald color scheme.
+    Efficient, powerful, automated production feel.
+    Premium tech aesthetic, clean lines.
+    Dark background with ambient glow.
+    No text, no faces. Abstract factory metaphor.`,
+    size: "square_hd",
+  },
 
   // ==================== FEATURE ICONS ====================
   {
