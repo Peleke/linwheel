@@ -310,3 +310,26 @@ body {
   outline: 2px solid var(--accent-primary);
   outline-offset: 2px;
 }
+
+/* =================================================================
+   Mobile Overflow Prevention
+   ================================================================= */
+
+/* Prevent horizontal scroll on mobile */
+html, body {
+  overflow-x: hidden;
+  max-width: 100vw;
+}
+
+/* Ensure pre/code blocks don't cause overflow */
+pre, code {
+  overflow-x: auto;
+  max-width: 100%;
+  word-wrap: break-word;
+}
+
+/* Images should never exceed container */
+img {
+  max-width: 100%;
+  height: auto;
+}
