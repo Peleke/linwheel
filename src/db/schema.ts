@@ -68,6 +68,9 @@ export const linkedinPosts = sqliteTable("linkedin_posts", {
   versionNumber: integer("version_number").default(1),
   // Approval workflow
   approved: integer("approved", { mode: "boolean" }).default(false),
+  // Scheduling
+  scheduledAt: integer("scheduled_at", { mode: "timestamp" }),
+  scheduledPosition: integer("scheduled_position"),
 });
 
 // Image intents table (ComfyUI-optimized)
@@ -107,6 +110,9 @@ export const articles = sqliteTable("articles", {
   fullText: text("full_text").notNull(),
   versionNumber: integer("version_number").default(1),
   approved: integer("approved", { mode: "boolean" }).default(false),
+  // Scheduling
+  scheduledAt: integer("scheduled_at", { mode: "timestamp" }),
+  scheduledPosition: integer("scheduled_position"),
 });
 
 // Article image intents table (ComfyUI-optimized)

@@ -16,6 +16,7 @@ import { PostCard } from "@/components/post-card";
 import { ResultsClientWrapper } from "@/components/results-client-wrapper";
 import { ToastContainer } from "@/components/toast";
 import { AppHeader } from "@/components/app-header";
+import { ApprovedContentPanel } from "@/components/approved-content-panel";
 
 import { ANGLE_DESCRIPTIONS } from "@/lib/prompts/angles";
 import { ARTICLE_ANGLE_DESCRIPTIONS } from "@/lib/prompts/article-angles";
@@ -34,6 +35,7 @@ type PostWithIntent = {
   postType: PostAngle;
   versionNumber: number | null;
   approved: boolean | null;
+  scheduledAt?: Date | null;
   imageIntent?: {
     id: string;
     headlineText: string;
@@ -58,6 +60,7 @@ type ArticleWithIntent = {
   articleType: ArticleAngle;
   versionNumber: number | null;
   approved: boolean | null;
+  scheduledAt?: Date | null;
   imageIntent?: {
     id: string;
     headlineText: string;
@@ -107,6 +110,7 @@ export default async function ResultsDashboardPage({ params }: Props) {
         postType: post.postType as PostAngle,
         versionNumber: post.versionNumber,
         approved: post.approved,
+        scheduledAt: post.scheduledAt,
         imageIntent: intent ? {
           id: intent.id,
           headlineText: intent.headlineText,
@@ -141,6 +145,7 @@ export default async function ResultsDashboardPage({ params }: Props) {
         articleType: article.articleType as ArticleAngle,
         versionNumber: article.versionNumber,
         approved: article.approved,
+        scheduledAt: article.scheduledAt,
         imageIntent: intent ? {
           id: intent.id,
           headlineText: intent.headlineText,
@@ -322,6 +327,31 @@ export default async function ResultsDashboardPage({ params }: Props) {
               </details>
             )}
           </div>
+
+          {/* Approved content panel - lifted to top for easy access */}
+          <ApprovedContentPanel
+            posts={postsWithIntents
+              .filter(p => p.approved)
+              .map(p => ({
+                id: p.id,
+                hook: p.hook,
+                fullText: p.fullText,
+                postType: p.postType,
+                scheduledAt: p.scheduledAt,
+                imageUrl: p.imageIntent?.generatedImageUrl,
+              }))}
+            articles={articlesWithIntents
+              .filter(a => a.approved)
+              .map(a => ({
+                id: a.id,
+                title: a.title,
+                fullText: a.fullText,
+                articleType: a.articleType,
+                scheduledAt: a.scheduledAt,
+                imageUrl: a.imageIntent?.generatedImageUrl,
+              }))}
+            runId={runId}
+          />
 
           {/* Content tabs (Posts / Articles) */}
           <ContentTabs
