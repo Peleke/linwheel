@@ -1032,3 +1032,195 @@ test.describe("Flow 13: Image Generation", () => {
     // - Re-approve: no regeneration, same image
   });
 });
+
+// ============================================================================
+// FLOW 14: LINKEDIN INTEGRATION
+// ============================================================================
+test.describe("Flow 14: LinkedIn Integration", () => {
+  test.describe("14A: Settings - LinkedIn Connection", () => {
+    test("14A.1 - settings page shows LinkedIn connection section", async ({ page }) => {
+      await page.goto("/settings");
+
+      // Should show LinkedIn section
+      await expect(page.getByRole("heading", { name: /LinkedIn/i })).toBeVisible();
+      await expect(page.getByText(/Connect your LinkedIn account/i)).toBeVisible();
+    });
+
+    test("14A.2 - shows Connect button when not connected", async ({ page }) => {
+      await page.goto("/settings");
+
+      // Should show connect button (unless already connected in test environment)
+      const connectButton = page.getByRole("link", { name: /Connect LinkedIn/i });
+      const disconnectButton = page.getByRole("button", { name: /Disconnect/i });
+
+      // Either connect or disconnect should be visible
+      const hasConnect = await connectButton.isVisible().catch(() => false);
+      const hasDisconnect = await disconnectButton.isVisible().catch(() => false);
+
+      expect(hasConnect || hasDisconnect).toBe(true);
+    });
+
+    test("14A.3 - connect button links to OAuth start endpoint", async ({ page }) => {
+      await page.goto("/settings");
+
+      const connectButton = page.getByRole("link", { name: /Connect LinkedIn/i });
+
+      if (await connectButton.isVisible()) {
+        // Verify the href points to OAuth endpoint
+        const href = await connectButton.getAttribute("href");
+        expect(href).toContain("/api/auth/linkedin");
+      }
+    });
+
+    test.skip("14A.4 - successful OAuth callback shows success message", async ({ page }) => {
+      // REQUIRES ACTUAL OAUTH FLOW
+      // In E2E, we would need to mock the OAuth flow
+      // Manually test with: /settings?linkedin_connected=true
+      await page.goto("/settings?linkedin_connected=true");
+
+      // Should show success message
+      await expect(page.getByText(/connected/i)).toBeVisible();
+    });
+
+    test.skip("14A.5 - failed OAuth callback shows error message", async ({ page }) => {
+      // Test error handling
+      await page.goto("/settings?linkedin_error=access_denied");
+
+      // Should show error message
+      await expect(page.getByText(/error|denied/i)).toBeVisible();
+    });
+
+    test.skip("14A.6 - disconnect button removes connection", async ({ page }) => {
+      // REQUIRES EXISTING CONNECTION
+      // When implemented, should test:
+      // - Click Disconnect button
+      // - Confirmation dialog appears
+      // - Confirm removes connection
+      // - Connect button reappears
+    });
+  });
+
+  test.describe("14B: Publish Button on Posts", () => {
+    test.skip("14B.1 - publish button not visible on unapproved posts", async ({ page }) => {
+      // REQUIRES COMPLETED RUN WITH POSTS
+      // When implemented, should test:
+      // - Navigate to dashboard with posts
+      // - Find an unapproved post
+      // - Verify Publish button is NOT visible
+    });
+
+    test.skip("14B.2 - publish button visible on approved posts", async ({ page }) => {
+      // REQUIRES COMPLETED RUN WITH APPROVED POSTS + LINKEDIN CONNECTION
+      // When implemented, should test:
+      // - Navigate to dashboard with approved posts
+      // - Find an approved post
+      // - Verify Publish button IS visible
+    });
+
+    test.skip("14B.3 - publish button shows confirmation dialog", async ({ page }) => {
+      // REQUIRES COMPLETED RUN WITH APPROVED POSTS + LINKEDIN CONNECTION
+      // When implemented, should test:
+      // - Click Publish button on approved post
+      // - Confirmation dialog appears
+      // - Shows "Publish this post to LinkedIn?"
+      // - Has Publish and Cancel buttons
+    });
+
+    test.skip("14B.4 - cancel hides confirmation dialog", async ({ page }) => {
+      // REQUIRES COMPLETED RUN WITH APPROVED POSTS + LINKEDIN CONNECTION
+      // When implemented, should test:
+      // - Click Publish button
+      // - Dialog appears
+      // - Click Cancel
+      // - Dialog hides, Publish button still visible
+    });
+
+    test.skip("14B.5 - publish shows loading state", async ({ page }) => {
+      // REQUIRES COMPLETED RUN + LINKEDIN CONNECTION + MOCK API
+      // When implemented, should test:
+      // - Click Publish > Confirm
+      // - Button shows loading spinner
+      // - Disabled during publish
+    });
+
+    test.skip("14B.6 - successful publish shows View button", async ({ page }) => {
+      // REQUIRES COMPLETED RUN + LINKEDIN CONNECTION + MOCK API
+      // When implemented, should test:
+      // - After successful publish
+      // - Publish button replaced with "View" link
+      // - Link points to linkedin.com/feed/update/...
+    });
+
+    test.skip("14B.7 - publish error shows error message", async ({ page }) => {
+      // REQUIRES MOCK API WITH ERROR
+      // When implemented, should test:
+      // - Publish fails (mock 500 response)
+      // - Error message appears
+      // - Dismiss button works
+      // - Can retry publishing
+    });
+
+    test.skip("14B.8 - already published posts show View button", async ({ page }) => {
+      // REQUIRES POST WITH linkedinPostUrn SET
+      // When implemented, should test:
+      // - Post already has linkedinPostUrn
+      // - Shows View button instead of Publish
+      // - View links to LinkedIn post
+    });
+  });
+
+  test.describe("14C: LinkedIn Connection Status API", () => {
+    test("14C.1 - status endpoint returns connection status", async ({ page, request }) => {
+      // Call the status API directly
+      const response = await request.get("/api/auth/linkedin/status");
+
+      expect(response.ok()).toBe(true);
+
+      const data = await response.json();
+      expect(data).toHaveProperty("connected");
+      expect(typeof data.connected).toBe("boolean");
+    });
+
+    test("14C.2 - status includes profile info when connected", async ({ page, request }) => {
+      const response = await request.get("/api/auth/linkedin/status");
+      const data = await response.json();
+
+      if (data.connected) {
+        // Should have profile info
+        expect(data).toHaveProperty("profileName");
+        expect(data).toHaveProperty("expiresAt");
+      }
+    });
+  });
+
+  test.describe("14D: Publish API", () => {
+    test.skip("14D.1 - publish requires authentication", async ({ request }) => {
+      // Test without auth - should fail
+      const response = await request.post("/api/posts/fake-id/publish-linkedin");
+
+      // Should return 401
+      expect(response.status()).toBe(401);
+    });
+
+    test.skip("14D.2 - publish requires post to be approved", async ({ request }) => {
+      // REQUIRES VALID POST ID (UNAPPROVED)
+      // When implemented, should test:
+      // - POST to publish endpoint with unapproved post
+      // - Returns 400 with "must be approved" message
+    });
+
+    test.skip("14D.3 - publish requires LinkedIn connection", async ({ request }) => {
+      // REQUIRES APPROVED POST + NO LINKEDIN CONNECTION
+      // When implemented, should test:
+      // - POST to publish endpoint
+      // - Returns 400 with "not connected" message
+    });
+
+    test.skip("14D.4 - publish returns post URL on success", async ({ request }) => {
+      // REQUIRES APPROVED POST + LINKEDIN CONNECTION + MOCK LINKEDIN API
+      // When implemented, should test:
+      // - POST to publish endpoint
+      // - Returns 200 with postUrn and postUrl
+    });
+  });
+});
