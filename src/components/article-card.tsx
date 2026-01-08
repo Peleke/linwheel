@@ -217,16 +217,16 @@ export function ArticleCard({
                   transition={{ duration: 0.2 }}
                   className="overflow-hidden"
                 >
-                  <div className="mt-2 p-3 bg-gradient-to-br from-slate-900 to-slate-800 rounded-lg text-xs font-mono">
-                    <p className="text-emerald-400">
+                  <div className="mt-2 p-3 bg-gradient-to-br from-slate-900 to-slate-800 rounded-lg text-xs font-mono overflow-hidden">
+                    <p className="text-emerald-400 break-words whitespace-pre-wrap">
                       <span className="text-slate-500">+ </span>
                       {article.imageIntent.prompt}
                     </p>
-                    <p className="text-rose-400 mt-1">
+                    <p className="text-rose-400 mt-1 break-words whitespace-pre-wrap">
                       <span className="text-slate-500">- </span>
                       {article.imageIntent.negativePrompt}
                     </p>
-                    <p className="text-violet-400 mt-1">
+                    <p className="text-violet-400 mt-1 break-words">
                       <span className="text-slate-500">style: </span>
                       {article.imageIntent.stylePreset}
                     </p>
