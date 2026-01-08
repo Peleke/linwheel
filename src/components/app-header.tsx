@@ -44,7 +44,7 @@ export function AppHeader() {
                 alt="LinWheel"
                 width={36}
                 height={36}
-                className="object-cover scale-110"
+                className="object-cover scale-110 transition-transform duration-700 ease-in-out group-hover:rotate-[360deg]"
                 priority
               />
               <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-700 bg-gradient-to-r from-transparent via-white/20 to-transparent" />
