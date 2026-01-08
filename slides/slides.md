@@ -58,45 +58,65 @@ Turn Any Content Into a Month of LinkedIn Posts
 ---
 layout: center
 class: text-center
-background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%)
+background: /background/hero-bg.png
 ---
+
+<div class="absolute inset-0 bg-black/50" />
+
+<div class="relative">
+
+<div class="text-sm uppercase tracking-[0.3em] text-white/50 mb-4">Today's Journey</div>
+
+<div class="text-4xl font-bold bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400 bg-clip-text text-transparent mb-12">
+What We'll Cover
+</div>
 
 <div class="grid grid-cols-4 gap-6">
 
-<div class="p-6 rounded-2xl bg-gradient-to-br from-rose-500/20 to-orange-500/20 border border-rose-500/30 backdrop-blur-sm transform hover:scale-105 transition-all">
-<div class="text-4xl mb-4 text-rose-400"><lucide:flame class="inline" /></div>
+<div v-click class="group p-6 rounded-2xl bg-gradient-to-br from-rose-500/20 to-orange-500/20 border border-rose-500/30 backdrop-blur-md transform hover:scale-105 transition-all hover:shadow-2xl hover:shadow-rose-500/20">
+<div class="text-5xl mb-4 text-rose-400 group-hover:scale-110 transition-transform"><lucide:flame class="inline" /></div>
 
 ### Part I
-**The Problem**
+<div class="text-xl font-bold bg-gradient-to-r from-rose-400 to-orange-400 bg-clip-text text-transparent">The Problem</div>
 
-<div class="text-sm text-white/60 mt-2">Why content creation is broken</div>
+<div class="text-sm text-white/60 mt-3">Why content creation is broken</div>
+<div class="mt-4 w-full h-1 rounded-full bg-gradient-to-r from-rose-500 to-orange-500 opacity-50"></div>
 </div>
 
-<div class="p-6 rounded-2xl bg-gradient-to-br from-blue-500/20 to-cyan-500/20 border border-blue-500/30 backdrop-blur-sm transform hover:scale-105 transition-all">
-<div class="text-4xl mb-4 text-cyan-400"><lucide:zap class="inline" /></div>
+<div v-click class="group p-6 rounded-2xl bg-gradient-to-br from-blue-500/20 to-cyan-500/20 border border-blue-500/30 backdrop-blur-md transform hover:scale-105 transition-all hover:shadow-2xl hover:shadow-cyan-500/20">
+<div class="text-5xl mb-4 text-cyan-400 group-hover:scale-110 transition-transform"><lucide:zap class="inline" /></div>
 
 ### Part II
-**The Solution**
+<div class="text-xl font-bold bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">The Solution</div>
 
-<div class="text-sm text-white/60 mt-2">LinWheel live demo</div>
+<div class="text-sm text-white/60 mt-3">LinWheel in action</div>
+<div class="mt-4 w-full h-1 rounded-full bg-gradient-to-r from-blue-500 to-cyan-500 opacity-50"></div>
 </div>
 
-<div class="p-6 rounded-2xl bg-gradient-to-br from-emerald-500/20 to-teal-500/20 border border-emerald-500/30 backdrop-blur-sm transform hover:scale-105 transition-all">
-<div class="text-4xl mb-4 text-emerald-400"><lucide:dollar-sign class="inline" /></div>
+<div v-click class="group p-6 rounded-2xl bg-gradient-to-br from-emerald-500/20 to-teal-500/20 border border-emerald-500/30 backdrop-blur-md transform hover:scale-105 transition-all hover:shadow-2xl hover:shadow-emerald-500/20">
+<div class="text-5xl mb-4 text-emerald-400 group-hover:scale-110 transition-transform"><lucide:dollar-sign class="inline" /></div>
 
 ### Part III
-**Business**
+<div class="text-xl font-bold bg-gradient-to-r from-emerald-400 to-teal-400 bg-clip-text text-transparent">Business</div>
 
-<div class="text-sm text-white/60 mt-2">Pricing & crushing competition</div>
+<div class="text-sm text-white/60 mt-3">Pricing & competition</div>
+<div class="mt-4 w-full h-1 rounded-full bg-gradient-to-r from-emerald-500 to-teal-500 opacity-50"></div>
 </div>
 
-<div class="p-6 rounded-2xl bg-gradient-to-br from-violet-500/20 to-purple-500/20 border border-violet-500/30 backdrop-blur-sm transform hover:scale-105 transition-all">
-<div class="text-4xl mb-4 text-violet-400"><lucide:rocket class="inline" /></div>
+<div v-click class="group p-6 rounded-2xl bg-gradient-to-br from-violet-500/20 to-purple-500/20 border border-violet-500/30 backdrop-blur-md transform hover:scale-105 transition-all hover:shadow-2xl hover:shadow-purple-500/20">
+<div class="text-5xl mb-4 text-violet-400 group-hover:scale-110 transition-transform"><lucide:rocket class="inline" /></div>
 
 ### Part IV
-**The Ask**
+<div class="text-xl font-bold bg-gradient-to-r from-violet-400 to-purple-400 bg-clip-text text-transparent">The Ask</div>
 
-<div class="text-sm text-white/60 mt-2">Next steps</div>
+<div class="text-sm text-white/60 mt-3">What's next</div>
+<div class="mt-4 w-full h-1 rounded-full bg-gradient-to-r from-violet-500 to-purple-500 opacity-50"></div>
+</div>
+
+</div>
+
+<div class="mt-10 text-white/40 text-sm">
+<lucide:clock class="inline mr-2" /> ~12 minutes
 </div>
 
 </div>
