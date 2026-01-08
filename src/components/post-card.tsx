@@ -39,6 +39,26 @@ export function PostCard({ post, runId }: PostCardProps) {
   const displayTitle = post.hook.split(/[.!?]/)[0]?.trim() || post.hook.substring(0, 80);
   const hasImage = !!post.imageIntent?.generatedImageUrl;
 
+  // Get content without the hook to avoid duplication in expanded view
+  const getContentWithoutHook = () => {
+    const fullText = post.fullText;
+    const hook = post.hook;
+
+    // If fullText starts with the hook, remove it
+    if (fullText.startsWith(hook)) {
+      return fullText.substring(hook.length).trim();
+    }
+
+    // Try to remove just the first line if it matches the displayTitle
+    const lines = fullText.split("\n");
+    const firstLine = lines[0]?.trim();
+    if (firstLine && displayTitle.startsWith(firstLine.substring(0, 20))) {
+      return lines.slice(1).join("\n").trim();
+    }
+
+    return fullText;
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20, scale: 0.98 }}
@@ -68,6 +88,7 @@ export function PostCard({ post, runId }: PostCardProps) {
           <div className="flex items-start justify-between gap-3">
             <div className="flex-1 min-w-0">
               <h3
+                data-testid="post-card-title"
                 className="font-semibold text-zinc-900 dark:text-zinc-100 text-sm leading-snug line-clamp-2"
                 title={post.hook}
               >
@@ -151,10 +172,13 @@ export function PostCard({ post, runId }: PostCardProps) {
               className="overflow-hidden"
             >
               <div className="px-4 pb-4 pt-2 border-t border-zinc-100 dark:border-zinc-800">
-                {/* Full Post Text */}
-                <div className="prose prose-sm prose-zinc dark:prose-invert max-w-none prose-p:my-2 prose-p:leading-relaxed text-sm">
+                {/* Full Post Text (without hook to avoid duplication) */}
+                <div
+                  data-testid="post-expanded-content"
+                  className="prose prose-sm prose-zinc dark:prose-invert max-w-none prose-p:my-3 prose-p:leading-relaxed text-sm"
+                >
                   <ReactMarkdown>
-                    {post.fullText.replace(/\n(?!\n)/g, '\n\n')}
+                    {getContentWithoutHook().replace(/\n(?!\n)/g, '\n\n')}
                   </ReactMarkdown>
                 </div>
 
