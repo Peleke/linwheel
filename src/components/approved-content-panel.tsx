@@ -35,7 +35,23 @@ export function ApprovedContentPanel({
   const [activeScheduler, setActiveScheduler] = useState<string | null>(null);
   const totalApproved = posts.length + articles.length;
 
-  if (totalApproved === 0) return null;
+  if (totalApproved === 0) {
+    return (
+      <div className="mb-8 p-4 rounded-xl border border-dashed border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-900/50">
+        <div className="flex items-center gap-3 text-zinc-500 dark:text-zinc-400">
+          <div className="w-8 h-8 rounded-lg bg-zinc-200 dark:bg-zinc-800 flex items-center justify-center">
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+          <div>
+            <p className="text-sm font-medium">No approved content yet</p>
+            <p className="text-xs text-zinc-400 dark:text-zinc-500">Approve posts or articles below to see them here</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   // Combine and sort by type for unified display
   const allContent = [
