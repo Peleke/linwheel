@@ -8,8 +8,9 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![Claude](https://img.shields.io/badge/Claude_AI-CC785C?style=for-the-badge&logo=anthropic&logoColor=white)](https://anthropic.com/)
 [![Flux.1](https://img.shields.io/badge/Flux.1-000000?style=for-the-badge&logo=data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48Y2lyY2xlIGN4PSIxMiIgY3k9IjEyIiByPSI4IiBmaWxsPSIjMTBCOTgxIi8+PC9zdmc+&logoColor=white)](https://fal.ai/)
+[![LinkedIn](https://img.shields.io/badge/LinkedIn_API-0A66C2?style=for-the-badge&logo=linkedin&logoColor=white)](https://linkedin.com/)
 
-**90+ posts. 6 angles. AI-generated cover images. In under 60 seconds.**
+**90+ posts. 6 angles. AI cover images. Direct LinkedIn publishing. Under 60 seconds.**
 
 [Get Started](#-quick-start) · [Features](#-features) · [Architecture](#-architecture) · [Roadmap](#-roadmap)
 
@@ -50,6 +51,18 @@ Paste your content. Select your angles. Get a month of scroll-stopping content.
 ---
 
 ## ✨ Features
+
+### 🚀 Direct LinkedIn Publishing
+
+**Zero friction from creation to posted.** Connect your LinkedIn account and publish approved posts instantly—no copy-paste, no switching apps.
+
+- **One-click connect** — OAuth integration with LinkedIn
+- **Instant publishing** — Approve a post, click Publish, done
+- **Image support** — AI-generated cover images publish with your post
+- **Published tracking** — See which posts are live with direct links
+- **Secure tokens** — AES-256-GCM encryption for your credentials
+
+> *Coming soon: Scheduled publishing — set it and forget it.*
 
 ### 🎭 Six Distinct Content Angles
 
@@ -124,6 +137,7 @@ Install LinWheel on any device:
 | **Content angles** | 1 (your default voice) | 6 distinct perspectives |
 | **Cover images** | DIY in Canva | AI-generated, one click |
 | **Carousels** | Hours of design work | Automatic, per-slide images |
+| **Publishing** | Copy-paste to LinkedIn | One-click direct publish |
 | **Consistency** | Varies by energy level | Same quality every time |
 
 ---
@@ -288,6 +302,11 @@ cp .env.example .env.local
 # AI Providers (Required)
 ANTHROPIC_API_KEY=your-anthropic-key      # Claude for text generation
 FAL_KEY=your-fal-key                       # Flux.1 for image generation
+
+# LinkedIn Integration (Required for publishing)
+LINKEDIN_CLIENT_ID=your-linkedin-app-id   # From LinkedIn Developer Portal
+LINKEDIN_CLIENT_SECRET=your-secret        # From LinkedIn Developer Portal
+TOKEN_ENCRYPTION_KEY=64-char-hex-key      # For secure token storage
 
 # Supabase Auth
 NEXT_PUBLIC_SUPABASE_URL=your-project-url
@@ -487,6 +506,7 @@ At 90 posts per run, that's **$0.03 per post with image**.
 - [x] **Stripe subscription billing** (Free tier + Pro @ $29/mo)
 - [x] Usage gating with upgrade prompts
 - [x] Supabase authentication
+- [x] **🚀 Direct LinkedIn Publishing** — Connect account, publish with one click
 
 ### 🎨 Brand Style Profiles
 *Voice profiles, but for visuals*
@@ -506,15 +526,15 @@ At 90 posts per run, that's **$0.03 per post with image**.
 - Bring your own LLM (Claude, GPT, Llama, Mistral)
 - Custom T2I pipelines for compliance-heavy industries (healthcare, finance, gov)
 
-### 📅 Direct Publishing + Scheduling
-*From paste to posted, zero friction*
+### 📅 Scheduled Publishing
+*Set it and forget it*
 
-> Connect LinkedIn directly. Schedule a month of content in one session.
+> ✅ Direct publishing is live! Scheduled auto-posting coming next.
 
-- Native LinkedIn API integration
+- ✅ ~~Native LinkedIn API integration~~ **SHIPPED**
 - Calendar view of scheduled posts
+- Automatic publishing at scheduled times
 - Optimal timing suggestions based on your audience
-- Integrations: Buffer, Typefully, native LinkedIn
 
 ### 👥 Team & Agency Mode
 *One dashboard, infinite brands*
