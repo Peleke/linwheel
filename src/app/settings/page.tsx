@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback, useMemo } from "react";
 import { useImagePreferences, type ImagePreferences } from "@/hooks/use-image-preferences";
 import { useLLMPreferences, type LLMPreferences, type LLMProvider } from "@/hooks/use-llm-preferences";
+import { usePushNotifications } from "@/hooks/use-push-notifications";
 import { AppHeader } from "@/components/app-header";
 import { SubscriptionStatus } from "@/components/subscription/subscription-status";
 
@@ -75,6 +76,14 @@ export default function SettingsPage() {
     setClaudeModel,
     setOpenaiModel: setLLMOpenaiModel,
   } = useLLMPreferences();
+
+  const {
+    isSupported: pushSupported,
+    isSubscribed: pushSubscribed,
+    isLoading: pushLoading,
+    subscribe: pushSubscribe,
+    unsubscribe: pushUnsubscribe,
+  } = usePushNotifications();
 
   const [llmProviderStatus, setLLMProviderStatus] = useState<LLMProviderStatus>({
     claude: false,
@@ -413,6 +422,106 @@ export default function SettingsPage() {
               <span className="font-medium text-zinc-600 dark:text-zinc-400">Tip:</span> Your scheduled content reminders will be sent based on this timezone. Make sure it matches where you'll be posting from.
             </p>
           </div>
+        </section>
+
+        {/* Push Notifications Section */}
+        <section className="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 p-6 mb-6">
+          <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100 mb-4">Notifications</h2>
+          <p className="text-sm text-zinc-500 mb-4">
+            Get reminded when your scheduled content is ready to publish.
+          </p>
+
+          {!pushSupported ? (
+            <div className="p-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg">
+              <div className="flex items-start gap-3">
+                <svg className="w-5 h-5 text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+                <div>
+                  <p className="text-sm font-medium text-amber-800 dark:text-amber-200">
+                    Notifications not supported
+                  </p>
+                  <p className="text-xs text-amber-700 dark:text-amber-300 mt-1">
+                    Your browser doesn&apos;t support push notifications. Try using Chrome, Firefox, or Safari.
+                  </p>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {/* Status indicator */}
+              <div className={`p-4 rounded-lg border-2 transition-all ${
+                pushSubscribed
+                  ? "bg-emerald-50 dark:bg-emerald-900/20 border-emerald-500"
+                  : "bg-zinc-50 dark:bg-zinc-800/50 border-zinc-200 dark:border-zinc-700"
+              }`}>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                      pushSubscribed
+                        ? "bg-emerald-500 text-white"
+                        : "bg-zinc-200 dark:bg-zinc-700 text-zinc-500"
+                    }`}>
+                      {pushSubscribed ? (
+                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                        </svg>
+                      ) : (
+                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                        </svg>
+                      )}
+                    </div>
+                    <div>
+                      <p className={`font-medium ${
+                        pushSubscribed
+                          ? "text-emerald-800 dark:text-emerald-200"
+                          : "text-zinc-700 dark:text-zinc-300"
+                      }`}>
+                        {pushSubscribed ? "Notifications Enabled" : "Notifications Disabled"}
+                      </p>
+                      <p className={`text-xs ${
+                        pushSubscribed
+                          ? "text-emerald-600 dark:text-emerald-400"
+                          : "text-zinc-500"
+                      }`}>
+                        {pushSubscribed
+                          ? "You'll receive reminders for scheduled content"
+                          : "Enable to get reminded when content is ready to post"}
+                      </p>
+                    </div>
+                  </div>
+
+                  <button
+                    onClick={() => pushSubscribed ? pushUnsubscribe() : pushSubscribe()}
+                    disabled={pushLoading}
+                    className={`px-4 py-2 text-sm font-medium rounded-lg transition-all disabled:opacity-50 ${
+                      pushSubscribed
+                        ? "bg-zinc-200 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-300 dark:hover:bg-zinc-600"
+                        : "bg-blue-600 text-white hover:bg-blue-700"
+                    }`}
+                  >
+                    {pushLoading ? (
+                      <span className="flex items-center gap-2">
+                        <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                        {pushSubscribed ? "Disabling..." : "Enabling..."}
+                      </span>
+                    ) : (
+                      pushSubscribed ? "Disable" : "Enable Notifications"
+                    )}
+                  </button>
+                </div>
+              </div>
+
+              {pushSubscribed && (
+                <div className="p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+                  <p className="text-xs text-blue-700 dark:text-blue-300">
+                    <span className="font-medium">How it works:</span> When you schedule content, we&apos;ll send you a reminder 15 minutes before it&apos;s time to post. Make sure to keep this browser tab open or allow background notifications.
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
         </section>
 
         {/* Voice Profile Section */}
