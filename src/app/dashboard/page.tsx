@@ -6,6 +6,19 @@ import { DashboardClient } from "@/components/dashboard-client";
 
 export const dynamic = "force-dynamic";
 
+// Safe date to ISO string conversion
+function safeToISOString(date: Date | null | undefined): string | null {
+  if (!date) return null;
+  try {
+    const iso = date.toISOString();
+    // Check if it's a valid date string
+    if (iso === "Invalid Date" || isNaN(date.getTime())) return null;
+    return iso;
+  } catch {
+    return null;
+  }
+}
+
 export default async function DashboardPage() {
   // Fetch all approved posts
   const approvedPosts = await db.query.linkedinPosts.findMany({
@@ -29,7 +42,7 @@ export default async function DashboardPage() {
         title: post.hook,
         fullText: post.fullText,
         contentType: post.postType,
-        scheduledAt: post.scheduledAt?.toISOString() || null,
+        scheduledAt: safeToISOString(post.scheduledAt),
         imageUrl: intent?.generatedImageUrl || null,
         runId: post.runId,
         runLabel: run?.sourceLabel || "Unknown",
@@ -59,7 +72,7 @@ export default async function DashboardPage() {
         title: article.title,
         fullText: article.fullText,
         contentType: article.articleType,
-        scheduledAt: article.scheduledAt?.toISOString() || null,
+        scheduledAt: safeToISOString(article.scheduledAt),
         imageUrl: intent?.generatedImageUrl || null,
         runId: article.runId,
         runLabel: run?.sourceLabel || "Unknown",
