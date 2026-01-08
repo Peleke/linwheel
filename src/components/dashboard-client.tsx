@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { usePushNotifications } from "@/hooks/use-push-notifications";
 
 // Get local date key (YYYY-MM-DD) respecting user's timezone
@@ -40,8 +41,10 @@ interface DashboardClientProps {
 }
 
 export function DashboardClient({ content }: DashboardClientProps) {
+  const router = useRouter();
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [schedulingItem, setSchedulingItem] = useState<string | null>(null);
+  const [isScheduling, setIsScheduling] = useState(false);
   const [weekOffset, setWeekOffset] = useState(0);
   const { isSupported, isSubscribed, isLoading: pushLoading, subscribe, unsubscribe } = usePushNotifications();
 
@@ -80,17 +83,35 @@ export function DashboardClient({ content }: DashboardClientProps) {
     const item = content.find(c => c.id === itemId);
     if (!item) return;
 
-    const endpoint = item.type === "post"
-      ? `/api/posts/${itemId}/schedule`
-      : `/api/articles/${itemId}/schedule`;
+    setIsScheduling(true);
 
-    await fetch(endpoint, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ scheduledAt: date.toISOString() }),
-    });
+    try {
+      const endpoint = item.type === "post"
+        ? `/api/posts/${itemId}/schedule`
+        : `/api/articles/${itemId}/schedule`;
 
-    window.location.reload();
+      const res = await fetch(endpoint, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ scheduledAt: date.toISOString() }),
+      });
+
+      if (!res.ok) {
+        const err = await res.json();
+        console.error("Schedule failed:", err);
+        alert("Failed to schedule. Please try again.");
+        return;
+      }
+
+      // Refresh the page data
+      router.refresh();
+    } catch (err) {
+      console.error("Schedule error:", err);
+      alert("Failed to schedule. Please try again.");
+    } finally {
+      setIsScheduling(false);
+      setSchedulingItem(null);
+    }
   };
 
   const isToday = (date: Date) => {
@@ -327,26 +348,37 @@ export function DashboardClient({ content }: DashboardClientProps) {
 }
 
 function CalendarItem({ item }: { item: ContentItem }) {
+  const isPost = item.type === "post";
   return (
-    <div className="group relative bg-zinc-100 dark:bg-zinc-800 rounded-lg p-2 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors">
+    <div className={`group relative rounded-lg p-2 transition-colors border-l-3 ${
+      isPost
+        ? "bg-blue-50 dark:bg-blue-900/20 border-l-blue-500 hover:bg-blue-100 dark:hover:bg-blue-900/30"
+        : "bg-purple-50 dark:bg-purple-900/20 border-l-purple-500 hover:bg-purple-100 dark:hover:bg-purple-900/30"
+    }`}>
       <div className="flex items-start gap-2">
         {item.imageUrl ? (
           <div className="relative w-8 h-8 rounded overflow-hidden flex-shrink-0">
             <Image src={item.imageUrl} alt="" fill className="object-cover" sizes="32px" />
           </div>
         ) : (
-          <div className={`w-8 h-8 rounded flex-shrink-0 ${
-            item.type === "post"
-              ? "bg-blue-500"
-              : "bg-sky-500"
-          }`} />
+          <div className={`w-8 h-8 rounded flex-shrink-0 flex items-center justify-center text-white text-[10px] font-bold ${
+            isPost ? "bg-blue-500" : "bg-purple-500"
+          }`}>
+            {isPost ? "P" : "A"}
+          </div>
         )}
         <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-1.5 mb-0.5">
+            <span className={`px-1.5 py-0.5 text-[9px] font-semibold uppercase rounded ${
+              isPost
+                ? "bg-blue-500 text-white"
+                : "bg-purple-500 text-white"
+            }`}>
+              {isPost ? "Post" : "Article"}
+            </span>
+          </div>
           <p className="text-xs font-medium text-zinc-900 dark:text-zinc-100 line-clamp-2">
             {item.title}
-          </p>
-          <p className="text-[10px] text-zinc-500 dark:text-zinc-400 mt-0.5 capitalize">
-            {item.type} • {item.contentType.replace("_", " ")}
           </p>
         </div>
       </div>
@@ -365,11 +397,14 @@ function QueueItem({
   onStartScheduling: () => void;
   onCancelScheduling: () => void;
 }) {
+  const isPost = item.type === "post";
   return (
-    <div className={`rounded-xl border transition-all ${
+    <div className={`rounded-xl border-l-4 transition-all ${
       isScheduling
-        ? "border-emerald-400 bg-emerald-50 dark:bg-emerald-900/20"
-        : "border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/50"
+        ? "border-l-emerald-400 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-400"
+        : isPost
+        ? "border-l-blue-500 bg-white dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700"
+        : "border-l-purple-500 bg-white dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700"
     }`}>
       <div className="p-3">
         <div className="flex items-start gap-3">
@@ -379,21 +414,30 @@ function QueueItem({
             </div>
           ) : (
             <div className={`w-12 h-12 rounded-lg flex-shrink-0 flex items-center justify-center ${
-              item.type === "post"
+              isPost
                 ? "bg-gradient-to-br from-blue-500 to-indigo-600"
-                : "bg-gradient-to-br from-sky-500 to-cyan-600"
+                : "bg-gradient-to-br from-purple-500 to-violet-600"
             }`}>
-              <span className="text-white text-xs font-bold uppercase">
-                {item.type[0]}
+              <span className="text-white text-sm font-bold">
+                {isPost ? "P" : "A"}
               </span>
             </div>
           )}
           <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-2 mb-1">
+              <span className={`px-2 py-0.5 text-[10px] font-semibold uppercase rounded ${
+                isPost
+                  ? "bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300"
+                  : "bg-purple-100 dark:bg-purple-900/50 text-purple-700 dark:text-purple-300"
+              }`}>
+                {isPost ? "Post" : "Article"}
+              </span>
+              <span className="text-[10px] text-zinc-400 capitalize">
+                {item.contentType.replace("_", " ")}
+              </span>
+            </div>
             <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100 line-clamp-2">
               {item.title}
-            </p>
-            <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1 capitalize">
-              {item.contentType.replace("_", " ")}
             </p>
           </div>
         </div>
