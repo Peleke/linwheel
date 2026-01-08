@@ -82,12 +82,12 @@ background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%)
 </div>
 
 <div class="p-6 rounded-2xl bg-gradient-to-br from-emerald-500/20 to-teal-500/20 border border-emerald-500/30 backdrop-blur-sm transform hover:scale-105 transition-all">
-<div class="text-4xl mb-4">💰</div>
+<div class="text-4xl mb-4">💀</div>
 
 ### Part III
 **Business**
 
-<div class="text-sm text-white/60 mt-2">Pricing & market</div>
+<div class="text-sm text-white/60 mt-2">Pricing & crushing competition</div>
 </div>
 
 <div class="p-6 rounded-2xl bg-gradient-to-br from-violet-500/20 to-purple-500/20 border border-violet-500/30 backdrop-blur-sm transform hover:scale-105 transition-all">
@@ -780,58 +780,178 @@ background: linear-gradient(135deg, #0f172a 0%, #064e3b 100%)
 </div>
 
 ---
-background: linear-gradient(135deg, #0f172a 0%, #064e3b 100%)
+layout: center
+class: text-center
 ---
 
-# <span class="bg-gradient-to-r from-violet-400 to-purple-400 bg-clip-text text-transparent">Competitive Advantage</span>
+<div class="absolute inset-0 bg-gradient-to-br from-rose-900/40 via-red-900/30 to-orange-900/40" />
 
-<div class="mt-8 p-6 rounded-2xl bg-white/5 border border-white/10 overflow-hidden">
+<div class="relative">
 
-<table class="w-full text-sm">
+# <span class="text-5xl">💀</span>
+
+<div class="text-5xl font-bold mt-4 bg-gradient-to-r from-rose-400 to-orange-400 bg-clip-text text-transparent">
+Competitive Landscape
+</div>
+
+<div class="mt-6 text-xl text-white/70">
+14 competitors researched. Zero do what we do.
+</div>
+
+</div>
+
+---
+background: linear-gradient(135deg, #0f172a 0%, #3f0f0f 100%)
+---
+
+# The <span class="bg-gradient-to-r from-rose-400 to-orange-400 bg-clip-text text-transparent">$65-995/mo Competitors</span>
+
+<div class="text-white/60 mb-4">What you'd pay for similar (but inferior) features today</div>
+
+<div class="grid grid-cols-4 gap-4 mt-6">
+
+<div v-click class="p-4 rounded-xl bg-white/5 border border-white/10 hover:border-rose-500/50 transition-all">
+<div class="flex items-center justify-between mb-2">
+<div class="font-bold">Taplio</div>
+<div class="text-rose-400 font-bold">$65/mo</div>
+</div>
+<div class="text-xs text-white/50 space-y-1">
+<div>✓ LinkedIn-focused</div>
+<div>✓ Carousels</div>
+<div class="text-rose-400">✗ No AI images</div>
+<div class="text-rose-400">✗ No multi-angle</div>
+<div class="text-rose-400">✗ Violates LinkedIn TOS</div>
+</div>
+</div>
+
+<div v-click class="p-4 rounded-xl bg-white/5 border border-white/10 hover:border-rose-500/50 transition-all">
+<div class="flex items-center justify-between mb-2">
+<div class="font-bold">Jasper</div>
+<div class="text-rose-400 font-bold">$49-125/mo</div>
+</div>
+<div class="text-xs text-white/50 space-y-1">
+<div>✓ Good brand voice</div>
+<div>✓ 50+ templates</div>
+<div class="text-rose-400">✗ Not LinkedIn-specific</div>
+<div class="text-rose-400">✗ No AI images</div>
+<div class="text-rose-400">✗ No multi-angle</div>
+</div>
+</div>
+
+<div v-click class="p-4 rounded-xl bg-white/5 border border-white/10 hover:border-rose-500/50 transition-all">
+<div class="flex items-center justify-between mb-2">
+<div class="font-bold">Hootsuite</div>
+<div class="text-rose-400 font-bold">$99-249/mo</div>
+</div>
+<div class="text-xs text-white/50 space-y-1">
+<div>✓ Social management</div>
+<div>✓ Analytics</div>
+<div class="text-rose-400">✗ Basic AI only</div>
+<div class="text-rose-400">✗ Enterprise overkill</div>
+<div class="text-rose-400">✗ No content creation</div>
+</div>
+</div>
+
+<div v-click class="p-4 rounded-xl bg-white/5 border border-white/10 hover:border-rose-500/50 transition-all">
+<div class="flex items-center justify-between mb-2">
+<div class="font-bold">Letterdrop</div>
+<div class="text-rose-400 font-bold">$995/mo</div>
+</div>
+<div class="text-xs text-white/50 space-y-1">
+<div>✓ Content repurposing</div>
+<div>✓ B2B focused</div>
+<div class="text-rose-400">✗ Enterprise only</div>
+<div class="text-rose-400">✗ No AI images</div>
+<div class="text-rose-400">✗ No carousels</div>
+</div>
+</div>
+
+</div>
+
+<v-click>
+
+<div class="mt-6 p-4 rounded-xl bg-gradient-to-r from-rose-500/20 to-orange-500/20 border border-rose-500/30 text-center">
+<div class="text-lg"><span class="text-rose-400 font-bold">Combined:</span> You'd need <span class="text-white font-bold">$200-400/mo</span> in tools to approximate what LinWheel does for <span class="text-emerald-400 font-bold">$29/mo</span></div>
+</div>
+
+</v-click>
+
+---
+background: linear-gradient(135deg, #0f172a 0%, #3f0f0f 100%)
+---
+
+# <span class="bg-gradient-to-r from-rose-400 to-orange-400 bg-clip-text text-transparent">The Feature Gap</span>
+
+<div class="text-white/60 mb-6">We researched every LinkedIn AI tool. Here's what we found.</div>
+
+<div class="p-4 rounded-2xl bg-white/5 border border-white/10 overflow-hidden">
+
+<table class="w-full text-xs">
 <thead>
-<tr class="border-b border-white/10">
-<th class="text-left p-3"></th>
-<th class="p-3 text-white/60">ChatGPT</th>
-<th class="p-3 text-white/60">Jasper</th>
-<th class="p-3 text-white/60">Copy.ai</th>
-<th class="p-3 text-indigo-400 font-bold">LinWheel</th>
+<tr class="border-b border-white/20">
+<th class="text-left p-2 text-white/60">Feature</th>
+<th class="p-2 text-center text-white/40">Taplio<br/><span class="text-rose-300">$65</span></th>
+<th class="p-2 text-center text-white/40">Supergrow<br/><span class="text-rose-300">$39</span></th>
+<th class="p-2 text-center text-white/40">Postwise<br/><span class="text-rose-300">$59</span></th>
+<th class="p-2 text-center text-white/40">Jasper<br/><span class="text-rose-300">$49</span></th>
+<th class="p-2 text-center text-white/40">Hootsuite<br/><span class="text-rose-300">$99</span></th>
+<th class="p-2 text-center bg-gradient-to-r from-indigo-500/20 to-purple-500/20 text-indigo-300 font-bold">LinWheel<br/><span class="text-emerald-400">$29</span></th>
 </tr>
 </thead>
 <tbody>
 <tr class="border-b border-white/5">
-<td class="p-3 text-white/80">LinkedIn-specific</td>
-<td class="p-3 text-center text-rose-400">✗</td>
-<td class="p-3 text-center text-amber-400">~</td>
-<td class="p-3 text-center text-amber-400">~</td>
-<td class="p-3 text-center text-emerald-400 font-bold">✓</td>
+<td class="p-2 text-white/80 font-medium">Multi-angle (7 perspectives)</td>
+<td class="p-2 text-center text-rose-400">✗</td>
+<td class="p-2 text-center text-rose-400">✗</td>
+<td class="p-2 text-center text-rose-400">✗</td>
+<td class="p-2 text-center text-rose-400">✗</td>
+<td class="p-2 text-center text-rose-400">✗</td>
+<td class="p-2 text-center text-emerald-400 font-bold bg-emerald-500/10">✓ ONLY</td>
 </tr>
 <tr class="border-b border-white/5">
-<td class="p-3 text-white/80">Multi-angle output</td>
-<td class="p-3 text-center text-rose-400">✗</td>
-<td class="p-3 text-center text-rose-400">✗</td>
-<td class="p-3 text-center text-rose-400">✗</td>
-<td class="p-3 text-center text-emerald-400 font-bold">7 angles</td>
+<td class="p-2 text-white/80 font-medium">AI image generation per post</td>
+<td class="p-2 text-center text-rose-400">✗</td>
+<td class="p-2 text-center text-rose-400">✗</td>
+<td class="p-2 text-center text-rose-400">✗</td>
+<td class="p-2 text-center text-rose-400">✗</td>
+<td class="p-2 text-center text-rose-400">✗</td>
+<td class="p-2 text-center text-emerald-400 font-bold bg-emerald-500/10">✓ ONLY</td>
 </tr>
 <tr class="border-b border-white/5">
-<td class="p-3 text-white/80">Voice matching</td>
-<td class="p-3 text-center text-rose-400">✗</td>
-<td class="p-3 text-center text-amber-400">Weak</td>
-<td class="p-3 text-center text-amber-400">Weak</td>
-<td class="p-3 text-center text-emerald-400 font-bold">✓</td>
+<td class="p-2 text-white/80 font-medium">Article + post pipeline</td>
+<td class="p-2 text-center text-rose-400">✗</td>
+<td class="p-2 text-center text-rose-400">✗</td>
+<td class="p-2 text-center text-rose-400">✗</td>
+<td class="p-2 text-center text-rose-400">✗</td>
+<td class="p-2 text-center text-rose-400">✗</td>
+<td class="p-2 text-center text-emerald-400 font-bold bg-emerald-500/10">✓ ONLY</td>
 </tr>
 <tr class="border-b border-white/5">
-<td class="p-3 text-white/80">AI images included</td>
-<td class="p-3 text-center text-rose-400">✗</td>
-<td class="p-3 text-center text-rose-400">✗</td>
-<td class="p-3 text-center text-rose-400">✗</td>
-<td class="p-3 text-center text-emerald-400 font-bold">✓</td>
+<td class="p-2 text-white/80 font-medium">Deep voice profiles</td>
+<td class="p-2 text-center text-amber-400">~</td>
+<td class="p-2 text-center text-amber-400">~</td>
+<td class="p-2 text-center text-amber-400">~</td>
+<td class="p-2 text-center text-emerald-400">✓</td>
+<td class="p-2 text-center text-rose-400">✗</td>
+<td class="p-2 text-center text-emerald-400 font-bold bg-emerald-500/10">✓✓</td>
+</tr>
+<tr class="border-b border-white/5">
+<td class="p-2 text-white/80 font-medium">Carousel generation</td>
+<td class="p-2 text-center text-emerald-400">✓</td>
+<td class="p-2 text-center text-emerald-400">✓</td>
+<td class="p-2 text-center text-rose-400">✗</td>
+<td class="p-2 text-center text-rose-400">✗</td>
+<td class="p-2 text-center text-rose-400">✗</td>
+<td class="p-2 text-center text-emerald-400 font-bold bg-emerald-500/10">✓</td>
 </tr>
 <tr>
-<td class="p-3 text-white/80">Podcast → posts</td>
-<td class="p-3 text-center text-rose-400">✗</td>
-<td class="p-3 text-center text-rose-400">✗</td>
-<td class="p-3 text-center text-rose-400">✗</td>
-<td class="p-3 text-center text-emerald-400 font-bold">✓</td>
+<td class="p-2 text-white/80 font-medium">LinkedIn-exclusive</td>
+<td class="p-2 text-center text-emerald-400">✓</td>
+<td class="p-2 text-center text-emerald-400">✓</td>
+<td class="p-2 text-center text-rose-400">✗</td>
+<td class="p-2 text-center text-rose-400">✗</td>
+<td class="p-2 text-center text-rose-400">✗</td>
+<td class="p-2 text-center text-emerald-400 font-bold bg-emerald-500/10">✓</td>
 </tr>
 </tbody>
 </table>
@@ -840,8 +960,134 @@ background: linear-gradient(135deg, #0f172a 0%, #064e3b 100%)
 
 <v-click>
 
-<div class="mt-8 text-center text-xl">
-<span class="bg-gradient-to-r from-violet-400 to-purple-400 bg-clip-text text-transparent font-bold">We're not "AI writing." We're a LinkedIn content factory.</span>
+<div class="mt-4 grid grid-cols-3 gap-4">
+
+<div class="p-3 rounded-xl bg-gradient-to-br from-indigo-500/20 to-purple-500/20 border border-indigo-500/30 text-center">
+<div class="text-2xl font-bold text-indigo-400">3</div>
+<div class="text-xs text-white/60">Features ONLY LinWheel has</div>
+</div>
+
+<div class="p-3 rounded-xl bg-gradient-to-br from-emerald-500/20 to-teal-500/20 border border-emerald-500/30 text-center">
+<div class="text-2xl font-bold text-emerald-400">55%</div>
+<div class="text-xs text-white/60">Cheaper than nearest rival</div>
+</div>
+
+<div class="p-3 rounded-xl bg-gradient-to-br from-rose-500/20 to-orange-500/20 border border-rose-500/30 text-center">
+<div class="text-2xl font-bold text-rose-400">0</div>
+<div class="text-xs text-white/60">Competitors with our full stack</div>
+</div>
+
+</div>
+
+</v-click>
+
+---
+background: linear-gradient(135deg, #0f172a 0%, #3f0f0f 100%)
+---
+
+# <span class="bg-gradient-to-r from-emerald-400 to-teal-400 bg-clip-text text-transparent">Why We Win</span>
+
+<div class="grid grid-cols-2 gap-8 mt-8">
+
+<div>
+
+<div v-click class="p-5 rounded-xl bg-gradient-to-br from-indigo-500/20 to-purple-500/20 border border-indigo-500/40 mb-4">
+<div class="flex items-center gap-3 mb-2">
+<div class="text-3xl">🎯</div>
+<div class="font-bold text-lg text-indigo-300">Multi-Angle = Moat</div>
+</div>
+<div class="text-sm text-white/70">7 unique perspectives from 1 source. Competitors do <span class="text-rose-400">format changes</span> (blog→post). We do <span class="text-emerald-400">perspective multiplication</span>.</div>
+</div>
+
+<div v-click class="p-5 rounded-xl bg-gradient-to-br from-pink-500/20 to-rose-500/20 border border-pink-500/40 mb-4">
+<div class="flex items-center gap-3 mb-2">
+<div class="text-3xl">🖼️</div>
+<div class="font-bold text-lg text-pink-300">AI Images = Unique</div>
+</div>
+<div class="text-sm text-white/70">Only ContentStudio has <span class="text-amber-400">limited</span> image AI. LinWheel generates <span class="text-emerald-400">custom images per post</span>. No one else does this.</div>
+</div>
+
+<div v-click class="p-5 rounded-xl bg-gradient-to-br from-emerald-500/20 to-teal-500/20 border border-emerald-500/40">
+<div class="flex items-center gap-3 mb-2">
+<div class="text-3xl">💰</div>
+<div class="font-bold text-lg text-emerald-300">Price = Advantage</div>
+</div>
+<div class="text-sm text-white/70">$29/mo vs $65-995/mo competitors. Same features, <span class="text-emerald-400">55-97% cheaper</span>. Unit economics work at scale.</div>
+</div>
+
+</div>
+
+<div v-click>
+
+<div class="p-6 rounded-2xl bg-gradient-to-br from-slate-800/50 to-slate-900/50 border border-slate-700/50 h-full">
+
+<div class="text-sm text-white/40 mb-4">Common Competitor Complaints (from reviews)</div>
+
+<div class="space-y-3">
+
+<div class="p-3 rounded-lg bg-rose-500/10 border border-rose-500/20">
+<div class="text-xs text-rose-400 mb-1">#1 Complaint</div>
+<div class="text-sm italic text-white/80">"AI content sounds generic and doesn't capture my voice"</div>
+<div class="text-xs text-emerald-400 mt-2">→ LinWheel: Deep voice profiles</div>
+</div>
+
+<div class="p-3 rounded-lg bg-rose-500/10 border border-rose-500/20">
+<div class="text-xs text-rose-400 mb-1">#2 Complaint</div>
+<div class="text-sm italic text-white/80">"No visual content—I still need Canva"</div>
+<div class="text-xs text-emerald-400 mt-2">→ LinWheel: AI images included</div>
+</div>
+
+<div class="p-3 rounded-lg bg-rose-500/10 border border-rose-500/20">
+<div class="text-xs text-rose-400 mb-1">#3 Complaint</div>
+<div class="text-sm italic text-white/80">"Too expensive for what you get"</div>
+<div class="text-xs text-emerald-400 mt-2">→ LinWheel: $29/mo unlimited</div>
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+---
+background: linear-gradient(135deg, #0f172a 0%, #064e3b 100%)
+---
+
+# <span class="bg-gradient-to-r from-violet-400 to-purple-400 bg-clip-text text-transparent">The Bottom Line</span>
+
+<v-click>
+
+<div class="mt-12 text-center">
+
+<div class="inline-block p-8 rounded-3xl bg-gradient-to-br from-indigo-500/20 via-purple-500/20 to-pink-500/20 border border-indigo-500/30">
+
+<div class="text-4xl font-bold bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400 bg-clip-text text-transparent mb-4">
+"We're not AI writing.<br/>We're a LinkedIn content factory."
+</div>
+
+<div class="grid grid-cols-3 gap-8 mt-8">
+
+<div class="text-center">
+<div class="text-5xl font-bold text-indigo-400">14</div>
+<div class="text-sm text-white/60">competitors analyzed</div>
+</div>
+
+<div class="text-center">
+<div class="text-5xl font-bold text-purple-400">0</div>
+<div class="text-sm text-white/60">with our feature stack</div>
+</div>
+
+<div class="text-center">
+<div class="text-5xl font-bold text-pink-400">$29</div>
+<div class="text-sm text-white/60">vs $65-995/mo</div>
+</div>
+
+</div>
+
+</div>
+
 </div>
 
 </v-click>
