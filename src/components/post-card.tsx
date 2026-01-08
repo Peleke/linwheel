@@ -8,6 +8,7 @@ import { CopyButton } from "@/components/copy-button";
 import { ApprovalButtons } from "@/components/approval-buttons";
 import { ImagePreview } from "./image-preview";
 import { RegeneratePromptButton } from "./regenerate-prompt-button";
+import { PublishLinkedInButton } from "./publish-linkedin-button";
 
 interface PostWithIntent {
   id: string;
@@ -16,6 +17,7 @@ interface PostWithIntent {
   postType: string;
   versionNumber: number | null;
   approved: boolean | null;
+  linkedinPostUrn?: string | null;
   imageIntent?: {
     id: string;
     headlineText: string;
@@ -260,7 +262,14 @@ export function PostCard({ post, runId }: PostCardProps) {
             hasImage={hasImage}
             imageUrl={post.imageIntent?.generatedImageUrl}
           />
-          <CopyButton text={post.fullText} />
+          <div className="flex items-center gap-2">
+            <PublishLinkedInButton
+              postId={post.id}
+              isApproved={post.approved ?? false}
+              linkedinPostUrn={post.linkedinPostUrn}
+            />
+            <CopyButton text={post.fullText} />
+          </div>
         </div>
       </motion.div>
     </motion.div>
