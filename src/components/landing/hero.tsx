@@ -85,12 +85,14 @@ export function Hero() {
         {/* Subheadline */}
         <p className="animate-fade-up-delay-2 text-lg sm:text-xl md:text-2xl text-neutral-400 mb-4 max-w-3xl mx-auto leading-relaxed">
           Paste any content. Get <span className="text-white font-medium">90+ ready-to-post</span> pieces{" "}
-          in <span className="text-white font-medium">6 distinct voices</span>—with <span className="text-emerald-400 font-medium">AI cover images</span>.
+          in <span className="text-white font-medium">6 distinct voices</span>—with <span className="text-emerald-400 font-medium">AI cover images</span>{" "}
+          and <span className="text-blue-400 font-medium">direct LinkedIn publishing</span>.
         </p>
 
         {/* Social proof line */}
         <p className="animate-fade-up-delay-2 text-neutral-500 mb-10">
-          One piece of content <strong className="text-white font-semibold">stops the scroll for a month.</strong>
+          One piece of content <strong className="text-white font-semibold">stops the scroll for a month.</strong>{" "}
+          <span className="text-blue-400">Publish without leaving the app.</span>
         </p>
 
         {/* CTAs */}
@@ -116,7 +118,7 @@ export function Hero() {
         </div>
 
         {/* Stats preview */}
-        <div className="animate-fade-up-delay-3 flex flex-wrap justify-center gap-6 md:gap-12 pb-20 md:pb-0">
+        <div className="animate-fade-up-delay-3 flex flex-wrap justify-center gap-6 md:gap-10 pb-20 md:pb-0">
           <div className="text-center">
             <div className="text-3xl md:text-4xl font-bold gradient-text">90+</div>
             <div className="text-sm text-neutral-500">Posts per source</div>
@@ -128,6 +130,10 @@ export function Hero() {
           <div className="text-center">
             <div className="text-3xl md:text-4xl font-bold text-emerald-400">AI</div>
             <div className="text-sm text-neutral-500">Cover images</div>
+          </div>
+          <div className="text-center">
+            <div className="text-3xl md:text-4xl font-bold text-blue-400">1-Click</div>
+            <div className="text-sm text-neutral-500">LinkedIn publish</div>
           </div>
           <div className="text-center">
             <div className="text-3xl md:text-4xl font-bold gradient-text">&lt;60s</div>
