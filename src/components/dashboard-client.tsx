@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -42,11 +42,24 @@ interface DashboardClientProps {
 
 export function DashboardClient({ content }: DashboardClientProps) {
   const router = useRouter();
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [schedulingItem, setSchedulingItem] = useState<string | null>(null);
   const [isScheduling, setIsScheduling] = useState(false);
   const [weekOffset, setWeekOffset] = useState(0);
   const { isSupported, isSubscribed, isLoading: pushLoading, subscribe, unsubscribe } = usePushNotifications();
+
+  // Scroll to today on mount (mobile)
+  useEffect(() => {
+    if (scrollContainerRef.current) {
+      const today = new Date();
+      const dayOfWeek = today.getDay(); // 0 = Sunday, 1 = Monday, etc.
+      // Each card is 85vw wide, scroll to today's position
+      const cardWidth = window.innerWidth * 0.85;
+      const scrollPosition = dayOfWeek * cardWidth;
+      scrollContainerRef.current.scrollTo({ left: scrollPosition, behavior: "instant" });
+    }
+  }, [weekOffset]); // Re-scroll when week changes
 
   // Split content
   const scheduled = content.filter(c => c.scheduledAt);
@@ -227,7 +240,7 @@ export function DashboardClient({ content }: DashboardClientProps) {
         <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800 overflow-hidden order-1">
           {/* Mobile: Horizontal scrollable week */}
           <div className="lg:hidden">
-            <div className="flex overflow-x-auto snap-x snap-mandatory scrollbar-hide">
+            <div ref={scrollContainerRef} className="flex overflow-x-auto snap-x snap-mandatory scrollbar-hide">
               {weekDates.map((date, i) => {
                 const dateKey = getLocalDateKey(date);
                 const dayContent = contentByDate[dateKey] || [];
