@@ -36,6 +36,7 @@ type PostWithIntent = {
   versionNumber: number | null;
   approved: boolean | null;
   scheduledAt?: Date | null;
+  linkedinPostUrn?: string | null;
   imageIntent?: {
     id: string;
     headlineText: string;
@@ -111,6 +112,7 @@ export default async function ResultsDashboardPage({ params }: Props) {
         versionNumber: post.versionNumber,
         approved: post.approved,
         scheduledAt: post.scheduledAt,
+        linkedinPostUrn: post.linkedinPostUrn,
         imageIntent: intent ? {
           id: intent.id,
           headlineText: intent.headlineText,
