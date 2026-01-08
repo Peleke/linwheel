@@ -273,7 +273,10 @@ export function ArticleCard({
                           exit={{ height: 0, opacity: 0 }}
                           className="overflow-hidden"
                         >
-                          <div className="mt-2 p-3 bg-zinc-50 dark:bg-zinc-800/50 rounded-lg text-xs font-mono text-zinc-600 dark:text-zinc-400">
+                          <div
+                            data-testid="prompt-text"
+                            className="mt-2 p-3 bg-zinc-50 dark:bg-zinc-800/50 rounded-lg text-xs font-mono text-zinc-600 dark:text-zinc-400 overflow-hidden"
+                          >
                             <p className="break-words">
                               <span className="text-emerald-600 dark:text-emerald-400">+</span> {article.imageIntent.prompt}
                             </p>
