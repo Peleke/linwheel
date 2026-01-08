@@ -57,6 +57,16 @@ export function AppHeader() {
           {/* Navigation */}
           <nav className="flex items-center gap-1">
             <Link
+              href="/dashboard"
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                isActive("/dashboard")
+                  ? "text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-500/10"
+                  : "text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:text-white dark:hover:bg-zinc-800"
+              }`}
+            >
+              Dashboard
+            </Link>
+            <Link
               href="/generate"
               className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                 isActive("/generate")

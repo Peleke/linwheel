@@ -74,7 +74,7 @@ export function Header() {
           </Link>
           {user ? (
             <Link
-              href="/generate"
+              href="/dashboard"
               className="glow-button px-5 py-2.5 rounded-lg text-sm font-medium text-white"
             >
               Dashboard
@@ -99,7 +99,7 @@ export function Header() {
 
         {/* Mobile menu button */}
         <Link
-          href={user ? "/generate" : "/login"}
+          href={user ? "/dashboard" : "/login"}
           className="md:hidden glow-button px-4 py-2 rounded-lg text-sm font-medium text-white"
         >
           {user ? "Dashboard" : "Get Started"}
