@@ -223,8 +223,8 @@ export function DashboardClient({ content }: DashboardClientProps) {
       {/* Mobile: Stack vertically, show horizontal scroll for days */}
       {/* Desktop: Side-by-side grid layout */}
       <div className="flex flex-col lg:grid lg:grid-cols-[1fr_320px] gap-6">
-        {/* Calendar */}
-        <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800 overflow-hidden order-2 lg:order-1">
+        {/* Calendar - shows first on mobile */}
+        <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800 overflow-hidden order-1">
           {/* Mobile: Horizontal scrollable week */}
           <div className="lg:hidden">
             <div className="flex overflow-x-auto snap-x snap-mandatory scrollbar-hide">
@@ -427,8 +427,8 @@ export function DashboardClient({ content }: DashboardClientProps) {
           </div>
         </div>
 
-        {/* Unscheduled queue - shows first on mobile */}
-        <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800 overflow-hidden order-1 lg:order-2">
+        {/* Unscheduled queue - shows second on mobile */}
+        <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800 overflow-hidden order-2">
           <div className="p-4 border-b border-zinc-200 dark:border-zinc-800">
             <h2 className="font-semibold text-zinc-900 dark:text-zinc-100">
               Ready to Schedule
