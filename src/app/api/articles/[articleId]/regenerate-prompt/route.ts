@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
 import { articles, articleImageIntents } from "@/db/schema";
 import { eq } from "drizzle-orm";
-import { generateArticleImageIntent } from "@/lib/generate";
+import { generateArticleImageIntent, regenerateArticleImageIntent } from "@/lib/generate";
 import { randomUUID } from "crypto";
 
 interface RouteParams {
@@ -12,11 +12,25 @@ interface RouteParams {
 /**
  * POST /api/articles/[articleId]/regenerate-prompt
  *
- * Regenerates the image intent prompt for an article using the LLM
+ * Regenerates the image intent prompt for an article using the LLM.
+ * Optionally accepts feedback to guide the regeneration.
+ *
+ * Body: { feedback?: string }
+ * - If feedback is provided and an intent exists, regenerates WITH feedback
+ * - If no feedback, generates fresh from article content
  */
 export async function POST(request: NextRequest, { params }: RouteParams) {
   try {
     const { articleId } = await params;
+
+    // Parse optional feedback from request body
+    let feedback: string | undefined;
+    try {
+      const body = await request.json();
+      feedback = body.feedback;
+    } catch {
+      // No body or invalid JSON, that's fine
+    }
 
     // Fetch the article
     const article = await db.query.articles.findFirst({
@@ -35,19 +49,41 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       ? JSON.parse(article.sections)
       : article.sections || [];
 
-    // Generate new image intent
-    console.log(`[API] Regenerating prompt for article ${articleId}`);
-    const newIntent = await generateArticleImageIntent({
-      title: article.title,
-      subtitle: article.subtitle,
-      introduction: article.introduction,
-      sections,
-    });
-
     // Check if article already has an image intent
     const existingIntent = await db.query.articleImageIntents.findFirst({
       where: eq(articleImageIntents.articleId, articleId),
     });
+
+    // Generate or regenerate image intent
+    let newIntent;
+    if (feedback && existingIntent) {
+      // Regenerate with feedback using existing intent as base
+      console.log(`[API] Regenerating prompt for article ${articleId} with feedback: "${feedback}"`);
+      newIntent = await regenerateArticleImageIntent(
+        {
+          title: article.title,
+          subtitle: article.subtitle,
+          introduction: article.introduction,
+          sections,
+        },
+        {
+          prompt: existingIntent.prompt,
+          negativePrompt: existingIntent.negativePrompt,
+          headlineText: existingIntent.headlineText,
+          stylePreset: existingIntent.stylePreset,
+        },
+        feedback
+      );
+    } else {
+      // Fresh generation
+      console.log(`[API] Generating fresh prompt for article ${articleId}`);
+      newIntent = await generateArticleImageIntent({
+        title: article.title,
+        subtitle: article.subtitle,
+        introduction: article.introduction,
+        sections,
+      });
+    }
 
     if (existingIntent) {
       // Update existing intent
