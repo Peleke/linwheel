@@ -1,10 +1,30 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import { useImagePreferences, type ImagePreferences } from "@/hooks/use-image-preferences";
 import { useLLMPreferences, type LLMPreferences, type LLMProvider } from "@/hooks/use-llm-preferences";
 import { AppHeader } from "@/components/app-header";
 import { SubscriptionStatus } from "@/components/subscription/subscription-status";
+
+// Common timezones for scheduling content
+const COMMON_TIMEZONES = [
+  { value: "America/New_York", label: "Eastern Time (ET)" },
+  { value: "America/Chicago", label: "Central Time (CT)" },
+  { value: "America/Denver", label: "Mountain Time (MT)" },
+  { value: "America/Los_Angeles", label: "Pacific Time (PT)" },
+  { value: "America/Phoenix", label: "Arizona (AZ)" },
+  { value: "America/Anchorage", label: "Alaska (AK)" },
+  { value: "Pacific/Honolulu", label: "Hawaii (HI)" },
+  { value: "Europe/London", label: "London (GMT/BST)" },
+  { value: "Europe/Paris", label: "Paris (CET/CEST)" },
+  { value: "Europe/Berlin", label: "Berlin (CET/CEST)" },
+  { value: "Asia/Tokyo", label: "Tokyo (JST)" },
+  { value: "Asia/Singapore", label: "Singapore (SGT)" },
+  { value: "Asia/Dubai", label: "Dubai (GST)" },
+  { value: "Asia/Kolkata", label: "India (IST)" },
+  { value: "Australia/Sydney", label: "Sydney (AEST/AEDT)" },
+  { value: "Pacific/Auckland", label: "Auckland (NZST/NZDT)" },
+];
 
 interface LLMProviderStatus {
   claude: boolean;
@@ -70,6 +90,42 @@ export default function SettingsPage() {
   const [newProfileName, setNewProfileName] = useState("");
   const [newProfileDescription, setNewProfileDescription] = useState("");
   const [newProfileSamples, setNewProfileSamples] = useState<string[]>([""]);
+
+  // Timezone state (stored in localStorage)
+  const [userTimezone, setUserTimezone] = useState<string>("");
+
+  // Detect browser timezone on mount
+  useEffect(() => {
+    const stored = localStorage.getItem("linwheel:timezone");
+    if (stored) {
+      setUserTimezone(stored);
+    } else {
+      // Default to browser timezone
+      const browserTz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      setUserTimezone(browserTz);
+      localStorage.setItem("linwheel:timezone", browserTz);
+    }
+  }, []);
+
+  const handleTimezoneChange = (tz: string) => {
+    setUserTimezone(tz);
+    localStorage.setItem("linwheel:timezone", tz);
+  };
+
+  // Current time in selected timezone
+  const currentTimeInTz = useMemo(() => {
+    if (!userTimezone) return "";
+    try {
+      return new Date().toLocaleTimeString("en-US", {
+        timeZone: userTimezone,
+        hour: "numeric",
+        minute: "2-digit",
+        hour12: true,
+      });
+    } catch {
+      return "";
+    }
+  }, [userTimezone]);
 
   // Fetch voice profiles
   const fetchVoiceProfiles = useCallback(async () => {
@@ -316,6 +372,46 @@ export default function SettingsPage() {
                 description="Best for text"
               />
             </div>
+          </div>
+        </section>
+
+        {/* Scheduling & Notifications Section */}
+        <section className="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 p-6 mb-6">
+          <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100 mb-4">Scheduling</h2>
+          <p className="text-sm text-zinc-500 mb-4">
+            Set your timezone for content scheduling and reminders.
+          </p>
+
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
+              Your Timezone
+            </label>
+            <select
+              value={userTimezone}
+              onChange={(e) => handleTimezoneChange(e.target.value)}
+              className="w-full px-3 py-2.5 rounded-lg border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 text-sm text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-colors"
+            >
+              {COMMON_TIMEZONES.map((tz) => (
+                <option key={tz.value} value={tz.value}>
+                  {tz.label}
+                </option>
+              ))}
+              {/* Include user's browser timezone if not in list */}
+              {!COMMON_TIMEZONES.find(tz => tz.value === userTimezone) && userTimezone && (
+                <option value={userTimezone}>{userTimezone}</option>
+              )}
+            </select>
+            {currentTimeInTz && (
+              <p className="text-xs text-zinc-500 mt-2">
+                Current time in this timezone: <span className="font-medium text-zinc-700 dark:text-zinc-300">{currentTimeInTz}</span>
+              </p>
+            )}
+          </div>
+
+          <div className="p-3 bg-zinc-50 dark:bg-zinc-800/50 rounded-lg">
+            <p className="text-xs text-zinc-500">
+              <span className="font-medium text-zinc-600 dark:text-zinc-400">Tip:</span> Your scheduled content reminders will be sent based on this timezone. Make sure it matches where you'll be posting from.
+            </p>
           </div>
         </section>
 

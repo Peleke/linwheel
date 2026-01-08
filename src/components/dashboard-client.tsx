@@ -1,10 +1,27 @@
 "use client";
 
-import { useState, useMemo } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { useState, useMemo, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePushNotifications } from "@/hooks/use-push-notifications";
+
+// Get local date key (YYYY-MM-DD) respecting user's timezone
+function getLocalDateKey(date: Date): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+// Parse ISO string to local Date
+function parseToLocalDate(isoString: string): Date {
+  return new Date(isoString);
+}
+
+// Get user's timezone
+function getUserTimezone(): string {
+  return Intl.DateTimeFormat().resolvedOptions().timeZone;
+}
 
 interface ContentItem {
   id: string;
@@ -45,12 +62,14 @@ export function DashboardClient({ content }: DashboardClientProps) {
     });
   }, [weekOffset]);
 
-  // Group scheduled content by date
+  // Group scheduled content by date (using local timezone)
   const contentByDate = useMemo(() => {
     const groups: Record<string, ContentItem[]> = {};
     for (const item of scheduled) {
       if (!item.scheduledAt) continue;
-      const dateKey = item.scheduledAt.split("T")[0];
+      // Parse ISO string and get local date key
+      const localDate = parseToLocalDate(item.scheduledAt);
+      const dateKey = getLocalDateKey(localDate);
       if (!groups[dateKey]) groups[dateKey] = [];
       groups[dateKey].push(item);
     }
@@ -186,7 +205,7 @@ export function DashboardClient({ content }: DashboardClientProps) {
           {/* Week header */}
           <div className="grid grid-cols-7 border-b border-zinc-200 dark:border-zinc-800">
             {weekDates.map((date, i) => {
-              const dateKey = date.toISOString().split("T")[0];
+              const dateKey = getLocalDateKey(date);
               const dayContent = contentByDate[dateKey] || [];
               const dayName = date.toLocaleDateString("en-US", { weekday: "short" });
               const dayNum = date.getDate();
@@ -228,7 +247,7 @@ export function DashboardClient({ content }: DashboardClientProps) {
           {/* Calendar body */}
           <div className="grid grid-cols-7 min-h-[400px]">
             {weekDates.map((date, i) => {
-              const dateKey = date.toISOString().split("T")[0];
+              const dateKey = getLocalDateKey(date);
               const dayContent = contentByDate[dateKey] || [];
               const isSelected = selectedDate === dateKey;
 
