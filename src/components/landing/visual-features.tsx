@@ -5,6 +5,14 @@ import Image from "next/image";
 
 const features = [
   {
+    image: "/promo/feature-linkedin-publish.png",
+    title: "Direct LinkedIn Publishing",
+    description: "Connect your account, approve a post, click Publish. Your content goes live instantly—no copy-paste.",
+    gradient: "from-blue-500/20 to-indigo-500/20",
+    border: "hover:border-blue-500/40",
+    isNew: true,
+  },
+  {
     image: "/promo/feature-ai-cover.png",
     title: "AI Cover Images",
     description: "Every post gets a custom image prompt. Generate scroll-stopping visuals in one click.",
@@ -17,13 +25,6 @@ const features = [
     description: "Turn articles into 5-slide carousels. Perfect for LinkedIn's algorithm-favorite format.",
     gradient: "from-amber-500/20 to-orange-500/20",
     border: "hover:border-amber-500/40",
-  },
-  {
-    image: "/promo/feature-download.png",
-    title: "One-Tap Download",
-    description: "Download any image or carousel for mobile posting. No desktop required.",
-    gradient: "from-blue-500/20 to-cyan-500/20",
-    border: "hover:border-blue-500/40",
   },
   {
     image: "/promo/feature-regenerate.png",
@@ -225,9 +226,16 @@ export function VisualFeatures() {
 
               {/* Card content */}
               <div className="p-6">
-                <h3 className="font-semibold text-lg text-neutral-100 mb-2">
-                  {feature.title}
-                </h3>
+                <div className="flex items-center gap-2 mb-2">
+                  <h3 className="font-semibold text-lg text-neutral-100">
+                    {feature.title}
+                  </h3>
+                  {"isNew" in feature && feature.isNew && (
+                    <span className="px-2 py-0.5 text-xs font-bold rounded-full bg-blue-500 text-white animate-pulse">
+                      NEW
+                    </span>
+                  )}
+                </div>
                 <p className="text-neutral-400 text-sm leading-relaxed">
                   {feature.description}
                 </p>

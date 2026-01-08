@@ -28,21 +28,25 @@ Turn Any Content Into a Month of LinkedIn Posts
 
 <div class="pt-12">
   <span class="px-6 py-3 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 text-lg">
-    ✨ 90+ posts · 7 angles · AI images · 60 seconds
+    ✨ 90+ posts · 7 angles · AI images · Direct LinkedIn publishing · 60 seconds
   </span>
 </div>
 
-<div class="mt-16 flex justify-center gap-8">
+<div class="mt-16 flex justify-center gap-6">
   <div class="text-center">
-    <div class="text-5xl font-bold text-indigo-400">90+</div>
+    <div class="text-4xl font-bold text-indigo-400">90+</div>
     <div class="text-sm text-white/60">posts generated</div>
   </div>
   <div class="text-center">
-    <div class="text-5xl font-bold text-purple-400">7</div>
+    <div class="text-4xl font-bold text-purple-400">7</div>
     <div class="text-sm text-white/60">content angles</div>
   </div>
   <div class="text-center">
-    <div class="text-5xl font-bold text-pink-400">&lt;60s</div>
+    <div class="text-4xl font-bold text-blue-400">1-Click</div>
+    <div class="text-sm text-white/60">LinkedIn publish</div>
+  </div>
+  <div class="text-center">
+    <div class="text-4xl font-bold text-pink-400">&lt;60s</div>
     <div class="text-sm text-white/60">generation time</div>
   </div>
 </div>
@@ -619,6 +623,94 @@ background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%)
 </div><!-- close col-span-2 grid -->
 
 </div><!-- close 3-col grid -->
+
+---
+background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%)
+---
+
+# <span class="bg-gradient-to-r from-blue-400 to-indigo-400 bg-clip-text text-transparent">Direct LinkedIn Publishing</span> <span class="px-3 py-1 text-sm rounded-full bg-blue-500 text-white animate-pulse ml-2">NEW</span>
+
+<div class="text-white/60 mb-6">From approved to published — zero friction, one click</div>
+
+<div class="grid grid-cols-2 gap-8">
+
+<div>
+
+<div class="space-y-4">
+
+<div v-click class="p-4 rounded-xl bg-white/5 border border-white/10 flex items-center gap-4">
+<div class="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-500 flex items-center justify-center text-2xl text-white"><lucide:link class="inline" /></div>
+<div>
+<div class="font-bold">One-Click Connect</div>
+<div class="text-sm text-white/60">OAuth integration with LinkedIn</div>
+</div>
+</div>
+
+<div v-click class="p-4 rounded-xl bg-white/5 border border-white/10 flex items-center gap-4">
+<div class="w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-500 flex items-center justify-center text-2xl text-white"><lucide:check-circle class="inline" /></div>
+<div>
+<div class="font-bold">Approve & Publish</div>
+<div class="text-sm text-white/60">Content goes live instantly</div>
+</div>
+</div>
+
+<div v-click class="p-4 rounded-xl bg-white/5 border border-white/10 flex items-center gap-4">
+<div class="w-12 h-12 rounded-xl bg-gradient-to-br from-violet-500 to-purple-500 flex items-center justify-center text-2xl text-white"><lucide:image class="inline" /></div>
+<div>
+<div class="font-bold">Images Included</div>
+<div class="text-sm text-white/60">AI images publish with your post</div>
+</div>
+</div>
+
+<div v-click class="p-4 rounded-xl bg-white/5 border border-white/10 flex items-center gap-4">
+<div class="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-500 flex items-center justify-center text-2xl text-white"><lucide:shield class="inline" /></div>
+<div>
+<div class="font-bold">Secure Tokens</div>
+<div class="text-sm text-white/60">AES-256-GCM encryption</div>
+</div>
+</div>
+
+</div>
+
+</div>
+
+<div v-click class="relative">
+
+<div class="absolute -inset-4 bg-gradient-to-r from-blue-500/20 via-indigo-500/20 to-violet-500/20 rounded-3xl blur-2xl"></div>
+
+<div class="relative p-6 rounded-2xl bg-slate-900/80 border border-white/10">
+
+<div class="text-center mb-4">
+<div class="text-6xl">🚀</div>
+<div class="text-xl font-bold mt-2">No more copy-paste</div>
+<div class="text-sm text-white/60">The workflow you've always wanted</div>
+</div>
+
+<div class="space-y-3 text-sm">
+<div class="flex items-center gap-3 p-2 rounded-lg bg-white/5">
+<span class="text-blue-400">1.</span>
+<span>Connect LinkedIn in Settings</span>
+</div>
+<div class="flex items-center gap-3 p-2 rounded-lg bg-white/5">
+<span class="text-indigo-400">2.</span>
+<span>Approve your best posts</span>
+</div>
+<div class="flex items-center gap-3 p-2 rounded-lg bg-white/5">
+<span class="text-violet-400">3.</span>
+<span>Click "Publish" → Done!</span>
+</div>
+</div>
+
+<div class="mt-4 p-3 rounded-xl bg-gradient-to-r from-blue-500/20 to-indigo-500/20 border border-blue-500/30 text-center">
+<div class="text-xs text-white/60">Coming soon:</div>
+<div class="font-bold text-blue-400">Scheduled Publishing</div>
+</div>
+
+</div>
+
+</div>
+
+</div>
 
 ---
 layout: center
