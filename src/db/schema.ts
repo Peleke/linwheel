@@ -184,6 +184,54 @@ export const carouselSlideVersions = sqliteTable("carousel_slide_versions", {
   createdAt: integer("created_at", { mode: "timestamp" }).$defaultFn(() => new Date()),
 });
 
+// Text positioning options for image overlays
+export const TEXT_POSITIONS = ["top", "center", "bottom", "top-left", "top-right", "bottom-left", "bottom-right"] as const;
+export type TextPosition = typeof TEXT_POSITIONS[number];
+
+// Post image versions table - tracks version history for post cover images
+export const postImageVersions = sqliteTable("post_image_versions", {
+  id: text("id").primaryKey(),
+  imageIntentId: text("image_intent_id").notNull().references(() => imageIntents.id, { onDelete: "cascade" }),
+  versionNumber: integer("version_number").notNull(), // 1, 2, 3...
+  // Content
+  prompt: text("prompt").notNull(),
+  headlineText: text("headline_text"),
+  imageUrl: text("image_url"),
+  // Text overlay options
+  includeText: integer("include_text", { mode: "boolean" }).default(true),
+  textPosition: text("text_position", { enum: TEXT_POSITIONS }).default("center"),
+  // Metadata
+  isActive: integer("is_active", { mode: "boolean" }).default(false),
+  generatedAt: integer("generated_at", { mode: "timestamp" }),
+  generationProvider: text("generation_provider", {
+    enum: ["openai", "comfyui", "fal"],
+  }),
+  generationError: text("generation_error"),
+  createdAt: integer("created_at", { mode: "timestamp" }).$defaultFn(() => new Date()),
+});
+
+// Article cover image versions table - tracks version history for article cover images
+export const articleCoverVersions = sqliteTable("article_cover_versions", {
+  id: text("id").primaryKey(),
+  articleImageIntentId: text("article_image_intent_id").notNull().references(() => articleImageIntents.id, { onDelete: "cascade" }),
+  versionNumber: integer("version_number").notNull(), // 1, 2, 3...
+  // Content
+  prompt: text("prompt").notNull(),
+  headlineText: text("headline_text"),
+  imageUrl: text("image_url"),
+  // Text overlay options
+  includeText: integer("include_text", { mode: "boolean" }).default(true),
+  textPosition: text("text_position", { enum: TEXT_POSITIONS }).default("center"),
+  // Metadata
+  isActive: integer("is_active", { mode: "boolean" }).default(false),
+  generatedAt: integer("generated_at", { mode: "timestamp" }),
+  generationProvider: text("generation_provider", {
+    enum: ["openai", "comfyui", "fal"],
+  }),
+  generationError: text("generation_error"),
+  createdAt: integer("created_at", { mode: "timestamp" }).$defaultFn(() => new Date()),
+});
+
 // Voice profiles table - for style matching
 export const voiceProfiles = sqliteTable("voice_profiles", {
   id: text("id").primaryKey(),
@@ -216,3 +264,7 @@ export type ArticleCarouselIntent = typeof articleCarouselIntents.$inferSelect;
 export type NewArticleCarouselIntent = typeof articleCarouselIntents.$inferInsert;
 export type CarouselSlideVersion = typeof carouselSlideVersions.$inferSelect;
 export type NewCarouselSlideVersion = typeof carouselSlideVersions.$inferInsert;
+export type PostImageVersion = typeof postImageVersions.$inferSelect;
+export type NewPostImageVersion = typeof postImageVersions.$inferInsert;
+export type ArticleCoverVersion = typeof articleCoverVersions.$inferSelect;
+export type NewArticleCoverVersion = typeof articleCoverVersions.$inferInsert;

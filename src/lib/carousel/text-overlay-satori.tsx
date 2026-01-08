@@ -114,10 +114,13 @@ interface CarouselOverlayOptions {
   size?: number;
 }
 
+type TextPosition = "top" | "center" | "bottom" | "top-left" | "top-right" | "bottom-left" | "bottom-right";
+
 interface CoverOverlayOptions {
   headline: string;
   width?: number;
   height?: number;
+  position?: TextPosition;
 }
 
 /**
@@ -250,11 +253,65 @@ export async function renderCarouselTextOverlay(
 
 /**
  * Generate text overlay for cover images (1200x628 landscape)
+ * Supports different text positions
  */
 export async function renderCoverTextOverlay(
   options: CoverOverlayOptions
 ): Promise<Buffer> {
-  const { headline, width = 1200, height = 628 } = options;
+  const { headline, width = 1200, height = 628, position = "bottom" } = options;
+
+  // Map positions to flexbox alignment and gradient direction
+  const positionStyles: Record<TextPosition, {
+    justifyContent: string;
+    alignItems: string;
+    textAlign: string;
+    gradient: string;
+  }> = {
+    top: {
+      justifyContent: "flex-start",
+      alignItems: "center",
+      textAlign: "center",
+      gradient: "linear-gradient(to bottom, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.3) 50%, transparent 100%)",
+    },
+    center: {
+      justifyContent: "center",
+      alignItems: "center",
+      textAlign: "center",
+      gradient: "radial-gradient(ellipse at center, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0.3) 50%, transparent 100%)",
+    },
+    bottom: {
+      justifyContent: "flex-end",
+      alignItems: "center",
+      textAlign: "center",
+      gradient: "linear-gradient(to top, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.3) 50%, transparent 100%)",
+    },
+    "top-left": {
+      justifyContent: "flex-start",
+      alignItems: "flex-start",
+      textAlign: "left",
+      gradient: "linear-gradient(to bottom right, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.3) 40%, transparent 100%)",
+    },
+    "top-right": {
+      justifyContent: "flex-start",
+      alignItems: "flex-end",
+      textAlign: "right",
+      gradient: "linear-gradient(to bottom left, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.3) 40%, transparent 100%)",
+    },
+    "bottom-left": {
+      justifyContent: "flex-end",
+      alignItems: "flex-start",
+      textAlign: "left",
+      gradient: "linear-gradient(to top right, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.3) 40%, transparent 100%)",
+    },
+    "bottom-right": {
+      justifyContent: "flex-end",
+      alignItems: "flex-end",
+      textAlign: "right",
+      gradient: "linear-gradient(to top left, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.3) 40%, transparent 100%)",
+    },
+  };
+
+  const styles = positionStyles[position];
 
   const element = (
     <div
@@ -263,14 +320,16 @@ export async function renderCoverTextOverlay(
         height,
         display: "flex",
         flexDirection: "column",
-        justifyContent: "flex-end",
+        justifyContent: styles.justifyContent,
+        alignItems: styles.alignItems,
         padding: 60,
-        background: "linear-gradient(to top, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.3) 50%, transparent 100%)",
+        background: styles.gradient,
         fontFamily: "Inter",
         fontSize: 48,
         fontWeight: 700,
         color: "white",
         lineHeight: 1.3,
+        textAlign: styles.textAlign as "left" | "center" | "right",
       }}
     >
       {headline}
@@ -341,7 +400,7 @@ export async function overlayCoverTextFromUrl(
   imageUrl: string,
   options: CoverOverlayOptions
 ): Promise<Buffer> {
-  console.log(`[TextOverlay] Fetching cover image from: ${imageUrl.substring(0, 80)}...`);
+  console.log(`[TextOverlay] Fetching cover image from: ${imageUrl.substring(0, 80)}... (position: ${options.position || "bottom"})`);
 
   const response = await fetch(imageUrl);
   if (!response.ok) {
@@ -353,6 +412,9 @@ export async function overlayCoverTextFromUrl(
 
   return overlayCoverText(imageBuffer, options);
 }
+
+// Export the TextPosition type for use in other modules
+export type { TextPosition };
 
 /**
  * Generate a gradient background slide with headline (fallback if T2I fails)
