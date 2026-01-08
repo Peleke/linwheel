@@ -126,122 +126,191 @@ function ContentCard({
   };
 
   return (
-    <div className="flex-shrink-0 snap-start w-[280px] sm:w-[320px]">
-      <div className="relative rounded-xl overflow-hidden bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-sm group">
-        {/* Image or gradient background */}
-        <div className="relative aspect-[16/9] overflow-hidden">
-          {item.imageUrl ? (
-            <Image
-              src={item.imageUrl}
-              alt={item.label}
-              fill
-              className="object-cover transition-transform group-hover:scale-105"
-              sizes="320px"
-            />
-          ) : (
-            <div className={`absolute inset-0 ${
-              item.type === "post"
-                ? "bg-gradient-to-br from-blue-500 to-indigo-600"
-                : "bg-gradient-to-br from-sky-500 to-cyan-600"
-            }`} />
-          )}
+    <>
+      <div className="flex-shrink-0 snap-start w-[280px] sm:w-[320px]">
+        <div className="relative rounded-xl overflow-hidden bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-sm group">
+          {/* Image or gradient background */}
+          <div className="relative aspect-[16/9] overflow-hidden">
+            {item.imageUrl ? (
+              <Image
+                src={item.imageUrl}
+                alt={item.label}
+                fill
+                className="object-cover transition-transform group-hover:scale-105"
+                sizes="320px"
+              />
+            ) : (
+              <div className={`absolute inset-0 ${
+                item.type === "post"
+                  ? "bg-gradient-to-br from-blue-500 to-indigo-600"
+                  : "bg-gradient-to-br from-sky-500 to-cyan-600"
+              }`} />
+            )}
 
-          {/* Overlay gradient */}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+            {/* Overlay gradient */}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
 
-          {/* Type badge */}
-          <div className="absolute top-2 left-2">
-            <span className={`px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide rounded-full ${
-              item.type === "post"
-                ? "bg-blue-500/90 text-white"
-                : "bg-sky-500/90 text-white"
-            }`}>
-              {item.type}
-            </span>
-          </div>
-
-          {/* Scheduled badge */}
-          {item.scheduledAt && (
-            <div className="absolute top-2 right-2">
-              <span className="px-2 py-0.5 text-[10px] font-medium bg-emerald-500 text-white rounded-full flex items-center gap-1">
-                <svg className="w-2.5 h-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                {formatShortDate(item.scheduledAt)}
+            {/* Type badge */}
+            <div className="absolute top-2 left-2">
+              <span className={`px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide rounded-full ${
+                item.type === "post"
+                  ? "bg-blue-500/90 text-white"
+                  : "bg-sky-500/90 text-white"
+              }`}>
+                {item.type}
               </span>
             </div>
-          )}
 
-          {/* Content label */}
-          <div className="absolute bottom-0 left-0 right-0 p-3">
-            <p className="text-white text-sm font-medium line-clamp-2 leading-snug">
-              {item.label}
-            </p>
-            <p className="text-white/70 text-xs mt-1 capitalize">
-              {item.contentType.replace("_", " ")}
-            </p>
+            {/* Scheduled badge */}
+            {item.scheduledAt && (
+              <div className="absolute top-2 right-2">
+                <span className="px-2 py-0.5 text-[10px] font-medium bg-emerald-500 text-white rounded-full flex items-center gap-1">
+                  <svg className="w-2.5 h-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  {formatShortDate(item.scheduledAt)}
+                </span>
+              </div>
+            )}
+
+            {/* Content label */}
+            <div className="absolute bottom-0 left-0 right-0 p-3">
+              <p className="text-white text-sm font-medium line-clamp-2 leading-snug">
+                {item.label}
+              </p>
+              <p className="text-white/70 text-xs mt-1 capitalize">
+                {item.contentType.replace("_", " ")}
+              </p>
+            </div>
+          </div>
+
+          {/* Action bar */}
+          <div className="flex items-center justify-between px-3 py-2 bg-zinc-50 dark:bg-zinc-800/50">
+            <button
+              onClick={handleCopy}
+              className="flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-200 dark:hover:bg-zinc-700 rounded transition-colors"
+            >
+              {copied ? (
+                <>
+                  <svg className="w-3.5 h-3.5 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                  </svg>
+                  Copied
+                </>
+              ) : (
+                <>
+                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                  </svg>
+                  Copy
+                </>
+              )}
+            </button>
+
+            <button
+              onClick={onToggleScheduler}
+              className={`flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded transition-colors ${
+                isSchedulerOpen
+                  ? "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300"
+                  : "text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-200 dark:hover:bg-zinc-700"
+              }`}
+            >
+              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+              {item.scheduledAt ? "Edit" : "Schedule"}
+            </button>
+          </div>
+
+          {/* Desktop: Inline schedule picker dropdown */}
+          <div className="hidden sm:block">
+            <AnimatePresence>
+              {isSchedulerOpen && (
+                <motion.div
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: "auto", opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{ duration: 0.15 }}
+                  className="overflow-hidden border-t border-zinc-200 dark:border-zinc-700"
+                >
+                  <SchedulePicker
+                    contentId={item.id}
+                    contentType={item.type}
+                    currentDate={item.scheduledAt}
+                    onClose={onToggleScheduler}
+                  />
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
         </div>
-
-        {/* Action bar */}
-        <div className="flex items-center justify-between px-3 py-2 bg-zinc-50 dark:bg-zinc-800/50">
-          <button
-            onClick={handleCopy}
-            className="flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-200 dark:hover:bg-zinc-700 rounded transition-colors"
-          >
-            {copied ? (
-              <>
-                <svg className="w-3.5 h-3.5 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                </svg>
-                Copied
-              </>
-            ) : (
-              <>
-                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                </svg>
-                Copy
-              </>
-            )}
-          </button>
-
-          <button
-            onClick={onToggleScheduler}
-            className={`flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded transition-colors ${
-              isSchedulerOpen
-                ? "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300"
-                : "text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-200 dark:hover:bg-zinc-700"
-            }`}
-          >
-            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-            </svg>
-            {item.scheduledAt ? "Edit" : "Schedule"}
-          </button>
-        </div>
-
-        {/* Schedule picker dropdown */}
-        <AnimatePresence>
-          {isSchedulerOpen && (
-            <motion.div
-              initial={{ height: 0, opacity: 0 }}
-              animate={{ height: "auto", opacity: 1 }}
-              exit={{ height: 0, opacity: 0 }}
-              transition={{ duration: 0.15 }}
-              className="overflow-hidden border-t border-zinc-200 dark:border-zinc-700"
-            >
-              <SchedulePicker
-                contentId={item.id}
-                contentType={item.type}
-                currentDate={item.scheduledAt}
-                onClose={onToggleScheduler}
-              />
-            </motion.div>
-          )}
-        </AnimatePresence>
       </div>
-    </div>
+
+      {/* Mobile: Full-screen modal */}
+      <AnimatePresence>
+        {isSchedulerOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="sm:hidden fixed inset-0 z-50 flex items-end justify-center"
+          >
+            {/* Backdrop */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={onToggleScheduler}
+              className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+            />
+
+            {/* Modal content */}
+            <motion.div
+              initial={{ y: "100%" }}
+              animate={{ y: 0 }}
+              exit={{ y: "100%" }}
+              transition={{ type: "spring", damping: 25, stiffness: 300 }}
+              className="relative w-full max-h-[90vh] bg-white dark:bg-zinc-900 rounded-t-3xl overflow-hidden"
+            >
+              {/* Handle bar */}
+              <div className="flex justify-center pt-3 pb-2">
+                <div className="w-10 h-1 rounded-full bg-zinc-300 dark:bg-zinc-600" />
+              </div>
+
+              {/* Header */}
+              <div className="flex items-center justify-between px-4 pb-3 border-b border-zinc-200 dark:border-zinc-800">
+                <div>
+                  <h3 className="font-semibold text-zinc-900 dark:text-zinc-100">
+                    Schedule {item.type === "post" ? "Post" : "Article"}
+                  </h3>
+                  <p className="text-sm text-zinc-500 dark:text-zinc-400 line-clamp-1">
+                    {item.label}
+                  </p>
+                </div>
+                <button
+                  onClick={onToggleScheduler}
+                  className="p-2 -mr-2 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-full transition-colors"
+                >
+                  <svg className="w-5 h-5 text-zinc-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+
+              {/* Picker content */}
+              <div className="overflow-y-auto max-h-[calc(90vh-100px)]">
+                <SchedulePicker
+                  contentId={item.id}
+                  contentType={item.type}
+                  currentDate={item.scheduledAt}
+                  onClose={onToggleScheduler}
+                />
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </>
   );
 }
 

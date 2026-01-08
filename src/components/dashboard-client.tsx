@@ -220,111 +220,225 @@ export function DashboardClient({ content }: DashboardClientProps) {
         </div>
       </div>
 
-      <div className="grid lg:grid-cols-[1fr_320px] gap-6">
+      {/* Mobile: Stack vertically, show horizontal scroll for days */}
+      {/* Desktop: Side-by-side grid layout */}
+      <div className="flex flex-col lg:grid lg:grid-cols-[1fr_320px] gap-6">
         {/* Calendar */}
-        <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800 overflow-hidden">
-          {/* Week header */}
-          <div className="grid grid-cols-7 border-b border-zinc-200 dark:border-zinc-800">
-            {weekDates.map((date, i) => {
-              const dateKey = getLocalDateKey(date);
-              const dayContent = contentByDate[dateKey] || [];
-              const dayName = date.toLocaleDateString("en-US", { weekday: "short" });
-              const dayNum = date.getDate();
+        <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800 overflow-hidden order-2 lg:order-1">
+          {/* Mobile: Horizontal scrollable week */}
+          <div className="lg:hidden">
+            <div className="flex overflow-x-auto snap-x snap-mandatory scrollbar-hide">
+              {weekDates.map((date, i) => {
+                const dateKey = getLocalDateKey(date);
+                const dayContent = contentByDate[dateKey] || [];
+                const dayName = date.toLocaleDateString("en-US", { weekday: "short" });
+                const dayNum = date.getDate();
+                const monthName = date.toLocaleDateString("en-US", { month: "short" });
+                const isSelected = selectedDate === dateKey;
 
-              return (
-                <div
-                  key={i}
-                  className={`p-3 text-center border-r last:border-r-0 border-zinc-200 dark:border-zinc-800 ${
-                    isToday(date) ? "bg-blue-50 dark:bg-blue-900/20" : ""
-                  }`}
-                >
-                  <p className="text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase">
-                    {dayName}
-                  </p>
-                  <p className={`text-lg font-semibold mt-1 ${
-                    isToday(date)
-                      ? "text-blue-600 dark:text-blue-400"
-                      : isPast(date)
-                      ? "text-zinc-400 dark:text-zinc-600"
-                      : "text-zinc-900 dark:text-zinc-100"
-                  }`}>
-                    {dayNum}
-                  </p>
-                  {dayContent.length > 0 && (
-                    <div className="flex justify-center gap-0.5 mt-1">
-                      {dayContent.slice(0, 3).map((_, j) => (
-                        <div key={j} className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                      ))}
-                      {dayContent.length > 3 && (
-                        <span className="text-[10px] text-zinc-500">+{dayContent.length - 3}</span>
+                return (
+                  <div
+                    key={i}
+                    onClick={() => {
+                      if (!isPast(date)) {
+                        setSelectedDate(isSelected ? null : dateKey);
+                      }
+                    }}
+                    className={`flex-shrink-0 snap-start w-[85vw] p-4 border-r border-zinc-200 dark:border-zinc-800 cursor-pointer transition-colors ${
+                      isSelected
+                        ? "bg-blue-50 dark:bg-blue-900/20"
+                        : isToday(date)
+                        ? "bg-zinc-50 dark:bg-zinc-800/50"
+                        : isPast(date)
+                        ? "bg-zinc-100/50 dark:bg-zinc-900/50 cursor-not-allowed opacity-60"
+                        : ""
+                    }`}
+                  >
+                    {/* Day header */}
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center gap-3">
+                        <div className={`w-12 h-12 rounded-xl flex flex-col items-center justify-center ${
+                          isToday(date)
+                            ? "bg-blue-600 text-white"
+                            : "bg-zinc-100 dark:bg-zinc-800"
+                        }`}>
+                          <span className={`text-xs font-medium uppercase ${
+                            isToday(date) ? "text-blue-100" : "text-zinc-500 dark:text-zinc-400"
+                          }`}>
+                            {dayName}
+                          </span>
+                          <span className={`text-lg font-bold ${
+                            isToday(date) ? "text-white" : "text-zinc-900 dark:text-zinc-100"
+                          }`}>
+                            {dayNum}
+                          </span>
+                        </div>
+                        <div>
+                          <p className="font-medium text-zinc-900 dark:text-zinc-100">
+                            {monthName} {dayNum}
+                          </p>
+                          <p className="text-sm text-zinc-500 dark:text-zinc-400">
+                            {dayContent.length} item{dayContent.length !== 1 ? "s" : ""}
+                          </p>
+                        </div>
+                      </div>
+                      {isToday(date) && (
+                        <span className="px-2 py-1 text-xs font-medium bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300 rounded-full">
+                          Today
+                        </span>
                       )}
                     </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
 
-          {/* Calendar body */}
-          <div className="grid grid-cols-7 min-h-[400px]">
-            {weekDates.map((date, i) => {
-              const dateKey = getLocalDateKey(date);
-              const dayContent = contentByDate[dateKey] || [];
-              const isSelected = selectedDate === dateKey;
+                    {/* Day content */}
+                    <div className="space-y-2 min-h-[120px]">
+                      {dayContent.length === 0 ? (
+                        <div className="flex items-center justify-center h-[120px] text-sm text-zinc-400 dark:text-zinc-500">
+                          No content scheduled
+                        </div>
+                      ) : (
+                        dayContent.map((item) => (
+                          <CalendarItem key={item.id} item={item} />
+                        ))
+                      )}
+                    </div>
 
-              return (
+                    {/* Drop zone for mobile */}
+                    {schedulingItem && !isPast(date) && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleSchedule(schedulingItem, date);
+                          setSchedulingItem(null);
+                        }}
+                        className="w-full mt-3 p-3 border-2 border-dashed border-emerald-400 rounded-xl text-sm font-medium text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 transition-colors"
+                      >
+                        Schedule for {dayName}
+                      </button>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+            {/* Scroll indicator */}
+            <div className="flex justify-center gap-1.5 py-3 border-t border-zinc-200 dark:border-zinc-800">
+              {weekDates.map((date, i) => (
                 <div
                   key={i}
-                  onClick={() => {
-                    if (!isPast(date)) {
-                      setSelectedDate(isSelected ? null : dateKey);
-                    }
-                  }}
-                  className={`border-r last:border-r-0 border-zinc-200 dark:border-zinc-800 p-2 cursor-pointer transition-colors ${
-                    isSelected
-                      ? "bg-blue-50 dark:bg-blue-900/20"
-                      : isPast(date)
-                      ? "bg-zinc-50 dark:bg-zinc-900/50 cursor-not-allowed"
-                      : "hover:bg-zinc-50 dark:hover:bg-zinc-800/50"
+                  className={`w-2 h-2 rounded-full transition-colors ${
+                    isToday(date)
+                      ? "bg-blue-500"
+                      : "bg-zinc-300 dark:bg-zinc-600"
                   }`}
-                >
-                  <div className="space-y-2">
-                    {dayContent.map((item) => (
-                      <CalendarItem key={item.id} item={item} />
-                    ))}
-                  </div>
+                />
+              ))}
+            </div>
+          </div>
 
-                  {/* Drop zone indicator when scheduling */}
-                  {schedulingItem && !isPast(date) && (
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleSchedule(schedulingItem, date);
-                        setSchedulingItem(null);
-                      }}
-                      className="w-full mt-2 p-2 border-2 border-dashed border-emerald-400 rounded-lg text-xs text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 transition-colors"
-                    >
-                      Drop here
-                    </button>
-                  )}
-                </div>
-              );
-            })}
+          {/* Desktop: Grid layout */}
+          <div className="hidden lg:block">
+            {/* Week header */}
+            <div className="grid grid-cols-7 border-b border-zinc-200 dark:border-zinc-800">
+              {weekDates.map((date, i) => {
+                const dateKey = getLocalDateKey(date);
+                const dayContent = contentByDate[dateKey] || [];
+                const dayName = date.toLocaleDateString("en-US", { weekday: "short" });
+                const dayNum = date.getDate();
+
+                return (
+                  <div
+                    key={i}
+                    className={`p-3 text-center border-r last:border-r-0 border-zinc-200 dark:border-zinc-800 ${
+                      isToday(date) ? "bg-blue-50 dark:bg-blue-900/20" : ""
+                    }`}
+                  >
+                    <p className="text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase">
+                      {dayName}
+                    </p>
+                    <p className={`text-lg font-semibold mt-1 ${
+                      isToday(date)
+                        ? "text-blue-600 dark:text-blue-400"
+                        : isPast(date)
+                        ? "text-zinc-400 dark:text-zinc-600"
+                        : "text-zinc-900 dark:text-zinc-100"
+                    }`}>
+                      {dayNum}
+                    </p>
+                    {dayContent.length > 0 && (
+                      <div className="flex justify-center gap-0.5 mt-1">
+                        {dayContent.slice(0, 3).map((_, j) => (
+                          <div key={j} className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                        ))}
+                        {dayContent.length > 3 && (
+                          <span className="text-[10px] text-zinc-500">+{dayContent.length - 3}</span>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Calendar body */}
+            <div className="grid grid-cols-7 min-h-[400px]">
+              {weekDates.map((date, i) => {
+                const dateKey = getLocalDateKey(date);
+                const dayContent = contentByDate[dateKey] || [];
+                const isSelected = selectedDate === dateKey;
+
+                return (
+                  <div
+                    key={i}
+                    onClick={() => {
+                      if (!isPast(date)) {
+                        setSelectedDate(isSelected ? null : dateKey);
+                      }
+                    }}
+                    className={`border-r last:border-r-0 border-zinc-200 dark:border-zinc-800 p-2 cursor-pointer transition-colors ${
+                      isSelected
+                        ? "bg-blue-50 dark:bg-blue-900/20"
+                        : isPast(date)
+                        ? "bg-zinc-50 dark:bg-zinc-900/50 cursor-not-allowed"
+                        : "hover:bg-zinc-50 dark:hover:bg-zinc-800/50"
+                    }`}
+                  >
+                    <div className="space-y-2">
+                      {dayContent.map((item) => (
+                        <CalendarItem key={item.id} item={item} />
+                      ))}
+                    </div>
+
+                    {/* Drop zone indicator when scheduling */}
+                    {schedulingItem && !isPast(date) && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleSchedule(schedulingItem, date);
+                          setSchedulingItem(null);
+                        }}
+                        className="w-full mt-2 p-2 border-2 border-dashed border-emerald-400 rounded-lg text-xs text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 transition-colors"
+                      >
+                        Drop here
+                      </button>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
           </div>
         </div>
 
-        {/* Unscheduled queue */}
-        <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800 overflow-hidden">
+        {/* Unscheduled queue - shows first on mobile */}
+        <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800 overflow-hidden order-1 lg:order-2">
           <div className="p-4 border-b border-zinc-200 dark:border-zinc-800">
             <h2 className="font-semibold text-zinc-900 dark:text-zinc-100">
               Ready to Schedule
             </h2>
             <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-0.5">
-              {unscheduled.length} items
+              {unscheduled.length} items • Swipe calendar to pick a date
             </p>
           </div>
 
-          <div className="p-3 space-y-2 max-h-[500px] overflow-y-auto">
+          <div className="p-3 space-y-2 max-h-[400px] lg:max-h-[500px] overflow-y-auto">
             {unscheduled.length === 0 ? (
               <div className="text-center py-8 text-zinc-500 dark:text-zinc-400">
                 <p className="text-sm">All content scheduled!</p>
