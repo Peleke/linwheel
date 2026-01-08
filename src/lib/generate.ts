@@ -4,6 +4,10 @@ import {
 } from "./prompts";
 import { GENERATE_IMAGE_INTENT_PROMPT } from "./prompts/image-intent";
 import { GENERATE_ARTICLE_IMAGE_INTENT_PROMPT } from "./prompts/article-image-intent";
+import {
+  REGENERATE_IMAGE_INTENT_PROMPT,
+  REGENERATE_ARTICLE_IMAGE_INTENT_PROMPT,
+} from "./prompts/image-intent-regen";
 import { runWriterSupervisor } from "./agents/writer-supervisor";
 import { runArticleWriterSupervisor } from "./agents/article-writer-supervisor";
 import { POST_ANGLES, ARTICLE_ANGLES, type PostAngle, type ArticleAngle } from "@/db/schema";
@@ -164,6 +168,76 @@ export async function generateArticleImageIntent(
   const result = await generateStructured(
     GENERATE_ARTICLE_IMAGE_INTENT_PROMPT,
     JSON.stringify(article, null, 2),
+    GeneratedImageIntentSchema,
+    0.6,
+    llmProvider
+  );
+  return result.data;
+}
+
+// Previous intent type for regeneration
+export interface PreviousImageIntent {
+  prompt: string;
+  negativePrompt?: string | null;
+  headlineText?: string | null;
+  stylePreset: string;
+}
+
+// Step 3c: Regenerate image intent with user feedback
+export async function regenerateImageIntent(
+  post: { hook: string; body_beats: string[]; full_text: string },
+  previousIntent: PreviousImageIntent,
+  feedback: string,
+  llmProvider?: LLMProvider
+): Promise<GeneratedImageIntent> {
+  const userMessage = `ORIGINAL POST:
+${JSON.stringify(post, null, 2)}
+
+PREVIOUS IMAGE INTENT:
+- Prompt: ${previousIntent.prompt}
+- Negative prompt: ${previousIntent.negativePrompt || "(none)"}
+- Headline text: ${previousIntent.headlineText || "(none)"}
+- Style preset: ${previousIntent.stylePreset}
+
+USER FEEDBACK:
+${feedback}
+
+Please regenerate the image intent applying this feedback while maintaining quality.`;
+
+  const result = await generateStructured(
+    REGENERATE_IMAGE_INTENT_PROMPT,
+    userMessage,
+    GeneratedImageIntentSchema,
+    0.6,
+    llmProvider
+  );
+  return result.data;
+}
+
+// Step 3d: Regenerate article image intent with user feedback
+export async function regenerateArticleImageIntent(
+  article: { title: string; subtitle?: string | null; introduction: string; sections: string[] },
+  previousIntent: PreviousImageIntent,
+  feedback: string,
+  llmProvider?: LLMProvider
+): Promise<GeneratedImageIntent> {
+  const userMessage = `ORIGINAL ARTICLE:
+${JSON.stringify(article, null, 2)}
+
+PREVIOUS IMAGE INTENT:
+- Prompt: ${previousIntent.prompt}
+- Negative prompt: ${previousIntent.negativePrompt || "(none)"}
+- Headline text: ${previousIntent.headlineText || "(none)"}
+- Style preset: ${previousIntent.stylePreset}
+
+USER FEEDBACK:
+${feedback}
+
+Please regenerate the image intent applying this feedback while maintaining article header quality.`;
+
+  const result = await generateStructured(
+    REGENERATE_ARTICLE_IMAGE_INTENT_PROMPT,
+    userMessage,
     GeneratedImageIntentSchema,
     0.6,
     llmProvider
