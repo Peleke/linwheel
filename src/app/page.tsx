@@ -12,7 +12,7 @@ import {
 
 export default function Home() {
   return (
-    <div className="min-h-screen bg-[#0a0a0a] text-white">
+    <div className="min-h-screen bg-[#0a0a0a] text-white overflow-x-hidden">
       <Header />
       <main>
         <Hero />
