@@ -8,6 +8,7 @@ import { overlayCoverTextFromUrl } from "@/lib/carousel/text-overlay-satori";
 import { uploadImage } from "@/lib/storage";
 import { getCurrentUser } from "@/lib/auth";
 import { incrementImageUsage, canGenerateImages } from "@/lib/usage";
+import { getActiveBrandStyle, composePromptWithBrandStyle, composeNegativeWithBrandStyle } from "@/lib/brand-styles";
 
 interface RouteParams {
   params: Promise<{ intentId: string }>;
@@ -165,11 +166,25 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       );
     }
 
+    // Apply brand style to prompts if user has an active one
+    let finalPrompt = intent.prompt;
+    let finalNegativePrompt = intent.negativePrompt;
+
+    if (user) {
+      const brandStyle = await getActiveBrandStyle(user.id);
+      if (brandStyle) {
+        console.log(`[PostImage] Applying brand style "${brandStyle.name}" to image generation`);
+        finalPrompt = composePromptWithBrandStyle(intent.prompt, brandStyle);
+        finalNegativePrompt = composeNegativeWithBrandStyle(intent.negativePrompt || "", brandStyle);
+        console.log(`[PostImage] Final prompt (first 150 chars): ${finalPrompt.slice(0, 150)}...`);
+      }
+    }
+
     // Generate the background image (T2I is unreliable with text, so don't pass headline)
     const result = await generateImage(
       {
-        prompt: intent.prompt,
-        negativePrompt: intent.negativePrompt,
+        prompt: finalPrompt,
+        negativePrompt: finalNegativePrompt,
         headlineText: "", // Don't include text in T2I prompt - we overlay it ourselves
         stylePreset: intent.stylePreset as StylePreset,
         aspectRatio: "1.91:1",
