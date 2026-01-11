@@ -39,6 +39,7 @@ Thumbs.db
 # Testing
 coverage/
 .nyc_output/
+.auth/
 
 # TypeScript
 *.tsbuildinfo
