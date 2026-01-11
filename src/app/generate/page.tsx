@@ -260,7 +260,7 @@ export default function GeneratePage() {
       <AppHeader />
 
       <main className="flex-1">
-        <div className="max-w-4xl mx-auto px-8 py-16">
+        <div className="max-w-4xl mx-auto px-4 sm:px-8 py-8 sm:py-16">
           <motion.div
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
@@ -379,14 +379,15 @@ export default function GeneratePage() {
                     className="overflow-hidden"
                   >
                     <div className="px-5 pb-5 pt-2">
-                      <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                      <div data-testid="post-angles-grid" className="grid grid-cols-2 md:grid-cols-3 gap-2 sm:gap-3">
                         {POST_ANGLES.map((angle, i) => (
                           <motion.label
                             key={angle.id}
+                            data-testid="angle-button"
                             initial={{ opacity: 0, y: 8 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ duration: 0.15, delay: i * 0.02 }}
-                            className={`group/card relative flex items-start gap-3 p-4 rounded-xl cursor-pointer transition-all duration-150 ${
+                            className={`group/card relative flex items-start gap-2 sm:gap-3 p-3 sm:p-4 rounded-xl cursor-pointer transition-all duration-150 min-h-[48px] ${
                               selectedAngles.includes(angle.id)
                                 ? "bg-blue-50 dark:bg-blue-500/10 shadow-sm shadow-blue-500/10"
                                 : "bg-zinc-50 dark:bg-zinc-800/50 hover:bg-zinc-100 dark:hover:bg-zinc-800"
@@ -414,8 +415,8 @@ export default function GeneratePage() {
 
                             <div className="flex-1 min-w-0">
                               <div className="flex items-center gap-1.5">
-                                <span className="text-base">{angle.emoji}</span>
-                                <span className={`text-sm font-medium transition-colors ${
+                                <span className="text-sm sm:text-base">{angle.emoji}</span>
+                                <span className={`text-xs sm:text-sm font-medium transition-colors ${
                                   selectedAngles.includes(angle.id)
                                     ? "text-blue-900 dark:text-blue-100"
                                     : "text-zinc-700 dark:text-zinc-300"
@@ -423,7 +424,7 @@ export default function GeneratePage() {
                                   {angle.label}
                                 </span>
                               </div>
-                              <span className="text-xs text-zinc-500 dark:text-zinc-400 block mt-0.5">
+                              <span data-testid="angle-description" className="hidden sm:block text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
                                 {angle.description}
                               </span>
                             </div>
@@ -515,14 +516,15 @@ export default function GeneratePage() {
                     className="overflow-hidden"
                   >
                     <div className="px-5 pb-5 pt-2">
-                      <div className="grid grid-cols-2 gap-3">
+                      <div data-testid="article-angles-grid" className="grid grid-cols-2 gap-2 sm:gap-3">
                         {ARTICLE_ANGLES.map((angle, i) => (
                           <motion.label
                             key={angle.id}
+                            data-testid="angle-button"
                             initial={{ opacity: 0, y: 8 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ duration: 0.15, delay: i * 0.03 }}
-                            className={`group/card relative flex items-start gap-3 p-4 rounded-xl cursor-pointer transition-all duration-150 ${
+                            className={`group/card relative flex items-start gap-2 sm:gap-3 p-3 sm:p-4 rounded-xl cursor-pointer transition-all duration-150 min-h-[48px] ${
                               selectedArticleAngles.includes(angle.id)
                                 ? "bg-sky-50 dark:bg-sky-500/10 shadow-sm shadow-sky-500/10"
                                 : "bg-zinc-50 dark:bg-zinc-800/50 hover:bg-zinc-100 dark:hover:bg-zinc-800"
@@ -550,8 +552,8 @@ export default function GeneratePage() {
 
                             <div className="flex-1 min-w-0">
                               <div className="flex items-center gap-1.5">
-                                <span className="text-base">{angle.emoji}</span>
-                                <span className={`text-sm font-medium transition-colors ${
+                                <span className="text-sm sm:text-base">{angle.emoji}</span>
+                                <span className={`text-xs sm:text-sm font-medium transition-colors ${
                                   selectedArticleAngles.includes(angle.id)
                                     ? "text-sky-900 dark:text-sky-100"
                                     : "text-zinc-700 dark:text-zinc-300"
@@ -559,7 +561,7 @@ export default function GeneratePage() {
                                   {angle.label}
                                 </span>
                               </div>
-                              <span className="text-xs text-zinc-500 dark:text-zinc-400 block mt-0.5">
+                              <span data-testid="angle-description" className="hidden sm:block text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
                                 {angle.description}
                               </span>
                             </div>
