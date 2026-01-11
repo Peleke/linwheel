@@ -127,8 +127,10 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
  * Generates T2I background, overlays headline text with Satori, uploads to storage.
  */
 export async function POST(request: NextRequest, { params }: RouteParams) {
+  console.log(`[PostImage] ========== POST HANDLER CALLED ==========`);
   try {
     const { intentId } = await params;
+    console.log(`[PostImage] Intent ID: ${intentId}`);
     const body = await request.json();
     const { provider, model } = body as {
       provider?: T2IProviderType;
