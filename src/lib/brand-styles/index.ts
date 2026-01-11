@@ -50,12 +50,28 @@ export function composePromptWithBrandStyle(
 ): string {
   const parts: string[] = [];
 
-  // 1. Style prefix (highest priority - FLUX pays most attention to start)
+  // 1. COLOR PALETTE FIRST (FLUX pays most attention to start)
+  // This overrides any colors in the base prompt
+  if (style.primaryColors?.length > 0) {
+    const colorHexes = style.primaryColors
+      .slice(0, 3)
+      .map((c: ColorDefinition) => c.hex)
+      .join(", ");
+    const colorNames = style.primaryColors
+      .slice(0, 3)
+      .map((c: ColorDefinition) => c.name || c.hex)
+      .join(" and ");
+    parts.push(`Color palette: ${colorHexes}. Use ${colorNames} colors exclusively`);
+  } else if (style.colorMood) {
+    parts.push(`${style.colorMood} color palette`);
+  }
+
+  // 2. Style prefix
   if (style.stylePrefix) {
     parts.push(style.stylePrefix);
   }
 
-  // 2. Imagery approach
+  // 3. Imagery approach
   const imageryDescriptions: Record<string, string> = {
     photography: "professional photography style",
     illustration: "polished illustration style",
@@ -65,19 +81,12 @@ export function composePromptWithBrandStyle(
   };
   parts.push(imageryDescriptions[style.imageryApproach] || style.imageryApproach);
 
-  // 3. Base prompt content (the actual image description)
-  parts.push(basePrompt);
-
-  // 4. Color direction
-  if (style.colorMood) {
-    parts.push(`with ${style.colorMood} color palette`);
-  } else if (style.primaryColors?.length > 0) {
-    const colorNames = style.primaryColors
-      .slice(0, 3)
-      .map((c: ColorDefinition) => c.name || c.hex)
-      .join(", ");
-    parts.push(`featuring ${colorNames} tones`);
-  }
+  // 4. Base prompt content (strip common color words to reduce conflict)
+  let cleanedPrompt = basePrompt
+    .replace(/\b(blue|cyan|purple|pink|red|orange|yellow|green|teal|navy|violet|magenta)\b\s*(gradient|background|accent|color|tone|hue)?s?/gi, "")
+    .replace(/\s+/g, " ")
+    .trim();
+  parts.push(cleanedPrompt);
 
   // 5. Artistic references (concrete > abstract per FLUX guidance)
   if (style.artisticReferences?.length) {
