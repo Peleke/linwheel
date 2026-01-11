@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { BRAND_STYLE_PRESETS } from "@/lib/brand-styles";
+import { BRAND_STYLE_PRESETS } from "@/lib/brand-styles/presets";
 import type { ColorDefinition, ImageryApproach } from "@/db/schema";
 
 interface BrandStyleProfile {
