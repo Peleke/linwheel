@@ -34,6 +34,7 @@ export function BrandStylesSection() {
   const [profiles, setProfiles] = useState<BrandStyleProfile[]>([]);
   const [activeProfileId, setActiveProfileId] = useState<string | null>(null);
   const [isCreating, setIsCreating] = useState(false);
+  const [editingProfile, setEditingProfile] = useState<BrandStyleProfile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -120,6 +121,63 @@ export function BrandStylesSection() {
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to create brand style");
     }
+  };
+
+  const handleUpdateProfile = async () => {
+    if (!editingProfile) return;
+    try {
+      setError(null);
+      const res = await fetch(`/api/brand-styles/${editingProfile.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: formData.name,
+          description: formData.description || null,
+          primaryColors: formData.primaryColors,
+          colorMood: formData.colorMood || null,
+          imageryApproach: formData.imageryApproach,
+          artisticReferences: formData.artisticReferences
+            ? formData.artisticReferences.split(",").map((s) => s.trim()).filter(Boolean)
+            : null,
+          lightingPreference: formData.lightingPreference || null,
+          compositionStyle: formData.compositionStyle || null,
+          moodDescriptors: formData.moodDescriptors
+            ? formData.moodDescriptors.split(",").map((s) => s.trim()).filter(Boolean)
+            : null,
+          stylePrefix: formData.stylePrefix || null,
+          styleSuffix: formData.styleSuffix || null,
+        }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || "Failed to update brand style");
+      }
+
+      setEditingProfile(null);
+      resetForm();
+      fetchProfiles();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to update brand style");
+    }
+  };
+
+  const startEditing = (profile: BrandStyleProfile) => {
+    setEditingProfile(profile);
+    setIsCreating(false);
+    setFormData({
+      name: profile.name,
+      description: profile.description || "",
+      primaryColors: profile.primaryColors,
+      colorMood: profile.colorMood || "",
+      imageryApproach: profile.imageryApproach,
+      artisticReferences: profile.artisticReferences?.join(", ") || "",
+      lightingPreference: profile.lightingPreference || "",
+      compositionStyle: profile.compositionStyle || "",
+      moodDescriptors: profile.moodDescriptors?.join(", ") || "",
+      stylePrefix: profile.stylePrefix || "",
+      styleSuffix: profile.styleSuffix || "",
+    });
   };
 
   const handleActivate = async (id: string) => {
@@ -250,8 +308,8 @@ export function BrandStylesSection() {
         </div>
       )}
 
-      {/* Create Form */}
-      {isCreating && (
+      {/* Create/Edit Form */}
+      {(isCreating || editingProfile) && (
         <div className="mb-6 p-5 bg-purple-50/50 dark:bg-purple-900/10 rounded-xl border border-purple-200 dark:border-purple-800/50">
           {/* Preset Buttons */}
           <div className="mb-5">
@@ -434,15 +492,16 @@ export function BrandStylesSection() {
           {/* Actions */}
           <div className="flex gap-3 pt-2">
             <button
-              onClick={handleCreateProfile}
+              onClick={editingProfile ? handleUpdateProfile : handleCreateProfile}
               disabled={!formData.name.trim() || formData.primaryColors.length === 0}
               className="px-4 py-2 text-sm font-medium bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
-              Create Brand Style
+              {editingProfile ? "Save Changes" : "Create Brand Style"}
             </button>
             <button
               onClick={() => {
                 setIsCreating(false);
+                setEditingProfile(null);
                 resetForm();
                 setError(null);
               }}
@@ -499,6 +558,12 @@ export function BrandStylesSection() {
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => startEditing(profile)}
+                    className="px-3 py-1.5 text-xs font-medium text-zinc-600 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg transition-colors"
+                  >
+                    Edit
+                  </button>
                   {profile.isActive ? (
                     <button
                       onClick={() => handleDeactivate(profile.id)}
