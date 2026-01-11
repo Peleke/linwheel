@@ -114,7 +114,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       const result = await client.createPost({
         text: postData.fullText,
         imageUrl,
-        altText: imageIntent[0]?.altText || undefined,
+        altText: imageIntent[0]?.headlineText || undefined,
       });
 
       // Update post with LinkedIn URN
