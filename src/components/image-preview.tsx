@@ -68,9 +68,10 @@ export function ImagePreview({
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
-        className="relative rounded-lg overflow-hidden border border-emerald-200 dark:border-emerald-800"
+        data-testid="prompt-image-preview"
+        className="relative rounded-lg overflow-hidden border border-emerald-200 dark:border-emerald-800 max-h-[300px]"
       >
-        <div className="relative aspect-[1.91/1] w-full">
+        <div className="relative aspect-[1.91/1] w-full max-h-[300px]">
           <Image
             src={imageUrl}
             alt={headlineText}
@@ -133,15 +134,6 @@ export function ImagePreview({
     );
   }
 
-  // Not approved yet - show placeholder
-  return (
-    <div className="rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 p-4">
-      <div className="flex items-center gap-3 text-slate-500 dark:text-slate-400">
-        <span className="text-lg">🖼️</span>
-        <p className="text-sm">
-          Image will be generated when post is approved
-        </p>
-      </div>
-    </div>
-  );
+  // Not approved yet - don't show placeholder (cleaner UI)
+  return null;
 }
