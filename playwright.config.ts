@@ -14,7 +14,9 @@ export default defineConfig({
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
   workers: process.env.CI ? 1 : undefined,
-  reporter: [["html"], ["list"], ...(process.env.CI ? [["github" as const]] : [])],
+  reporter: process.env.CI
+    ? [["html"], ["list"], ["github"]]
+    : [["html"], ["list"]],
   use: {
     baseURL: process.env.PLAYWRIGHT_TEST_BASE_URL || "http://localhost:3001",
     trace: "on-first-retry",
