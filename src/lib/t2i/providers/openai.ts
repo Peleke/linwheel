@@ -14,18 +14,19 @@ import type {
   StylePreset,
 } from "../types";
 
-// Style preset to prompt modifier mapping (natural language for GPT-image models)
+// Style preset to prompt modifier mapping (COLOR-NEUTRAL for GPT-image models)
+// NOTE: Colors come from brand style profile, applied in the request.prompt
 const STYLE_PROMPTS: Record<StylePreset, string> = {
   typographic_minimal:
-    "Clean minimalist editorial design on solid warm cream or soft white background, bold professional typography with thoughtful spacing, magazine cover quality, soft natural lighting, calm sophisticated atmosphere, high-end design campaign aesthetic.",
+    "Clean minimalist editorial design on solid background, bold professional typography with thoughtful spacing, magazine cover quality, soft natural lighting, calm sophisticated atmosphere, high-end design campaign aesthetic.",
   gradient_text:
-    "Modern gradient background flowing from deep purple through electric blue to soft pink, sleek tech-forward aesthetic, contemporary design with smooth color transitions, soft ambient glow, professional futuristic mood, editorial quality.",
+    "Modern gradient background, sleek tech-forward aesthetic, contemporary design with smooth color transitions, soft ambient glow, professional futuristic mood, editorial quality.",
   dark_mode:
-    "Rich dark navy or deep charcoal background with subtle depth, bright accent colors providing elegant contrast, sleek modern professional appearance, soft ambient lighting from edges, sophisticated corporate tech mood, premium editorial quality.",
+    "Rich dark background with subtle depth, bright accent colors providing elegant contrast, sleek modern professional appearance, soft ambient lighting from edges, sophisticated corporate tech mood, premium editorial quality.",
   accent_bar:
-    "Clean design with a bold colored accent bar (orange, teal, or purple). Corporate but creative feel.",
+    "Clean design with a bold colored accent bar. Corporate but creative feel.",
   abstract_shapes:
-    "Flowing abstract geometric shapes with soft gradient transitions, layered translucent forms in complementary colors, professional editorial photography style, modern design campaign aesthetic, creative yet sophisticated mood, premium quality.",
+    "Flowing abstract geometric shapes with soft gradient transitions, layered translucent forms, professional editorial photography style, modern design campaign aesthetic, creative yet sophisticated mood, premium quality.",
 };
 
 // Size mappings for LinkedIn aspect ratios
@@ -132,11 +133,14 @@ export class OpenAIImageProvider implements T2IProvider {
   private buildPrompt(request: ImageGenerationRequest, stylePrompt: string): string {
     const parts: string[] = [];
 
+    // Main prompt content FIRST (includes brand colors at start for prioritization)
+    parts.push(request.prompt);
+
+    // Style direction (color-neutral, adds form/lighting/mood)
+    parts.push(stylePrompt);
+
     // Main instruction
     parts.push("Create a professional LinkedIn cover image.");
-
-    // Style direction
-    parts.push(stylePrompt);
 
     // Headline text to render
     if (request.headlineText) {
@@ -144,9 +148,6 @@ export class OpenAIImageProvider implements T2IProvider {
         `The image should prominently display the text: "${request.headlineText}". Make the text highly legible and well-integrated into the design.`
       );
     }
-
-    // Main prompt content
-    parts.push(request.prompt);
 
     // Negative prompt as things to avoid
     if (request.negativePrompt) {

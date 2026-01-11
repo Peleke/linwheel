@@ -62,8 +62,8 @@ describe("composePromptWithBrandStyle", () => {
 
     const result = composePromptWithBrandStyle(basePrompt, brandStyle);
 
-    // Should include color mood or color reference
-    expect(result).toContain("color palette");
+    // Should include color palette at the start (front-loaded for FLUX)
+    expect(result).toContain("Color palette:");
     expect(result).toContain(basePrompt);
   });
 
