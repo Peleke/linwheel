@@ -24,6 +24,7 @@ export function CopyButton({ text, variant = "default" }: CopyButtonProps) {
   return (
     <motion.button
       onClick={handleCopy}
+      data-testid="copy-button"
       whileHover={{ scale: 1.02 }}
       whileTap={{ scale: 0.98 }}
       className={`${baseStyles} bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-700 hover:text-zinc-700 dark:hover:text-zinc-200 transition-colors flex items-center gap-1`}
