@@ -170,14 +170,21 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     let finalPrompt = intent.prompt;
     let finalNegativePrompt = intent.negativePrompt;
 
+    console.log(`[PostImage] User check: ${user ? `authenticated (${user.id.slice(0, 8)}...)` : "NOT authenticated"}`);
+
     if (user) {
       const brandStyle = await getActiveBrandStyle(user.id);
+      console.log(`[PostImage] Brand style lookup: ${brandStyle ? `found "${brandStyle.name}" (active: ${brandStyle.isActive})` : "NONE FOUND"}`);
       if (brandStyle) {
         console.log(`[PostImage] Applying brand style "${brandStyle.name}" to image generation`);
+        console.log(`[PostImage] Brand colors: ${JSON.stringify(brandStyle.primaryColors?.slice(0, 2))}`);
         finalPrompt = composePromptWithBrandStyle(intent.prompt, brandStyle);
         finalNegativePrompt = composeNegativeWithBrandStyle(intent.negativePrompt || "", brandStyle);
-        console.log(`[PostImage] Final prompt (first 150 chars): ${finalPrompt.slice(0, 150)}...`);
+        console.log(`[PostImage] Original prompt: ${intent.prompt.slice(0, 100)}...`);
+        console.log(`[PostImage] Final prompt: ${finalPrompt.slice(0, 150)}...`);
       }
+    } else {
+      console.log(`[PostImage] Skipping brand style - no authenticated user`);
     }
 
     // Generate the background image (T2I is unreliable with text, so don't pass headline)
