@@ -74,13 +74,20 @@ export async function POST(request: Request) {
     let finalPrompt = intent.prompt;
     let finalNegativePrompt = intent.negativePrompt;
 
+    console.log(`[API] Image generation - User authenticated: ${!!user}, userId: ${user?.id?.slice(0, 8)}...`);
+
     if (user) {
       const brandStyle = await getActiveBrandStyle(user.id);
+      console.log(`[API] Brand style lookup result: ${brandStyle ? `Found "${brandStyle.name}" (active: ${brandStyle.isActive})` : "None found"}`);
       if (brandStyle) {
         console.log(`[API] Applying brand style "${brandStyle.name}" to image generation`);
+        console.log(`[API] Brand colors: ${JSON.stringify(brandStyle.primaryColors?.slice(0, 2))}`);
         finalPrompt = composePromptWithBrandStyle(intent.prompt, brandStyle);
         finalNegativePrompt = composeNegativeWithBrandStyle(intent.negativePrompt || "", brandStyle);
+        console.log(`[API] Final prompt (first 200 chars): ${finalPrompt.slice(0, 200)}...`);
       }
+    } else {
+      console.log(`[API] No user authenticated, skipping brand style`);
     }
 
     // Generate the image
