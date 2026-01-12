@@ -43,6 +43,13 @@
       "when": 1768216678284,
       "tag": "0005_lovely_slyde",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "6",
+      "when": 1768227544172,
+      "tag": "0006_nosy_yellowjacket",
+      "breakpoints": true
     }
   ]
 }
