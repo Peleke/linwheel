@@ -26,7 +26,7 @@ export interface ImageGenerationRequest {
   /** Visual style preset */
   stylePreset: StylePreset;
   /** Optional aspect ratio (default: 1.91:1 for LinkedIn) */
-  aspectRatio?: "16:9" | "1.91:1" | "1:1" | "4:5";
+  aspectRatio?: "16:9" | "9:16" | "1.91:1" | "1:1" | "4:5";
   /** Optional quality setting */
   quality?: "standard" | "hd";
 }

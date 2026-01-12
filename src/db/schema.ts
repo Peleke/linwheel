@@ -58,6 +58,8 @@ export const linkedinPosts = sqliteTable("linkedin_posts", {
   // Nullable for manual drafts (not AI-generated)
   insightId: text("insight_id").references(() => insights.id),
   runId: text("run_id").references(() => generationRuns.id),
+  // User ID - required for manual drafts, optional for AI-generated (can get from run)
+  userId: text("user_id"),
   hook: text("hook").notNull(),
   bodyBeats: text("body_beats", { mode: "json" }).$type<string[]>().notNull(),
   openQuestion: text("open_question").notNull(),
@@ -124,6 +126,11 @@ export const articles = sqliteTable("articles", {
   // Scheduling
   scheduledAt: integer("scheduled_at", { mode: "timestamp" }),
   scheduledPosition: integer("scheduled_position"),
+  // Publishing
+  autoPublish: integer("auto_publish", { mode: "boolean" }).default(false),
+  linkedinPostUrn: text("linkedin_post_urn"),
+  linkedinPublishedAt: integer("linkedin_published_at", { mode: "timestamp" }),
+  linkedinPublishError: text("linkedin_publish_error"),
 });
 
 // Article image intents table (ComfyUI-optimized)
@@ -179,8 +186,19 @@ export const articleCarouselIntents = sqliteTable("article_carousel_intents", {
     enum: ["openai", "comfyui", "fal"],
   }),
   generationError: text("generation_error"),
+  // Custom caption for the carousel LinkedIn post
+  caption: text("caption"),
+  // Scheduling for carousel post
+  offsetDays: integer("offset_days").default(0), // 0 = same time as article, >0 = days after article
+  scheduledAt: integer("scheduled_at", { mode: "timestamp" }), // When to publish carousel as post
+  autoPublish: integer("auto_publish", { mode: "boolean" }).default(false),
+  // Publishing status
+  status: text("status", { enum: ["pending", "ready", "scheduled", "published", "failed"] }).default("pending"),
+  linkedinPostUrn: text("linkedin_post_urn"),
+  publishedAt: integer("published_at", { mode: "timestamp" }),
+  publishError: text("publish_error"),
   createdAt: integer("created_at", { mode: "timestamp" }).$defaultFn(() => new Date()),
-});
+});;
 
 // Post carousels table - carousels attached to LinkedIn posts
 export const postCarousels = sqliteTable("post_carousels", {

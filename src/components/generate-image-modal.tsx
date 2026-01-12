@@ -3,6 +3,11 @@
 import { useState, useEffect, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { getStoredPreferences } from "@/hooks/use-image-preferences";
+import {
+  POST_IMAGE_SIZES,
+  DEFAULT_POST_IMAGE_SIZE,
+  type PostImageSizeKey,
+} from "@/lib/linkedin-image-config";
 
 interface ImageIntent {
   id: string;
@@ -47,6 +52,7 @@ export function GenerateImageModal({
   const [negativePrompt, setNegativePrompt] = useState("");
   const [headlineText, setHeadlineText] = useState("");
   const [stylePreset, setStylePreset] = useState("typographic_minimal");
+  const [imageSize, setImageSize] = useState<PostImageSizeKey>(DEFAULT_POST_IMAGE_SIZE);
 
   // Generated image
   const [generatedImageUrl, setGeneratedImageUrl] = useState<string | null>(null);
@@ -149,6 +155,8 @@ export function GenerateImageModal({
         body: JSON.stringify({
           provider: prefs.provider,
           model: prefs.provider === "fal" ? prefs.falModel : prefs.openaiModel,
+          // Only pass imageSize for posts (articles have fixed dimensions)
+          ...(type === "post" && { imageSize }),
         }),
       });
 
@@ -213,7 +221,12 @@ export function GenerateImageModal({
                   <img
                     src={generatedImageUrl}
                     alt="Generated cover"
-                    className="w-full aspect-[1.91/1] object-cover"
+                    className="w-full object-cover"
+                    style={{
+                      aspectRatio: type === "post"
+                        ? `${POST_IMAGE_SIZES[imageSize].width}/${POST_IMAGE_SIZES[imageSize].height}`
+                        : "1200/644"
+                    }}
                   />
                   <div className="absolute top-3 right-3">
                     <span className="px-2 py-1 text-xs font-medium bg-green-500/90 text-white rounded-full">
@@ -294,6 +307,39 @@ export function GenerateImageModal({
                   ))}
                 </div>
               </div>
+
+              {/* Image Size - Only for posts */}
+              {type === "post" && (
+                <div>
+                  <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-3">
+                    Image Size
+                    <span className="text-neutral-400 font-normal ml-1">(LinkedIn recommended)</span>
+                  </label>
+                  <div className="grid grid-cols-3 gap-2">
+                    {(Object.entries(POST_IMAGE_SIZES) as [PostImageSizeKey, typeof POST_IMAGE_SIZES[PostImageSizeKey]][]).map(([key, size]) => (
+                      <button
+                        key={key}
+                        onClick={() => setImageSize(key)}
+                        className={`p-3 rounded-xl border-2 text-left transition-all ${
+                          imageSize === key
+                            ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20"
+                            : "border-neutral-200 dark:border-neutral-700 hover:border-neutral-300 dark:hover:border-neutral-600"
+                        }`}
+                      >
+                        <div className="font-medium text-sm text-neutral-900 dark:text-white">
+                          {size.label.split(" ")[0]}
+                        </div>
+                        <div className="text-xs text-neutral-500 mt-0.5">
+                          {size.width}×{size.height}
+                        </div>
+                        <div className="text-xs text-neutral-400 mt-0.5 line-clamp-1">
+                          {size.description}
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {/* Error Message */}
               {error && (

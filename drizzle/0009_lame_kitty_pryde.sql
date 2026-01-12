@@ -1,0 +1,1 @@
+ALTER TABLE `linkedin_posts` ADD `user_id` text;

@@ -9,6 +9,7 @@ import { uploadImage } from "@/lib/storage";
 import { getCurrentUser } from "@/lib/auth";
 import { incrementImageUsage, canGenerateImages } from "@/lib/usage";
 import { getActiveBrandStyle, composePromptWithBrandStyle, composeNegativeWithBrandStyle } from "@/lib/brand-styles";
+import { getPostImageDimensions, DEFAULT_POST_IMAGE_SIZE } from "@/lib/linkedin-image-config";
 
 interface RouteParams {
   params: Promise<{ intentId: string }>;
@@ -132,9 +133,10 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     const { intentId } = await params;
     console.log(`[PostImage] Intent ID: ${intentId}`);
     const body = await request.json();
-    const { provider, model } = body as {
+    const { provider, model, imageSize } = body as {
       provider?: T2IProviderType;
       model?: string;
+      imageSize?: "square" | "portrait" | "landscape";
     };
 
     // Check user and image usage limits
@@ -189,14 +191,17 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       console.log(`[PostImage] Skipping brand style - no authenticated user`);
     }
 
-    // Generate the background image (T2I is unreliable with text, so don't pass headline)
+    // Generate the background image using LinkedIn-optimized dimensions
+    // (T2I is unreliable with text, so don't pass headline - we overlay it ourselves)
+    const sizeKey = imageSize || DEFAULT_POST_IMAGE_SIZE;
+    const postDimensions = getPostImageDimensions(sizeKey);
     const result = await generateImage(
       {
         prompt: finalPrompt,
         negativePrompt: finalNegativePrompt,
         headlineText: "", // Don't include text in T2I prompt - we overlay it ourselves
         stylePreset: intent.stylePreset as StylePreset,
-        aspectRatio: "1.91:1",
+        aspectRatio: postDimensions.aspectRatio,
         quality: "hd",
       },
       provider,
@@ -232,8 +237,8 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
         console.log(`[PostImage] Overlaying text on cover image...`);
         const compositedBuffer = await overlayCoverTextFromUrl(result.imageUrl, {
           headline: intent.headlineText,
-          width: 1200,
-          height: 628,
+          width: postDimensions.width,
+          height: postDimensions.height,
         });
 
         // Upload to storage

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { getStoredPreferences } from "@/hooks/use-image-preferences";
 import { CarouselPreview } from "./carousel-preview";
@@ -30,6 +31,14 @@ interface CarouselStatus {
   pdfUrl?: string;
   generatedAt?: string;
   error?: string;
+  scheduledAt?: string | null;
+  autoPublish?: boolean;
+  status?: "pending" | "ready" | "scheduled" | "published";
+  linkedinPostUrn?: string | null;
+}
+
+interface ArticleScheduleInfo {
+  scheduledAt?: string | null;
 }
 
 export function CarouselButton({ articleId, isApproved }: CarouselButtonProps) {
@@ -42,13 +51,42 @@ export function CarouselButton({ articleId, isApproved }: CarouselButtonProps) {
   const [regeneratingSlide, setRegeneratingSlide] = useState<number | null>(null);
   const [versionHistorySlide, setVersionHistorySlide] = useState<number | null>(null);
 
-  // Fetch carousel status
+  // Scheduling state
+  const [showScheduleModal, setShowScheduleModal] = useState(false);
+  const [scheduleMode, setScheduleMode] = useState<"simultaneous" | "stagger">("simultaneous");
+  const [scheduleDate, setScheduleDate] = useState("");
+  const [scheduleTime, setScheduleTime] = useState("09:00");
+  const [isScheduling, setIsScheduling] = useState(false);
+  const [articleInfo, setArticleInfo] = useState<ArticleScheduleInfo | null>(null);
+
+  // Fetch carousel status and article info
   const fetchStatus = async () => {
     setIsLoading(true);
     try {
-      const res = await fetch(`/api/articles/${articleId}/carousel`);
-      const data = await res.json();
-      setStatus(data);
+      // Fetch carousel status
+      const carouselRes = await fetch(`/api/articles/${articleId}/carousel`);
+      const carouselData = await carouselRes.json();
+
+      // If carousel exists, also fetch schedule info
+      if (carouselData.exists) {
+        const scheduleRes = await fetch(`/api/articles/${articleId}/carousel/schedule`);
+        if (scheduleRes.ok) {
+          const scheduleData = await scheduleRes.json();
+          carouselData.scheduledAt = scheduleData.scheduledAt;
+          carouselData.autoPublish = scheduleData.autoPublish;
+          carouselData.status = scheduleData.status;
+          carouselData.linkedinPostUrn = scheduleData.linkedinPostUrn;
+        }
+      }
+
+      setStatus(carouselData);
+
+      // Fetch article schedule info for simultaneous scheduling option
+      const articleRes = await fetch(`/api/articles/${articleId}`);
+      if (articleRes.ok) {
+        const articleData = await articleRes.json();
+        setArticleInfo({ scheduledAt: articleData.scheduledAt });
+      }
     } catch (err) {
       console.error("Failed to fetch carousel status:", err);
     } finally {
@@ -160,6 +198,104 @@ export function CarouselButton({ articleId, isApproved }: CarouselButtonProps) {
       setError(err instanceof Error ? err.message : "Slide regeneration failed");
     } finally {
       setRegeneratingSlide(null);
+    }
+  };
+
+  // Schedule carousel
+  const handleSchedule = async () => {
+    // For simultaneous mode, article must be scheduled first
+    if (scheduleMode === "simultaneous" && !articleInfo?.scheduledAt) {
+      setError("Schedule the article first to use simultaneous scheduling");
+      return;
+    }
+
+    // For stagger mode, date/time must be provided
+    if (scheduleMode === "stagger" && (!scheduleDate || !scheduleTime)) {
+      return;
+    }
+
+    setIsScheduling(true);
+    setError(null);
+    try {
+      const requestBody = scheduleMode === "simultaneous"
+        ? { sharedSchedule: true, autoPublish: true }
+        : { scheduledAt: new Date(`${scheduleDate}T${scheduleTime}`).toISOString(), autoPublish: true };
+
+      const res = await fetch(`/api/articles/${articleId}/carousel/schedule`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(requestBody),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to schedule carousel");
+      }
+
+      setStatus(prev => prev ? {
+        ...prev,
+        scheduledAt: data.scheduledAt,
+        autoPublish: data.autoPublish,
+        status: data.status,
+      } : prev);
+      setShowScheduleModal(false);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to schedule carousel");
+    } finally {
+      setIsScheduling(false);
+    }
+  };
+
+  // Unschedule carousel
+  const handleUnschedule = async () => {
+    setIsScheduling(true);
+    setError(null);
+    try {
+      const res = await fetch(`/api/articles/${articleId}/carousel/schedule`, {
+        method: "DELETE",
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to unschedule carousel");
+      }
+
+      setStatus(prev => prev ? {
+        ...prev,
+        scheduledAt: null,
+        autoPublish: false,
+        status: data.status,
+      } : prev);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to unschedule carousel");
+    } finally {
+      setIsScheduling(false);
+    }
+  };
+
+  // Publish carousel immediately
+  const handlePublishNow = async () => {
+    setIsScheduling(true);
+    setError(null);
+    try {
+      const res = await fetch(`/api/articles/${articleId}/carousel/publish`, {
+        method: "POST",
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to publish carousel");
+      }
+
+      setStatus(prev => prev ? {
+        ...prev,
+        status: "published",
+        linkedinPostUrn: data.linkedinPostUrn,
+      } : prev);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to publish carousel");
+    } finally {
+      setIsScheduling(false);
     }
   };
 
@@ -288,6 +424,88 @@ export function CarouselButton({ articleId, isApproved }: CarouselButtonProps) {
                     regeneratingSlide={regeneratingSlide}
                     onViewVersions={(slideNumber) => setVersionHistorySlide(slideNumber)}
                   />
+
+                  {/* Schedule/Publish Section */}
+                  <div className="pt-3 mt-3 border-t border-amber-200 dark:border-amber-800/50 space-y-3">
+                    {/* Published status */}
+                    {status?.status === "published" && status.linkedinPostUrn && (
+                      <div className="flex items-center justify-between p-3 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 rounded-lg">
+                        <div className="flex items-center gap-2">
+                          <svg className="w-5 h-5 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                          </svg>
+                          <span className="text-sm font-medium text-emerald-700 dark:text-emerald-300">
+                            Published to LinkedIn
+                          </span>
+                        </div>
+                        <a
+                          href={`https://www.linkedin.com/feed/update/${status.linkedinPostUrn}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-sm text-emerald-600 hover:text-emerald-700 underline"
+                        >
+                          View →
+                        </a>
+                      </div>
+                    )}
+
+                    {/* Scheduled status */}
+                    {status?.status === "scheduled" && status.scheduledAt && (
+                      <div className="flex items-center justify-between p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg">
+                        <div className="flex items-center gap-2">
+                          <svg className="w-5 h-5 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                          <span className="text-sm font-medium text-amber-700 dark:text-amber-300">
+                            Scheduled: {new Date(status.scheduledAt).toLocaleString()}
+                          </span>
+                        </div>
+                        <button
+                          onClick={handleUnschedule}
+                          disabled={isScheduling}
+                          className="text-sm text-amber-600 hover:text-amber-700 underline disabled:opacity-50"
+                        >
+                          {isScheduling ? "..." : "Unschedule"}
+                        </button>
+                      </div>
+                    )}
+
+                    {/* Schedule/Publish buttons (only when not published or scheduled) */}
+                    {status?.status !== "published" && status?.status !== "scheduled" && (
+                      <div className="flex items-center gap-3">
+                        <button
+                          onClick={() => setShowScheduleModal(true)}
+                          className="inline-flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-amber-700 dark:text-amber-300 bg-amber-100 dark:bg-amber-900/30 hover:bg-amber-200 dark:hover:bg-amber-900/50 rounded-lg transition-colors"
+                        >
+                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                          </svg>
+                          Schedule
+                        </button>
+                        <button
+                          onClick={handlePublishNow}
+                          disabled={isScheduling}
+                          className="inline-flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-white bg-blue-600 hover:bg-blue-500 rounded-lg transition-colors disabled:opacity-50"
+                        >
+                          <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M19 3a2 2 0 012 2v14a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h14m-.5 15.5v-5.3a3.26 3.26 0 00-3.26-3.26c-.85 0-1.84.52-2.32 1.3v-1.11h-2.79v8.37h2.79v-4.93c0-.77.62-1.4 1.39-1.4a1.4 1.4 0 011.4 1.4v4.93h2.79M6.88 8.56a1.68 1.68 0 001.68-1.68c0-.93-.75-1.69-1.68-1.69a1.69 1.69 0 00-1.69 1.69c0 .93.76 1.68 1.69 1.68m1.39 9.94v-8.37H5.5v8.37h2.77z" />
+                          </svg>
+                          {isScheduling ? "Publishing..." : "Publish Now"}
+                        </button>
+                      </div>
+                    )}
+
+                    {/* Link to full page for more options */}
+                    <Link
+                      href={`/article/${articleId}?tab=carousel`}
+                      className="inline-flex items-center gap-1 text-xs text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-300 transition-colors"
+                    >
+                      Open full page
+                      <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                      </svg>
+                    </Link>
+                  </div>
                 </div>
               ) : !isLoading && isApproved ? (
                 /* No carousel - show generate button */
@@ -340,6 +558,142 @@ export function CarouselButton({ articleId, isApproved }: CarouselButtonProps) {
         onClose={() => setVersionHistorySlide(null)}
         onVersionActivated={fetchStatus}
       />
+
+      {/* Schedule Modal */}
+      {showScheduleModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white dark:bg-zinc-900 rounded-xl p-6 w-full max-w-md mx-4 shadow-xl">
+            <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100 mb-4">
+              Schedule Carousel
+            </h3>
+
+            <div className="space-y-4">
+              {/* Schedule Mode Selection */}
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                  When to publish
+                </label>
+                <div className="space-y-2">
+                  <label className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${
+                    scheduleMode === "simultaneous"
+                      ? "border-amber-500 bg-amber-50 dark:bg-amber-900/20"
+                      : "border-zinc-200 dark:border-zinc-700 hover:border-zinc-300 dark:hover:border-zinc-600"
+                  }`}>
+                    <input
+                      type="radio"
+                      name="scheduleMode"
+                      value="simultaneous"
+                      checked={scheduleMode === "simultaneous"}
+                      onChange={() => setScheduleMode("simultaneous")}
+                      className="mt-0.5 accent-amber-600"
+                    />
+                    <div>
+                      <p className="font-medium text-zinc-900 dark:text-zinc-100">
+                        Simultaneous
+                      </p>
+                      <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                        Publish at the same time as the article
+                        {articleInfo?.scheduledAt ? (
+                          <span className="text-amber-600 dark:text-amber-400">
+                            {" "}({new Date(articleInfo.scheduledAt).toLocaleString()})
+                          </span>
+                        ) : (
+                          <span className="text-red-500"> (Article not scheduled)</span>
+                        )}
+                      </p>
+                    </div>
+                  </label>
+
+                  <label className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${
+                    scheduleMode === "stagger"
+                      ? "border-amber-500 bg-amber-50 dark:bg-amber-900/20"
+                      : "border-zinc-200 dark:border-zinc-700 hover:border-zinc-300 dark:hover:border-zinc-600"
+                  }`}>
+                    <input
+                      type="radio"
+                      name="scheduleMode"
+                      value="stagger"
+                      checked={scheduleMode === "stagger"}
+                      onChange={() => setScheduleMode("stagger")}
+                      className="mt-0.5 accent-amber-600"
+                    />
+                    <div>
+                      <p className="font-medium text-zinc-900 dark:text-zinc-100">
+                        Stagger
+                      </p>
+                      <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                        Choose a specific date and time
+                      </p>
+                    </div>
+                  </label>
+                </div>
+              </div>
+
+              {/* Date/Time Picker (only for stagger mode) */}
+              {scheduleMode === "stagger" && (
+                <div className="space-y-3 pt-2">
+                  <div>
+                    <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
+                      Date
+                    </label>
+                    <input
+                      type="date"
+                      value={scheduleDate}
+                      onChange={(e) => setScheduleDate(e.target.value)}
+                      min={new Date().toISOString().split("T")[0]}
+                      className="w-full px-3 py-2 border border-zinc-300 dark:border-zinc-700 rounded-lg bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-amber-500"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
+                      Time
+                    </label>
+                    <input
+                      type="time"
+                      value={scheduleTime}
+                      onChange={(e) => setScheduleTime(e.target.value)}
+                      className="w-full px-3 py-2 border border-zinc-300 dark:border-zinc-700 rounded-lg bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-amber-500"
+                    />
+                    <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">
+                      {Intl.DateTimeFormat().resolvedOptions().timeZone}
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              <div className="flex items-center gap-2 p-3 bg-amber-50 dark:bg-amber-900/20 rounded-lg">
+                <svg className="w-5 h-5 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                </svg>
+                <span className="text-sm text-amber-700 dark:text-amber-300">
+                  Auto-publish enabled
+                </span>
+              </div>
+            </div>
+
+            <div className="flex gap-3 mt-6">
+              <button
+                onClick={() => setShowScheduleModal(false)}
+                className="flex-1 px-4 py-2 text-sm font-medium text-zinc-700 dark:text-zinc-300 bg-zinc-200 dark:bg-zinc-800 rounded-lg hover:bg-zinc-300 dark:hover:bg-zinc-700 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSchedule}
+                disabled={
+                  isScheduling ||
+                  (scheduleMode === "simultaneous" && !articleInfo?.scheduledAt) ||
+                  (scheduleMode === "stagger" && !scheduleDate)
+                }
+                className="flex-1 px-4 py-2 text-sm font-medium text-white bg-amber-600 rounded-lg hover:bg-amber-500 transition-colors disabled:opacity-50"
+              >
+                {isScheduling ? "Scheduling..." : "Schedule"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
