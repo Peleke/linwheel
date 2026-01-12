@@ -135,6 +135,10 @@ export default function ArticleEditPage({
   const [publishError, setPublishError] = useState<string | null>(null);
   const [linkedinPostUrn, setLinkedinPostUrn] = useState<string | null>(null);
 
+  // Native article publishing state
+  const [isPublishingNative, setIsPublishingNative] = useState(false);
+  const [nativePublishError, setNativePublishError] = useState<string | null>(null);
+
   // User profile state
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
 
@@ -402,6 +406,42 @@ export default function ArticleEditPage({
       setPublishError("Failed to publish article");
     } finally {
       setIsPublishing(false);
+    }
+  };
+
+  const handlePublishNative = async () => {
+    setIsPublishingNative(true);
+    setNativePublishError(null);
+    setError(null);
+
+    try {
+      // First save any changes
+      await handleSave();
+
+      const res = await fetch(`/api/articles/${articleId}/publish-native`, {
+        method: "POST",
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        if (data.code === "COOKIE_REQUIRED") {
+          setNativePublishError("Please add your LinkedIn session cookie in Settings to publish native articles.");
+        } else if (data.code === "COOKIE_EXPIRED") {
+          setNativePublishError("Your LinkedIn session has expired. Please update your li_at cookie in Settings.");
+        } else {
+          setNativePublishError(data.error || "Failed to publish native article");
+        }
+        return;
+      }
+
+      setLinkedinPostUrn(data.articleUrl);
+      setSuccessMessage("Native LinkedIn article published!");
+    } catch (err) {
+      console.error("Native publish error:", err);
+      setNativePublishError("Failed to publish native article. Browser automation may not be available.");
+    } finally {
+      setIsPublishingNative(false);
     }
   };
 
@@ -829,33 +869,78 @@ export default function ArticleEditPage({
                 {isSaving ? "Saving..." : "Save"}
               </button>
 
-              {/* Create Article on LinkedIn */}
-              <div className="relative group">
+              {/* Native Article Publishing */}
+              {!linkedinPostUrn && article?.approved && (
+                <div className="relative group">
+                  <button
+                    onClick={handlePublishNative}
+                    disabled={isPublishingNative || !title.trim()}
+                    className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium bg-blue-600 hover:bg-blue-500 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {isPublishingNative ? (
+                      <>
+                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                        Publishing...
+                      </>
+                    ) : (
+                      <>
+                        <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+                          <path d="M19 3a2 2 0 012 2v14a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h14m-.5 15.5v-5.3a3.26 3.26 0 00-3.26-3.26c-.85 0-1.84.52-2.32 1.3v-1.11h-2.79v8.37h2.79v-4.93c0-.77.62-1.4 1.39-1.4a1.4 1.4 0 011.4 1.4v4.93h2.79M6.88 8.56a1.68 1.68 0 001.68-1.68c0-.93-.75-1.69-1.68-1.69a1.69 1.69 0 00-1.69 1.69c0 .93.76 1.68 1.69 1.68m1.39 9.94v-8.37H5.5v8.37h2.77z" />
+                        </svg>
+                        Publish Article
+                      </>
+                    )}
+                  </button>
+                  {/* Info tooltip */}
+                  <div className="absolute -right-6 top-1/2 -translate-y-1/2">
+                    <div className="relative group/tooltip">
+                      <svg className="w-4 h-4 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 cursor-help" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      <div className="absolute bottom-full right-0 mb-2 w-72 p-3 bg-zinc-900 dark:bg-zinc-800 text-white text-xs rounded-lg shadow-lg opacity-0 invisible group-hover/tooltip:opacity-100 group-hover/tooltip:visible transition-all z-50">
+                        <p className="mb-1 font-medium">Native Article Publishing (Beta)</p>
+                        <p className="text-zinc-300 mb-2">Uses browser automation to publish as a native LinkedIn article. Requires your li_at session cookie configured in Settings.</p>
+                        <p className="text-zinc-400 text-[10px]">Note: This may take 30-60 seconds to complete.</p>
+                        <div className="absolute bottom-0 right-4 translate-y-1/2 rotate-45 w-2 h-2 bg-zinc-900 dark:bg-zinc-800"></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Manual LinkedIn article creation (fallback) */}
+              {!linkedinPostUrn && (
                 <a
                   href="https://www.linkedin.com/article/new/"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium bg-blue-600 hover:bg-blue-500 text-white rounded-lg transition-colors"
+                  className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors"
+                  title="Open LinkedIn article editor manually"
                 >
-                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M19 3a2 2 0 012 2v14a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h14m-.5 15.5v-5.3a3.26 3.26 0 00-3.26-3.26c-.85 0-1.84.52-2.32 1.3v-1.11h-2.79v8.37h2.79v-4.93c0-.77.62-1.4 1.39-1.4a1.4 1.4 0 011.4 1.4v4.93h2.79M6.88 8.56a1.68 1.68 0 001.68-1.68c0-.93-.75-1.69-1.68-1.69a1.69 1.69 0 00-1.69 1.69c0 .93.76 1.68 1.69 1.68m1.39 9.94v-8.37H5.5v8.37h2.77z" />
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
                   </svg>
-                  Create on LinkedIn
+                  Manual
                 </a>
-                {/* Info icon with tooltip */}
-                <div className="absolute -right-6 top-1/2 -translate-y-1/2">
-                  <div className="relative group/tooltip">
-                    <svg className="w-4 h-4 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 cursor-help" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    <div className="absolute bottom-full right-0 mb-2 w-64 p-3 bg-zinc-900 dark:bg-zinc-800 text-white text-xs rounded-lg shadow-lg opacity-0 invisible group-hover/tooltip:opacity-100 group-hover/tooltip:visible transition-all z-50">
-                      <p className="mb-1 font-medium">Why can&apos;t we auto-publish articles?</p>
-                      <p className="text-zinc-300">LinkedIn&apos;s API only supports creating posts, not native long-form articles. To publish as a full article, you&apos;ll need to create it directly on LinkedIn and paste your content.</p>
-                      <div className="absolute bottom-0 right-4 translate-y-1/2 rotate-45 w-2 h-2 bg-zinc-900 dark:bg-zinc-800"></div>
-                    </div>
-                  </div>
-                </div>
-              </div>
+              )}
+
+              {/* Published badge */}
+              {linkedinPostUrn && (
+                <a
+                  href={linkedinPostUrn}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 rounded-lg hover:bg-emerald-200 dark:hover:bg-emerald-900/50 transition-colors"
+                >
+                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                  </svg>
+                  Published
+                  <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                  </svg>
+                </a>
+              )}
 
               {!isScheduled && (
                 <button
@@ -909,6 +994,17 @@ export default function ArticleEditPage({
                   <path d="M19 3a2 2 0 012 2v14a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h14m-.5 15.5v-5.3a3.26 3.26 0 00-3.26-3.26c-.85 0-1.84.52-2.32 1.3v-1.11h-2.79v8.37h2.79v-4.93c0-.77.62-1.4 1.39-1.4a1.4 1.4 0 011.4 1.4v4.93h2.79M6.88 8.56a1.68 1.68 0 001.68-1.68c0-.93-.75-1.69-1.68-1.69a1.69 1.69 0 00-1.69 1.69c0 .93.76 1.68 1.69 1.68m1.39 9.94v-8.37H5.5v8.37h2.77z" />
                 </svg>
                 {publishError}
+              </p>
+            </div>
+          )}
+
+          {nativePublishError && (
+            <div className="mb-4 p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg">
+              <p className="text-sm text-amber-700 dark:text-amber-300 flex items-center gap-2">
+                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M19 3a2 2 0 012 2v14a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h14m-.5 15.5v-5.3a3.26 3.26 0 00-3.26-3.26c-.85 0-1.84.52-2.32 1.3v-1.11h-2.79v8.37h2.79v-4.93c0-.77.62-1.4 1.39-1.4a1.4 1.4 0 011.4 1.4v4.93h2.79M6.88 8.56a1.68 1.68 0 001.68-1.68c0-.93-.75-1.69-1.68-1.69a1.69 1.69 0 00-1.69 1.69c0 .93.76 1.68 1.69 1.68m1.39 9.94v-8.37H5.5v8.37h2.77z" />
+                </svg>
+                {nativePublishError}
               </p>
             </div>
           )}

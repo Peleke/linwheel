@@ -9,6 +9,8 @@ interface LinkedInStatus {
   profilePicture: string | null;
   expiresAt: string | null;
   isExpired: boolean;
+  hasLiAtCookie: boolean;
+  liAtCookieUpdatedAt: string | null;
 }
 
 export function LinkedInConnection() {
@@ -17,6 +19,11 @@ export function LinkedInConnection() {
   const [isDisconnecting, setIsDisconnecting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+
+  // Native article publishing (li_at cookie)
+  const [showCookieSection, setShowCookieSection] = useState(false);
+  const [cookieValue, setCookieValue] = useState("");
+  const [isSavingCookie, setIsSavingCookie] = useState(false);
 
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -97,7 +104,7 @@ export function LinkedInConnection() {
       });
 
       if (res.ok) {
-        setStatus({ connected: false, profileName: null, profilePicture: null, expiresAt: null, isExpired: false });
+        setStatus({ connected: false, profileName: null, profilePicture: null, expiresAt: null, isExpired: false, hasLiAtCookie: false, liAtCookieUpdatedAt: null });
         setSuccessMessage("LinkedIn account disconnected.");
       } else {
         const data = await res.json();
@@ -108,6 +115,62 @@ export function LinkedInConnection() {
       setError("Failed to disconnect. Please try again.");
     } finally {
       setIsDisconnecting(false);
+    }
+  };
+
+  const handleSaveCookie = async () => {
+    if (!cookieValue.trim()) return;
+
+    setIsSavingCookie(true);
+    setError(null);
+
+    try {
+      const res = await fetch("/api/auth/linkedin/cookie", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ cookie: cookieValue.trim() }),
+      });
+
+      if (res.ok) {
+        setSuccessMessage("LinkedIn session cookie saved! You can now publish native articles.");
+        setCookieValue("");
+        setShowCookieSection(false);
+        await fetchStatus();
+      } else {
+        const data = await res.json();
+        setError(data.error || "Failed to save cookie.");
+      }
+    } catch (err) {
+      console.error("Failed to save cookie:", err);
+      setError("Failed to save cookie. Please try again.");
+    } finally {
+      setIsSavingCookie(false);
+    }
+  };
+
+  const handleRemoveCookie = async () => {
+    if (!confirm("Remove your LinkedIn session cookie? You won't be able to publish native articles until you add it again.")) return;
+
+    setIsSavingCookie(true);
+    setError(null);
+
+    try {
+      const res = await fetch("/api/auth/linkedin/cookie", {
+        method: "DELETE",
+      });
+
+      if (res.ok) {
+        setSuccessMessage("LinkedIn session cookie removed.");
+        await fetchStatus();
+      } else {
+        const data = await res.json();
+        setError(data.error || "Failed to remove cookie.");
+      }
+    } catch (err) {
+      console.error("Failed to remove cookie:", err);
+      setError("Failed to remove cookie. Please try again.");
+    } finally {
+      setIsSavingCookie(false);
     }
   };
 
@@ -249,6 +312,137 @@ export function LinkedInConnection() {
             <span className="font-medium text-zinc-600 dark:text-zinc-400">Why connect?</span>{" "}
             Connecting your LinkedIn account lets you publish approved posts directly with one click. We only request permission to post on your behalf.
           </p>
+        </div>
+      )}
+
+      {/* Native Article Publishing Section */}
+      {status?.connected && !status.isExpired && (
+        <div className="mt-6 pt-6 border-t border-zinc-200 dark:border-zinc-700">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <h4 className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
+                Native Article Publishing
+              </h4>
+              <span className="px-1.5 py-0.5 text-xs font-medium bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 rounded">
+                Beta
+              </span>
+            </div>
+            {status.hasLiAtCookie && (
+              <span className="flex items-center gap-1 text-xs text-emerald-600 dark:text-emerald-400">
+                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                </svg>
+                Configured
+              </span>
+            )}
+          </div>
+
+          <p className="text-xs text-zinc-500 dark:text-zinc-400 mb-3">
+            LinkedIn&apos;s API doesn&apos;t support publishing native long-form articles. To enable automatic article publishing, you can provide your browser session cookie.
+          </p>
+
+          {status.hasLiAtCookie ? (
+            <div className="p-3 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 rounded-lg">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-emerald-800 dark:text-emerald-200">
+                    Session cookie configured
+                  </p>
+                  <p className="text-xs text-emerald-600 dark:text-emerald-400">
+                    {status.liAtCookieUpdatedAt
+                      ? `Last updated ${new Date(status.liAtCookieUpdatedAt).toLocaleDateString()}`
+                      : "Ready for native article publishing"}
+                  </p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setShowCookieSection(true)}
+                    className="px-3 py-1.5 text-xs font-medium text-zinc-700 dark:text-zinc-300 bg-zinc-200 dark:bg-zinc-700 rounded-lg hover:bg-zinc-300 dark:hover:bg-zinc-600 transition-colors"
+                  >
+                    Update
+                  </button>
+                  <button
+                    onClick={handleRemoveCookie}
+                    disabled={isSavingCookie}
+                    className="px-3 py-1.5 text-xs font-medium text-red-700 dark:text-red-300 bg-red-100 dark:bg-red-900/30 rounded-lg hover:bg-red-200 dark:hover:bg-red-900/50 transition-colors disabled:opacity-50"
+                  >
+                    Remove
+                  </button>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <button
+              onClick={() => setShowCookieSection(!showCookieSection)}
+              className="w-full px-4 py-2 text-sm font-medium text-zinc-700 dark:text-zinc-300 bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors text-left flex items-center justify-between"
+            >
+              <span>Set up native article publishing</span>
+              <svg className={`w-4 h-4 transition-transform ${showCookieSection ? "rotate-180" : ""}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+              </svg>
+            </button>
+          )}
+
+          {showCookieSection && (
+            <div className="mt-4 p-4 bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700 rounded-lg space-y-4">
+              <div>
+                <h5 className="text-sm font-medium text-zinc-900 dark:text-zinc-100 mb-2">
+                  How to get your LinkedIn session cookie:
+                </h5>
+                <ol className="text-xs text-zinc-600 dark:text-zinc-400 space-y-1.5 list-decimal list-inside">
+                  <li>Open <a href="https://www.linkedin.com" target="_blank" rel="noopener noreferrer" className="text-blue-600 dark:text-blue-400 hover:underline">linkedin.com</a> in your browser and make sure you&apos;re logged in</li>
+                  <li>Open Developer Tools (F12 or Cmd+Option+I)</li>
+                  <li>Go to Application tab → Cookies → linkedin.com</li>
+                  <li>Find the cookie named <code className="px-1 py-0.5 bg-zinc-200 dark:bg-zinc-700 rounded text-zinc-800 dark:text-zinc-200">li_at</code></li>
+                  <li>Copy its value and paste below</li>
+                </ol>
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-zinc-700 dark:text-zinc-300 mb-1.5">
+                  li_at cookie value
+                </label>
+                <input
+                  type="password"
+                  value={cookieValue}
+                  onChange={(e) => setCookieValue(e.target.value)}
+                  placeholder="Paste your li_at cookie value here..."
+                  className="w-full px-3 py-2 text-sm bg-white dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
+                />
+                <p className="mt-1 text-xs text-zinc-500">
+                  This cookie expires periodically. You may need to update it if publishing fails.
+                </p>
+              </div>
+
+              <div className="flex items-center gap-2 pt-2">
+                <button
+                  onClick={handleSaveCookie}
+                  disabled={isSavingCookie || !cookieValue.trim()}
+                  className="px-4 py-2 text-sm font-medium bg-blue-600 text-white rounded-lg hover:bg-blue-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isSavingCookie ? "Saving..." : "Save Cookie"}
+                </button>
+                <button
+                  onClick={() => {
+                    setShowCookieSection(false);
+                    setCookieValue("");
+                  }}
+                  className="px-4 py-2 text-sm font-medium text-zinc-700 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors"
+                >
+                  Cancel
+                </button>
+              </div>
+
+              <div className="pt-2 border-t border-zinc-200 dark:border-zinc-700">
+                <p className="text-xs text-amber-600 dark:text-amber-400 flex items-start gap-1.5">
+                  <svg className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                  </svg>
+                  <span>Your cookie is encrypted and stored securely. It&apos;s only used to publish articles on your behalf. Never share your cookie with others.</span>
+                </p>
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>
