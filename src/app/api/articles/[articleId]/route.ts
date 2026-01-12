@@ -60,7 +60,10 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       fullText: article.fullText,
       versionNumber: article.versionNumber,
       approved: article.approved,
+      autoPublish: article.autoPublish,
       scheduledAt: safeToISOString(article.scheduledAt),
+      linkedinPostUrn: article.linkedinPostUrn,
+      linkedinPublishedAt: safeToISOString(article.linkedinPublishedAt),
       imageIntent: intent
         ? {
             id: intent.id,

@@ -28,7 +28,10 @@ interface ArticleData {
   fullText: string;
   versionNumber: number | null;
   approved: boolean;
+  autoPublish: boolean | null;
   scheduledAt: string | null;
+  linkedinPostUrn: string | null;
+  linkedinPublishedAt: string | null;
   imageIntent: {
     id: string;
     headlineText: string;
@@ -79,6 +82,11 @@ export default function ArticleEditPage({
   const [isDeletingImage, setIsDeletingImage] = useState(false);
   const [imageError, setImageError] = useState<string | null>(null);
 
+  // Publishing state
+  const [isPublishing, setIsPublishing] = useState(false);
+  const [publishError, setPublishError] = useState<string | null>(null);
+  const [linkedinPostUrn, setLinkedinPostUrn] = useState<string | null>(null);
+
   // User profile state
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
 
@@ -121,6 +129,7 @@ export default function ArticleEditPage({
         setConclusion(data.conclusion);
         setIsScheduled(!!data.scheduledAt);
         setScheduledAt(data.scheduledAt);
+        setLinkedinPostUrn(data.linkedinPostUrn);
 
         // Load cover image settings
         const imageRes = await fetch(`/api/articles/${articleId}/cover-image`);
@@ -321,6 +330,33 @@ export default function ArticleEditPage({
     }
   };
 
+  const handlePublish = async () => {
+    setIsPublishing(true);
+    setPublishError(null);
+    setError(null);
+
+    try {
+      const res = await fetch(`/api/articles/${articleId}/publish-linkedin`, {
+        method: "POST",
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setPublishError(data.error || "Failed to publish");
+        return;
+      }
+
+      setLinkedinPostUrn(data.postUrn);
+      setSuccessMessage("Article published to LinkedIn!");
+    } catch (err) {
+      console.error("Publish error:", err);
+      setPublishError("Failed to publish article");
+    } finally {
+      setIsPublishing(false);
+    }
+  };
+
   const handleDelete = async () => {
     setIsDeleting(true);
     setError(null);
@@ -458,6 +494,40 @@ export default function ArticleEditPage({
                 {isSaving ? "Saving..." : "Save"}
               </button>
 
+              {/* Publish Now or View on LinkedIn */}
+              {linkedinPostUrn ? (
+                <a
+                  href={`https://www.linkedin.com/feed/update/${linkedinPostUrn}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-lg transition-colors hover:bg-blue-200 dark:hover:bg-blue-900/50"
+                >
+                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M19 3a2 2 0 012 2v14a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h14m-.5 15.5v-5.3a3.26 3.26 0 00-3.26-3.26c-.85 0-1.84.52-2.32 1.3v-1.11h-2.79v8.37h2.79v-4.93c0-.77.62-1.4 1.39-1.4a1.4 1.4 0 011.4 1.4v4.93h2.79M6.88 8.56a1.68 1.68 0 001.68-1.68c0-.93-.75-1.69-1.68-1.69a1.69 1.69 0 00-1.69 1.69c0 .93.76 1.68 1.69 1.68m1.39 9.94v-8.37H5.5v8.37h2.77z" />
+                  </svg>
+                  View on LinkedIn
+                </a>
+              ) : (
+                <button
+                  onClick={handlePublish}
+                  disabled={isPublishing || !title.trim()}
+                  className={`flex items-center gap-1.5 px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+                    isPublishing
+                      ? "bg-blue-300 text-white cursor-wait"
+                      : "bg-blue-600 hover:bg-blue-500 text-white"
+                  } disabled:opacity-50 disabled:cursor-not-allowed`}
+                >
+                  {isPublishing ? (
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  ) : (
+                    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M19 3a2 2 0 012 2v14a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h14m-.5 15.5v-5.3a3.26 3.26 0 00-3.26-3.26c-.85 0-1.84.52-2.32 1.3v-1.11h-2.79v8.37h2.79v-4.93c0-.77.62-1.4 1.39-1.4a1.4 1.4 0 011.4 1.4v4.93h2.79M6.88 8.56a1.68 1.68 0 001.68-1.68c0-.93-.75-1.69-1.68-1.69a1.69 1.69 0 00-1.69 1.69c0 .93.76 1.68 1.69 1.68m1.39 9.94v-8.37H5.5v8.37h2.77z" />
+                    </svg>
+                  )}
+                  {isPublishing ? "Publishing..." : "Publish Now"}
+                </button>
+              )}
+
               {!isScheduled && (
                 <button
                   onClick={() => {
@@ -499,6 +569,17 @@ export default function ArticleEditPage({
                   <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
                 {error}
+              </p>
+            </div>
+          )}
+
+          {publishError && (
+            <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+              <p className="text-sm text-red-700 dark:text-red-300 flex items-center gap-2">
+                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M19 3a2 2 0 012 2v14a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h14m-.5 15.5v-5.3a3.26 3.26 0 00-3.26-3.26c-.85 0-1.84.52-2.32 1.3v-1.11h-2.79v8.37h2.79v-4.93c0-.77.62-1.4 1.39-1.4a1.4 1.4 0 011.4 1.4v4.93h2.79M6.88 8.56a1.68 1.68 0 001.68-1.68c0-.93-.75-1.69-1.68-1.69a1.69 1.69 0 00-1.69 1.69c0 .93.76 1.68 1.69 1.68m1.39 9.94v-8.37H5.5v8.37h2.77z" />
+                </svg>
+                {publishError}
               </p>
             </div>
           )}
