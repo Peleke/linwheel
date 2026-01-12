@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, use } from "react";
 import { useRouter } from "next/navigation";
 import { AppHeader } from "@/components/app-header";
 import Image from "next/image";
+import ReactMarkdown from "react-markdown";
 
 interface UserProfile {
   id: string;
@@ -143,16 +144,15 @@ export default function ArticleEditPage({
     setError(null);
 
     try {
-      // Build the full text from parts
+      // Build the full text from parts (sections already contain their own headings)
       const fullText = [
         `# ${title}`,
         subtitle ? `*${subtitle}*` : "",
         "",
         introduction,
         "",
-        ...sections.map((s, i) => `## Section ${i + 1}\n${s}`),
+        ...sections.filter(Boolean),
         "",
-        "## Conclusion",
         conclusion,
       ].filter(Boolean).join("\n\n");
 
@@ -619,24 +619,24 @@ export default function ArticleEditPage({
 
                 {/* Introduction */}
                 {introduction && (
-                  <div className="mb-6 whitespace-pre-wrap">{introduction}</div>
+                  <div className="mb-6 prose prose-zinc dark:prose-invert max-w-none">
+                    <ReactMarkdown>{introduction}</ReactMarkdown>
+                  </div>
                 )}
 
                 {/* Sections */}
                 {sections.map((section, index) => (
                   section && (
-                    <div key={index} className="mb-6">
-                      <h2 className="text-xl font-semibold mb-2">Section {index + 1}</h2>
-                      <div className="whitespace-pre-wrap">{section}</div>
+                    <div key={index} className="mb-6 prose prose-zinc dark:prose-invert max-w-none">
+                      <ReactMarkdown>{section}</ReactMarkdown>
                     </div>
                   )
                 ))}
 
                 {/* Conclusion */}
                 {conclusion && (
-                  <div className="mb-6">
-                    <h2 className="text-xl font-semibold mb-2">Conclusion</h2>
-                    <div className="whitespace-pre-wrap">{conclusion}</div>
+                  <div className="mb-6 prose prose-zinc dark:prose-invert max-w-none">
+                    <ReactMarkdown>{conclusion}</ReactMarkdown>
                   </div>
                 )}
               </article>

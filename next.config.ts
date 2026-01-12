@@ -16,6 +16,15 @@ const nextConfig: NextConfig = {
         protocol: "https",
         hostname: "*.supabase.co",
       },
+      // LinkedIn profile pictures
+      {
+        protocol: "https",
+        hostname: "media.licdn.com",
+      },
+      {
+        protocol: "https",
+        hostname: "*.licdn.com",
+      },
     ],
   },
   // Include font files in serverless function bundles for Satori text overlay
