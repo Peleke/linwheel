@@ -12,10 +12,6 @@
     {
       "path": "/api/cron/content-reminders",
       "schedule": "0 9 * * *"
-    },
-    {
-      "path": "/api/cron/auto-publish",
-      "schedule": "*/5 * * * *"
     }
   ]
 }
