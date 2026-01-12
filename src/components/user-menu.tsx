@@ -13,7 +13,22 @@ export function UserMenu({ user }: UserMenuProps) {
   const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [profilePicture, setProfilePicture] = useState<string | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
+
+  // Fetch LinkedIn profile picture if connected
+  useEffect(() => {
+    if (!user) return;
+
+    fetch("/api/auth/linkedin/status")
+      .then((res) => res.ok ? res.json() : null)
+      .then((data) => {
+        if (data?.profilePicture) {
+          setProfilePicture(data.profilePicture);
+        }
+      })
+      .catch(() => {});
+  }, [user]);
 
   // Close menu when clicking outside
   useEffect(() => {
@@ -59,9 +74,17 @@ export function UserMenu({ user }: UserMenuProps) {
         className="flex items-center gap-2 text-sm font-medium text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white transition-colors"
       >
         {/* Avatar */}
-        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white text-xs font-bold">
-          {initials}
-        </div>
+        {profilePicture ? (
+          <img
+            src={profilePicture}
+            alt="Profile"
+            className="w-8 h-8 rounded-full object-cover ring-2 ring-indigo-500"
+          />
+        ) : (
+          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white text-xs font-bold">
+            {initials}
+          </div>
+        )}
         {/* Dropdown arrow */}
         <svg
           className={`w-4 h-4 transition-transform ${isOpen ? "rotate-180" : ""}`}

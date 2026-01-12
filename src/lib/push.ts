@@ -90,6 +90,31 @@ export async function sendContentReminder(
 }
 
 /**
+ * Send a "post published" notification
+ */
+export async function sendPostPublishedNotification(
+  subscription: PushSubscriptionData,
+  content: {
+    title: string;
+    postUrl: string;
+    contentId: string;
+  }
+): Promise<{ success: boolean; error?: string }> {
+  return sendPushNotification(subscription, {
+    title: "Post Published!",
+    body: `"${content.title.slice(0, 50)}${content.title.length > 50 ? "..." : ""}" is now live on LinkedIn`,
+    icon: "/logo.png",
+    badge: "/badge.png",
+    url: content.postUrl,
+    data: {
+      contentType: "post",
+      contentId: content.contentId,
+      action: "post_published",
+    },
+  });
+}
+
+/**
  * Get the public VAPID key for client-side subscription
  */
 export function getVapidPublicKey(): string | null {

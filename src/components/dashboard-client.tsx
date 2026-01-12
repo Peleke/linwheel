@@ -34,6 +34,8 @@ interface ContentItem {
   imageUrl: string | null;
   runId: string;
   runLabel: string;
+  linkedinPostUrn: string | null;
+  autoPublish: boolean;
 }
 
 interface DashboardClientProps {
@@ -46,37 +48,42 @@ export function DashboardClient({ content }: DashboardClientProps) {
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [schedulingItem, setSchedulingItem] = useState<string | null>(null);
   const [isScheduling, setIsScheduling] = useState(false);
-  const [weekOffset, setWeekOffset] = useState(0);
+  const [dayOffset, setDayOffset] = useState(0); // Days offset from today (for day-by-day nav)
   const { isSupported, isSubscribed, isLoading: pushLoading, subscribe, unsubscribe } = usePushNotifications();
 
-  // Scroll to today on mount (mobile)
+  // Schedule modal state
+  const [showScheduleModal, setShowScheduleModal] = useState(false);
+  const [scheduleDate, setScheduleDate] = useState("");
+  const [scheduleTime, setScheduleTime] = useState("09:00");
+  const [scheduleItemId, setScheduleItemId] = useState<string | null>(null);
+
+  // Scroll to center day on mount/change (mobile)
   useEffect(() => {
     if (scrollContainerRef.current) {
-      const today = new Date();
-      const dayOfWeek = today.getDay(); // 0 = Sunday, 1 = Monday, etc.
-      // Each card is 85vw wide, scroll to today's position
+      // Center on the middle day (index 3) of the 7-day view
       const cardWidth = window.innerWidth * 0.85;
-      const scrollPosition = dayOfWeek * cardWidth;
+      const scrollPosition = 3 * cardWidth;
       scrollContainerRef.current.scrollTo({ left: scrollPosition, behavior: "instant" });
     }
-  }, [weekOffset]); // Re-scroll when week changes
+  }, [dayOffset]); // Re-scroll when day offset changes
 
   // Split content
+  // Scheduled = has scheduledAt date (regardless of publish status)
+  // Unscheduled = no scheduledAt AND not yet published
   const scheduled = content.filter(c => c.scheduledAt);
-  const unscheduled = content.filter(c => !c.scheduledAt);
+  const unscheduled = content.filter(c => !c.scheduledAt && !c.linkedinPostUrn);
 
-  // Get current week dates
+  // Get 7 days centered on today + dayOffset (3 days before, center day, 3 days after)
   const weekDates = useMemo(() => {
-    const today = new Date();
-    const startOfWeek = new Date(today);
-    startOfWeek.setDate(today.getDate() - today.getDay() + (weekOffset * 7));
+    const centerDate = new Date();
+    centerDate.setDate(centerDate.getDate() + dayOffset);
 
     return Array.from({ length: 7 }, (_, i) => {
-      const date = new Date(startOfWeek);
-      date.setDate(startOfWeek.getDate() + i);
+      const date = new Date(centerDate);
+      date.setDate(centerDate.getDate() + (i - 3)); // -3 to +3 from center
       return date;
     });
-  }, [weekOffset]);
+  }, [dayOffset]);
 
   // Group scheduled content by date (using local timezone)
   const contentByDate = useMemo(() => {
@@ -92,7 +99,76 @@ export function DashboardClient({ content }: DashboardClientProps) {
     return groups;
   }, [scheduled]);
 
-  const handleSchedule = async (itemId: string, date: Date) => {
+  const handlePublish = async (itemId: string) => {
+    const response = await fetch(`/api/posts/${itemId}/publish-linkedin`, {
+      method: "POST",
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error || "Failed to publish");
+    }
+
+    // Refresh to update the UI
+    router.refresh();
+  };
+
+  // Open schedule modal for an item
+  const openScheduleModal = (itemId: string, preSelectedDate?: Date) => {
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const defaultDate = preSelectedDate || tomorrow;
+
+    setScheduleItemId(itemId);
+    setScheduleDate(defaultDate.toISOString().split("T")[0]);
+    setScheduleTime("09:00");
+    setShowScheduleModal(true);
+    setSchedulingItem(null); // Close inline scheduling mode if open
+  };
+
+  const handleScheduleSubmit = async () => {
+    if (!scheduleItemId || !scheduleDate || !scheduleTime) return;
+
+    const item = content.find(c => c.id === scheduleItemId);
+    if (!item) return;
+
+    setIsScheduling(true);
+
+    try {
+      // Combine date and time
+      const scheduledDateTime = new Date(`${scheduleDate}T${scheduleTime}`);
+
+      const endpoint = item.type === "post"
+        ? `/api/posts/${scheduleItemId}/schedule`
+        : `/api/articles/${scheduleItemId}/schedule`;
+
+      const res = await fetch(endpoint, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ scheduledAt: scheduledDateTime.toISOString() }),
+      });
+
+      if (!res.ok) {
+        const err = await res.json();
+        console.error("Schedule failed:", err);
+        alert("Failed to schedule. Please try again.");
+        return;
+      }
+
+      // Close modal and refresh
+      setShowScheduleModal(false);
+      setScheduleItemId(null);
+      router.refresh();
+    } catch (err) {
+      console.error("Schedule error:", err);
+      alert("Failed to schedule. Please try again.");
+    } finally {
+      setIsScheduling(false);
+    }
+  };
+
+  const handleUnschedule = async (itemId: string) => {
     const item = content.find(c => c.id === itemId);
     if (!item) return;
 
@@ -106,25 +182,47 @@ export function DashboardClient({ content }: DashboardClientProps) {
       const res = await fetch(endpoint, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ scheduledAt: date.toISOString() }),
+        body: JSON.stringify({ scheduledAt: null }),
       });
 
       if (!res.ok) {
         const err = await res.json();
-        console.error("Schedule failed:", err);
-        alert("Failed to schedule. Please try again.");
+        console.error("Unschedule failed:", err);
+        alert("Failed to unschedule. Please try again.");
         return;
       }
 
-      // Refresh the page data
       router.refresh();
     } catch (err) {
-      console.error("Schedule error:", err);
-      alert("Failed to schedule. Please try again.");
+      console.error("Unschedule error:", err);
+      alert("Failed to unschedule. Please try again.");
     } finally {
       setIsScheduling(false);
-      setSchedulingItem(null);
     }
+  };
+
+  // Legacy handler for inline calendar scheduling (still used for quick-pick)
+  const handleSchedule = async (itemId: string, date: Date) => {
+    // Open modal with pre-selected date instead of immediately scheduling
+    openScheduleModal(itemId, date);
+  };
+
+  const handleDelete = async (itemId: string) => {
+    const item = content.find(c => c.id === itemId);
+    if (!item) return;
+
+    const endpoint = item.type === "post"
+      ? `/api/posts/${itemId}`
+      : `/api/articles/${itemId}`;
+
+    const res = await fetch(endpoint, { method: "DELETE" });
+
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.error || "Failed to delete");
+    }
+
+    router.refresh();
   };
 
   const isToday = (date: Date) => {
@@ -176,6 +274,16 @@ export function DashboardClient({ content }: DashboardClientProps) {
         </div>
 
         <div className="flex items-center gap-4">
+          {/* Quick Compose button */}
+          <Link
+            href="/compose"
+            className="flex items-center gap-2 px-4 py-2 text-sm font-medium bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 rounded-lg hover:bg-zinc-800 dark:hover:bg-zinc-100 transition-colors"
+          >
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+            </svg>
+            New Post
+          </Link>
           {/* Notification toggle */}
           {isSupported && (
             <button
@@ -205,25 +313,27 @@ export function DashboardClient({ content }: DashboardClientProps) {
             </button>
           )}
 
-          {/* Week navigation */}
+          {/* Day-by-day navigation */}
           <div className="flex items-center gap-2">
           <button
-            onClick={() => setWeekOffset(w => w - 1)}
+            onClick={() => setDayOffset(d => d - 1)}
             className="p-2 hover:bg-zinc-200 dark:hover:bg-zinc-800 rounded-lg transition-colors"
+            title="Previous day"
           >
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
             </svg>
           </button>
           <button
-            onClick={() => setWeekOffset(0)}
+            onClick={() => setDayOffset(0)}
             className="px-3 py-1.5 text-sm font-medium hover:bg-zinc-200 dark:hover:bg-zinc-800 rounded-lg transition-colors"
           >
             Today
           </button>
           <button
-            onClick={() => setWeekOffset(w => w + 1)}
+            onClick={() => setDayOffset(d => d + 1)}
             className="p-2 hover:bg-zinc-200 dark:hover:bg-zinc-800 rounded-lg transition-colors"
+            title="Next day"
           >
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
@@ -310,7 +420,7 @@ export function DashboardClient({ content }: DashboardClientProps) {
                         </div>
                       ) : (
                         dayContent.map((item) => (
-                          <CalendarItem key={item.id} item={item} />
+                          <CalendarItem key={item.id} item={item} onUnschedule={handleUnschedule} />
                         ))
                       )}
                     </div>
@@ -332,18 +442,40 @@ export function DashboardClient({ content }: DashboardClientProps) {
                 );
               })}
             </div>
-            {/* Scroll indicator */}
-            <div className="flex justify-center gap-1.5 py-3 border-t border-zinc-200 dark:border-zinc-800">
-              {weekDates.map((date, i) => (
-                <div
-                  key={i}
-                  className={`w-2 h-2 rounded-full transition-colors ${
-                    isToday(date)
-                      ? "bg-blue-500"
-                      : "bg-zinc-300 dark:bg-zinc-600"
-                  }`}
-                />
-              ))}
+            {/* Scroll indicator with navigation carets */}
+            <div className="flex items-center justify-center gap-3 py-3 border-t border-zinc-200 dark:border-zinc-800">
+              <button
+                onClick={() => setDayOffset(d => d - 1)}
+                className="p-1 hover:bg-zinc-200 dark:hover:bg-zinc-800 rounded transition-colors"
+                title="Previous day"
+              >
+                <svg className="w-4 h-4 text-zinc-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+                </svg>
+              </button>
+              <div className="flex gap-1.5">
+                {weekDates.map((date, i) => (
+                  <div
+                    key={i}
+                    className={`w-2 h-2 rounded-full transition-colors ${
+                      isToday(date)
+                        ? "bg-blue-500"
+                        : i === 3
+                        ? "bg-zinc-500 dark:bg-zinc-400"
+                        : "bg-zinc-300 dark:bg-zinc-600"
+                    }`}
+                  />
+                ))}
+              </div>
+              <button
+                onClick={() => setDayOffset(d => d + 1)}
+                className="p-1 hover:bg-zinc-200 dark:hover:bg-zinc-800 rounded transition-colors"
+                title="Next day"
+              >
+                <svg className="w-4 h-4 text-zinc-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                </svg>
+              </button>
             </div>
           </div>
 
@@ -416,7 +548,7 @@ export function DashboardClient({ content }: DashboardClientProps) {
                   >
                     <div className="space-y-2">
                       {dayContent.map((item) => (
-                        <CalendarItem key={item.id} item={item} />
+                        <CalendarItem key={item.id} item={item} onUnschedule={handleUnschedule} />
                       ))}
                     </div>
 
@@ -464,51 +596,170 @@ export function DashboardClient({ content }: DashboardClientProps) {
                   isScheduling={schedulingItem === item.id}
                   onStartScheduling={() => setSchedulingItem(item.id)}
                   onCancelScheduling={() => setSchedulingItem(null)}
+                  onOpenScheduleModal={() => openScheduleModal(item.id)}
+                  onPublish={handlePublish}
+                  onDelete={handleDelete}
                 />
               ))
             )}
           </div>
         </div>
       </div>
+
+      {/* Schedule Modal with date and time */}
+      {showScheduleModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setShowScheduleModal(false)}>
+          <div className="bg-white dark:bg-zinc-900 rounded-2xl p-6 max-w-sm mx-4 shadow-xl" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center">
+                <svg className="w-5 h-5 text-emerald-600 dark:text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+              </div>
+              <div>
+                <h3 className="font-semibold text-zinc-900 dark:text-zinc-100">Schedule Content</h3>
+                <p className="text-sm text-zinc-500 dark:text-zinc-400">Pick a date and time</p>
+              </div>
+            </div>
+
+            {/* Date picker */}
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1.5">
+                Date
+              </label>
+              <input
+                type="date"
+                value={scheduleDate}
+                onChange={(e) => setScheduleDate(e.target.value)}
+                min={new Date().toISOString().split("T")[0]}
+                className="w-full px-3 py-2 bg-zinc-50 dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+              />
+            </div>
+
+            {/* Time picker */}
+            <div className="mb-6">
+              <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1.5">
+                Time
+              </label>
+              <input
+                type="time"
+                value={scheduleTime}
+                onChange={(e) => setScheduleTime(e.target.value)}
+                className="w-full px-3 py-2 bg-zinc-50 dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+              />
+              <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">
+                {getUserTimezone()}
+              </p>
+            </div>
+
+            {/* Action buttons */}
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowScheduleModal(false)}
+                className="flex-1 px-4 py-2 text-sm font-medium border border-zinc-300 dark:border-zinc-700 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleScheduleSubmit}
+                disabled={isScheduling || !scheduleDate || !scheduleTime}
+                className="flex-1 px-4 py-2 text-sm font-medium bg-emerald-600 text-white rounded-lg hover:bg-emerald-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isScheduling ? "Scheduling..." : "Schedule"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
 
-function CalendarItem({ item }: { item: ContentItem }) {
+function CalendarItem({ item, onUnschedule }: { item: ContentItem; onUnschedule?: (itemId: string) => void }) {
+  const [isUnscheduling, setIsUnscheduling] = useState(false);
   const isPost = item.type === "post";
+  const editUrl = isPost ? `/compose?draft=${item.id}` : `/article/${item.id}`;
+
+  // Format scheduled time
+  const scheduledTime = item.scheduledAt
+    ? new Date(item.scheduledAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    : null;
+
+  const handleUnschedule = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!onUnschedule) return;
+    setIsUnscheduling(true);
+    try {
+      await onUnschedule(item.id);
+    } finally {
+      setIsUnscheduling(false);
+    }
+  };
+
   return (
-    <div className={`group relative rounded-lg p-2 transition-colors border-l-3 ${
-      isPost
-        ? "bg-blue-50 dark:bg-blue-900/20 border-l-blue-500 hover:bg-blue-100 dark:hover:bg-blue-900/30"
-        : "bg-purple-50 dark:bg-purple-900/20 border-l-purple-500 hover:bg-purple-100 dark:hover:bg-purple-900/30"
-    }`}>
-      <div className="flex items-start gap-2">
-        {item.imageUrl ? (
-          <div className="relative w-8 h-8 rounded overflow-hidden flex-shrink-0">
-            <Image src={item.imageUrl} alt="" fill className="object-cover" sizes="32px" />
-          </div>
-        ) : (
-          <div className={`w-8 h-8 rounded flex-shrink-0 flex items-center justify-center text-white text-[10px] font-bold ${
-            isPost ? "bg-blue-500" : "bg-purple-500"
-          }`}>
-            {isPost ? "P" : "A"}
-          </div>
-        )}
-        <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-1.5 mb-0.5">
-            <span className={`px-1.5 py-0.5 text-[9px] font-semibold uppercase rounded ${
-              isPost
-                ? "bg-blue-500 text-white"
-                : "bg-purple-500 text-white"
+    <div
+      className={`group relative rounded-lg p-2 transition-colors border-l-3 ${
+        isPost
+          ? "bg-blue-50 dark:bg-blue-900/20 border-l-blue-500 hover:bg-blue-100 dark:hover:bg-blue-900/30"
+          : "bg-purple-50 dark:bg-purple-900/20 border-l-purple-500 hover:bg-purple-100 dark:hover:bg-purple-900/30"
+      }`}
+    >
+      <Link
+        href={editUrl}
+        onClick={(e) => e.stopPropagation()}
+        className="block"
+      >
+        <div className="flex items-start gap-2">
+          {item.imageUrl ? (
+            <div className="relative w-8 h-8 rounded overflow-hidden flex-shrink-0">
+              <Image src={item.imageUrl} alt="" fill className="object-cover" sizes="32px" />
+            </div>
+          ) : (
+            <div className={`w-8 h-8 rounded flex-shrink-0 flex items-center justify-center text-white text-[10px] font-bold ${
+              isPost ? "bg-blue-500" : "bg-purple-500"
             }`}>
-              {isPost ? "Post" : "Article"}
-            </span>
+              {isPost ? "P" : "A"}
+            </div>
+          )}
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-1.5 mb-0.5">
+              <span className={`px-1.5 py-0.5 text-[9px] font-semibold uppercase rounded ${
+                isPost
+                  ? "bg-blue-500 text-white"
+                  : "bg-purple-500 text-white"
+              }`}>
+                {isPost ? "Post" : "Article"}
+              </span>
+              {scheduledTime && (
+                <span className="text-[9px] text-zinc-500 dark:text-zinc-400">
+                  {scheduledTime}
+                </span>
+              )}
+            </div>
+            <p className="text-xs font-medium text-zinc-900 dark:text-zinc-100 line-clamp-2">
+              {item.title}
+            </p>
           </div>
-          <p className="text-xs font-medium text-zinc-900 dark:text-zinc-100 line-clamp-2">
-            {item.title}
-          </p>
         </div>
-      </div>
+      </Link>
+      {/* Unschedule button - appears on hover */}
+      {onUnschedule && (
+        <button
+          onClick={handleUnschedule}
+          disabled={isUnscheduling}
+          className="absolute top-1 right-1 p-1 opacity-0 group-hover:opacity-100 text-zinc-400 hover:text-amber-600 dark:hover:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded transition-all"
+          title="Unschedule"
+        >
+          {isUnscheduling ? (
+            <div className="w-3 h-3 border border-current border-t-transparent rounded-full animate-spin" />
+          ) : (
+            <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          )}
+        </button>
+      )}
     </div>
   );
 }
@@ -518,13 +769,52 @@ function QueueItem({
   isScheduling,
   onStartScheduling,
   onCancelScheduling,
+  onOpenScheduleModal,
+  onPublish,
+  onDelete,
 }: {
   item: ContentItem;
   isScheduling: boolean;
   onStartScheduling: () => void;
   onCancelScheduling: () => void;
+  onOpenScheduleModal: () => void;
+  onPublish: (itemId: string) => Promise<void>;
+  onDelete: (itemId: string) => Promise<void>;
 }) {
+  const [isPublishing, setIsPublishing] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [publishError, setPublishError] = useState<string | null>(null);
   const isPost = item.type === "post";
+  const isPublished = !!item.linkedinPostUrn;
+
+  const handleDelete = async () => {
+    setIsDeleting(true);
+    try {
+      await onDelete(item.id);
+    } catch (err) {
+      console.error("Delete failed:", err);
+    } finally {
+      setIsDeleting(false);
+      setShowDeleteConfirm(false);
+    }
+  };
+
+  const handlePublish = async () => {
+    if (!isPost) return; // Only posts can be published directly
+    setIsPublishing(true);
+    setPublishError(null);
+    try {
+      await onPublish(item.id);
+    } catch (err) {
+      setPublishError(err instanceof Error ? err.message : "Failed to publish");
+    } finally {
+      setIsPublishing(false);
+    }
+  };
+
+  const editUrl = isPost ? `/compose?draft=${item.id}` : `/article/${item.id}`;
+
   return (
     <div className={`rounded-xl border-l-4 transition-all ${
       isScheduling
@@ -533,7 +823,11 @@ function QueueItem({
         ? "border-l-blue-500 bg-white dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700"
         : "border-l-purple-500 bg-white dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700"
     }`}>
-      <div className="p-3">
+      {/* Clickable content area */}
+      <Link
+        href={editUrl}
+        className="block p-3 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors rounded-t-xl"
+      >
         <div className="flex items-start gap-3">
           {item.imageUrl ? (
             <div className="relative w-12 h-12 rounded-lg overflow-hidden flex-shrink-0">
@@ -568,8 +862,18 @@ function QueueItem({
             </p>
           </div>
         </div>
+      </Link>
 
-        <div className="flex items-center gap-2 mt-3">
+      {/* Actions area */}
+      <div className="px-3 pb-3">
+        {/* Error message */}
+        {publishError && (
+          <div className="mb-2 p-2 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+            <p className="text-xs text-red-600 dark:text-red-400">{publishError}</p>
+          </div>
+        )}
+
+        <div className="flex items-center gap-2">
           {isScheduling ? (
             <>
               <span className="text-xs text-emerald-600 dark:text-emerald-400 flex-1">
@@ -582,26 +886,113 @@ function QueueItem({
                 Cancel
               </button>
             </>
-          ) : (
-            <button
-              onClick={onStartScheduling}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg transition-colors"
+          ) : isPublished ? (
+            <a
+              href={`https://www.linkedin.com/feed/update/${item.linkedinPostUrn}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-lg transition-colors hover:bg-blue-200 dark:hover:bg-blue-900/50"
             >
-              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M19 3a2 2 0 012 2v14a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h14m-.5 15.5v-5.3a3.26 3.26 0 00-3.26-3.26c-.85 0-1.84.52-2.32 1.3v-1.11h-2.79v8.37h2.79v-4.93c0-.77.62-1.4 1.39-1.4a1.4 1.4 0 011.4 1.4v4.93h2.79M6.88 8.56a1.68 1.68 0 001.68-1.68c0-.93-.75-1.69-1.68-1.69a1.69 1.69 0 00-1.69 1.69c0 .93.76 1.68 1.69 1.68m1.39 9.94v-8.37H5.5v8.37h2.77z" />
               </svg>
-              Schedule
-            </button>
+              View on LinkedIn
+            </a>
+          ) : (
+            <>
+              {/* Publish Now button - only for posts */}
+              {isPost && (
+                <button
+                  onClick={handlePublish}
+                  disabled={isPublishing}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${
+                    isPublishing
+                      ? "bg-blue-300 text-white cursor-wait"
+                      : "bg-blue-600 hover:bg-blue-500 text-white"
+                  }`}
+                >
+                  {isPublishing ? (
+                    <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  ) : (
+                    <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M19 3a2 2 0 012 2v14a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h14m-.5 15.5v-5.3a3.26 3.26 0 00-3.26-3.26c-.85 0-1.84.52-2.32 1.3v-1.11h-2.79v8.37h2.79v-4.93c0-.77.62-1.4 1.39-1.4a1.4 1.4 0 011.4 1.4v4.93h2.79M6.88 8.56a1.68 1.68 0 001.68-1.68c0-.93-.75-1.69-1.68-1.69a1.69 1.69 0 00-1.69 1.69c0 .93.76 1.68 1.69 1.68m1.39 9.94v-8.37H5.5v8.37h2.77z" />
+                    </svg>
+                  )}
+                  {isPublishing ? "Publishing..." : "Publish Now"}
+                </button>
+              )}
+              <button
+                onClick={onOpenScheduleModal}
+                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg transition-colors"
+              >
+                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+                Schedule
+              </button>
+            </>
           )}
+          {/* Delete button */}
+          <button
+            onClick={() => setShowDeleteConfirm(true)}
+            className="p-1.5 text-zinc-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors ml-auto"
+            title="Delete"
+          >
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+            </svg>
+          </button>
         </div>
       </div>
 
-      <Link
-        href={`/results/${item.runId}`}
-        className="block px-3 py-2 border-t border-zinc-200 dark:border-zinc-700 text-xs text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
-      >
-        From: {item.runLabel}
-      </Link>
+      {/* Footer - show source run if available */}
+      {item.runId && (
+        <div className="flex border-t border-zinc-200 dark:border-zinc-700">
+          <Link
+            href={`/results/${item.runId}`}
+            className="flex-1 px-3 py-2 text-xs text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors text-center"
+          >
+            From: {item.runLabel}
+          </Link>
+        </div>
+      )}
+
+      {/* Delete confirmation modal */}
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setShowDeleteConfirm(false)}>
+          <div className="bg-white dark:bg-zinc-900 rounded-2xl p-6 max-w-sm mx-4 shadow-xl" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
+                <svg className="w-5 h-5 text-red-600 dark:text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+              </div>
+              <div>
+                <h3 className="font-semibold text-zinc-900 dark:text-zinc-100">Delete {isPost ? "post" : "article"}?</h3>
+                <p className="text-sm text-zinc-500 dark:text-zinc-400">This cannot be undone.</p>
+              </div>
+            </div>
+            <p className="text-sm text-zinc-600 dark:text-zinc-300 mb-4 line-clamp-2">
+              &ldquo;{item.title}&rdquo;
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowDeleteConfirm(false)}
+                className="flex-1 px-4 py-2 text-sm font-medium border border-zinc-300 dark:border-zinc-700 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDelete}
+                disabled={isDeleting}
+                className="flex-1 px-4 py-2 text-sm font-medium bg-red-600 text-white rounded-lg hover:bg-red-500 transition-colors disabled:opacity-50"
+              >
+                {isDeleting ? "Deleting..." : "Delete"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

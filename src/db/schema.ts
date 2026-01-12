@@ -55,8 +55,9 @@ export const insights = sqliteTable("insights", {
 // LinkedIn posts table
 export const linkedinPosts = sqliteTable("linkedin_posts", {
   id: text("id").primaryKey(),
-  insightId: text("insight_id").notNull().references(() => insights.id),
-  runId: text("run_id").notNull().references(() => generationRuns.id),
+  // Nullable for manual drafts (not AI-generated)
+  insightId: text("insight_id").references(() => insights.id),
+  runId: text("run_id").references(() => generationRuns.id),
   hook: text("hook").notNull(),
   bodyBeats: text("body_beats", { mode: "json" }).$type<string[]>().notNull(),
   openQuestion: text("open_question").notNull(),
@@ -68,9 +69,17 @@ export const linkedinPosts = sqliteTable("linkedin_posts", {
   versionNumber: integer("version_number").default(1),
   // Approval workflow
   approved: integer("approved", { mode: "boolean" }).default(false),
+  // Manual draft flag - true for user-created posts, false for AI-generated
+  isManualDraft: integer("is_manual_draft", { mode: "boolean" }).default(false),
+  // Auto-publish flag - when true, cron will publish at scheduledAt time
+  autoPublish: integer("auto_publish", { mode: "boolean" }).default(true),
   // Scheduling
   scheduledAt: integer("scheduled_at", { mode: "timestamp" }),
   scheduledPosition: integer("scheduled_position"),
+  // LinkedIn publishing
+  linkedinPostUrn: text("linkedin_post_urn"),
+  linkedinPublishedAt: integer("linkedin_published_at", { mode: "timestamp" }),
+  linkedinPublishError: text("linkedin_publish_error"),
 });
 
 // Image intents table (ComfyUI-optimized)
@@ -91,6 +100,8 @@ export const imageIntents = sqliteTable("image_intents", {
     enum: ["openai", "comfyui", "fal"],
   }),
   generationError: text("generation_error"),
+  // Toggle whether to include cover image when publishing
+  includeInPost: integer("include_in_post", { mode: "boolean" }).default(true),
 });
 
 // Style presets constant for reuse
@@ -132,6 +143,8 @@ export const articleImageIntents = sqliteTable("article_image_intents", {
     enum: ["openai", "comfyui", "fal"],
   }),
   generationError: text("generation_error"),
+  // Toggle whether to include cover image when publishing
+  includeInPost: integer("include_in_post", { mode: "boolean" }).default(true),
 });
 
 // Carousel page structure (stored in JSON)
@@ -169,6 +182,27 @@ export const articleCarouselIntents = sqliteTable("article_carousel_intents", {
   createdAt: integer("created_at", { mode: "timestamp" }).$defaultFn(() => new Date()),
 });
 
+// Post carousels table - carousels attached to LinkedIn posts
+export const postCarousels = sqliteTable("post_carousels", {
+  id: text("id").primaryKey(),
+  postId: text("post_id").notNull().references(() => linkedinPosts.id, { onDelete: "cascade" }),
+  // Generated carousel data
+  carouselUrl: text("carousel_url"), // URL to generated carousel image/PDF
+  pages: text("pages", { mode: "json" }).$type<CarouselPage[]>(),
+  stylePreset: text("style_preset", { enum: STYLE_PRESETS }),
+  // Offset scheduling - publish carousel X days after post
+  offsetDays: integer("offset_days").default(0),
+  scheduledAt: integer("scheduled_at", { mode: "timestamp" }),
+  // Publishing status
+  status: text("status", { enum: ["pending", "generating", "ready", "scheduled", "published", "failed"] }).default("pending"),
+  publishedAt: integer("published_at", { mode: "timestamp" }),
+  linkedinPostUrn: text("linkedin_post_urn"),
+  publishError: text("publish_error"),
+  // Metadata
+  createdAt: integer("created_at", { mode: "timestamp" }).$defaultFn(() => new Date()),
+  updatedAt: integer("updated_at", { mode: "timestamp" }).$defaultFn(() => new Date()),
+});
+
 // Carousel slide versions table - tracks version history for each slide
 export const carouselSlideVersions = sqliteTable("carousel_slide_versions", {
   id: text("id").primaryKey(),
@@ -198,6 +232,61 @@ export const voiceProfiles = sqliteTable("voice_profiles", {
   // Array of writing samples for few-shot style matching
   samples: text("samples", { mode: "json" }).$type<string[]>().notNull(),
   // Only one profile can be active at a time
+  isActive: integer("is_active", { mode: "boolean" }).default(false),
+  createdAt: integer("created_at", { mode: "timestamp" }).$defaultFn(() => new Date()),
+  updatedAt: integer("updated_at", { mode: "timestamp" }).$defaultFn(() => new Date()),
+});
+
+// Imagery approach enum for brand styles
+export const IMAGERY_APPROACHES = ["photography", "illustration", "abstract", "3d_render", "mixed"] as const;
+export type ImageryApproach = typeof IMAGERY_APPROACHES[number];
+
+// Color definition for brand palettes
+export interface ColorDefinition {
+  hex: string;
+  name: string;
+  usage: "primary" | "accent" | "background" | "text";
+}
+
+// Brand style profiles table - for consistent AI image generation
+export const brandStyleProfiles = sqliteTable("brand_style_profiles", {
+  id: text("id").primaryKey(),
+  userId: text("user_id").notNull(),
+  name: text("name").notNull(),
+  description: text("description"),
+
+  // Core Visual Identity
+  primaryColors: text("primary_colors", { mode: "json" }).$type<ColorDefinition[]>().notNull(),
+  secondaryColors: text("secondary_colors", { mode: "json" }).$type<ColorDefinition[]>(),
+  colorMood: text("color_mood"), // e.g., "warm and energetic", "cool and professional"
+
+  // Typography Style (for text-in-image generation)
+  typographyStyle: text("typography_style"), // e.g., "bold sans-serif", "elegant serif"
+  headlineWeight: text("headline_weight"), // e.g., "ultra-bold", "light", "medium"
+
+  // Imagery Direction
+  imageryApproach: text("imagery_approach", { enum: IMAGERY_APPROACHES }).notNull(),
+  artisticReferences: text("artistic_references", { mode: "json" }).$type<string[]>(), // Reference artists/photographers/styles
+  lightingPreference: text("lighting_preference"), // e.g., "soft natural", "dramatic studio"
+  compositionStyle: text("composition_style"), // e.g., "minimalist", "layered", "centered"
+
+  // Mood & Atmosphere
+  moodDescriptors: text("mood_descriptors", { mode: "json" }).$type<string[]>(), // e.g., ["bold", "innovative"]
+  texturePreference: text("texture_preference"), // e.g., "clean and flat", "grainy and vintage"
+
+  // Technical Preferences
+  aspectRatioPreference: text("aspect_ratio_preference", { enum: ["1:1", "16:9", "4:3", "1.91:1"] }),
+  depthOfField: text("depth_of_field", { enum: ["shallow", "deep", "varied"] }),
+
+  // Prompt Engineering - auto-injected into all image prompts
+  stylePrefix: text("style_prefix"), // Auto-prepended to all prompts
+  styleSuffix: text("style_suffix"), // Auto-appended to all prompts
+  negativeConcepts: text("negative_concepts", { mode: "json" }).$type<string[]>(), // Things to avoid
+
+  // Reference Images (URLs for image-to-image consistency)
+  referenceImageUrls: text("reference_image_urls", { mode: "json" }).$type<string[]>(),
+
+  // Status
   isActive: integer("is_active", { mode: "boolean" }).default(false),
   createdAt: integer("created_at", { mode: "timestamp" }).$defaultFn(() => new Date()),
   updatedAt: integer("updated_at", { mode: "timestamp" }).$defaultFn(() => new Date()),
@@ -238,6 +327,7 @@ export const linkedinConnections = sqliteTable("linkedin_connections", {
   expiresAt: integer("expires_at", { mode: "timestamp" }),
   linkedinProfileId: text("linkedin_profile_id"),
   linkedinProfileName: text("linkedin_profile_name"),
+  linkedinProfilePicture: text("linkedin_profile_picture"),
   createdAt: integer("created_at", { mode: "timestamp" }).$defaultFn(() => new Date()),
   updatedAt: integer("updated_at", { mode: "timestamp" }).$defaultFn(() => new Date()),
 });
@@ -267,3 +357,7 @@ export type PublishingStatus = typeof publishingStatus.$inferSelect;
 export type NewPublishingStatus = typeof publishingStatus.$inferInsert;
 export type LinkedinConnection = typeof linkedinConnections.$inferSelect;
 export type NewLinkedinConnection = typeof linkedinConnections.$inferInsert;
+export type BrandStyleProfile = typeof brandStyleProfiles.$inferSelect;
+export type NewBrandStyleProfile = typeof brandStyleProfiles.$inferInsert;
+export type PostCarousel = typeof postCarousels.$inferSelect;
+export type NewPostCarousel = typeof postCarousels.$inferInsert;

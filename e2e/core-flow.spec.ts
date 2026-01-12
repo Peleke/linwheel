@@ -1032,3 +1032,332 @@ test.describe("Flow 13: Image Generation", () => {
     // - Re-approve: no regeneration, same image
   });
 });
+
+// ============================================================================
+// FLOW 14: DASHBOARD DATE NAVIGATION
+// ============================================================================
+test.describe("Flow 14: Dashboard Date Navigation", () => {
+  test("14.1 - dashboard shows navigation controls", async ({ page }) => {
+    await page.goto("/dashboard");
+
+    // Should show left/right navigation carets
+    await expect(page.getByTitle("Previous day")).toBeVisible();
+    await expect(page.getByTitle("Next day")).toBeVisible();
+
+    // Should show Today button
+    await expect(page.getByRole("button", { name: "Today" })).toBeVisible();
+  });
+
+  test("14.2 - clicking next day advances by one day", async ({ page }) => {
+    await page.goto("/dashboard");
+
+    // Get today's date for reference
+    const today = new Date();
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+
+    // Format tomorrow's date
+    const tomorrowDay = tomorrow.toLocaleDateString("en-US", { weekday: "short" });
+    const tomorrowDate = tomorrow.getDate();
+
+    // Click next day button
+    await page.getByTitle("Next day").click();
+
+    // The center day should now be tomorrow
+    // On desktop, check that tomorrow is visible in the grid
+    await expect(page.getByText(tomorrowDay)).toBeVisible();
+  });
+
+  test("14.3 - clicking previous day goes back by one day", async ({ page }) => {
+    await page.goto("/dashboard");
+
+    // Get yesterday's date
+    const today = new Date();
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+
+    const yesterdayDay = yesterday.toLocaleDateString("en-US", { weekday: "short" });
+
+    // Click previous day button
+    await page.getByTitle("Previous day").click();
+
+    // Yesterday should be visible
+    await expect(page.getByText(yesterdayDay)).toBeVisible();
+  });
+
+  test("14.4 - Today button resets to current day", async ({ page }) => {
+    await page.goto("/dashboard");
+
+    // Navigate away from today
+    await page.getByTitle("Next day").click();
+    await page.getByTitle("Next day").click();
+    await page.getByTitle("Next day").click();
+
+    // Click Today to reset
+    await page.getByRole("button", { name: "Today" }).click();
+
+    // Today should be highlighted (has special styling)
+    const today = new Date();
+    const todayDate = today.getDate().toString();
+
+    // The today date should be visible with today indicator
+    await expect(page.locator(`text=${todayDate}`).first()).toBeVisible();
+  });
+
+  test("14.5 - mobile shows scroll indicator dots with carets", async ({ page }) => {
+    // Set mobile viewport
+    await page.setViewportSize({ width: 375, height: 667 });
+    await page.goto("/dashboard");
+
+    // Should show dots indicator
+    const dots = page.locator(".rounded-full.w-2.h-2");
+    await expect(dots.first()).toBeVisible();
+
+    // Should have 7 dots (one for each day)
+    await expect(dots).toHaveCount(7);
+
+    // Should show carets around the dots
+    // Mobile carets for navigation
+    const mobileLeftCaret = page.locator("button[title='Previous day']").last();
+    const mobileRightCaret = page.locator("button[title='Next day']").last();
+
+    await expect(mobileLeftCaret).toBeVisible();
+    await expect(mobileRightCaret).toBeVisible();
+  });
+
+  test("14.6 - navigation shows 7-day view centered on selected day", async ({ page }) => {
+    await page.goto("/dashboard");
+
+    // Get current date range
+    const today = new Date();
+
+    // Should show 3 days before and 3 days after center
+    // Verify by checking that today is visible along with surrounding days
+    const threeDaysAgo = new Date(today);
+    threeDaysAgo.setDate(today.getDate() - 3);
+
+    const threeDaysAhead = new Date(today);
+    threeDaysAhead.setDate(today.getDate() + 3);
+
+    // Both should be visible in the 7-day view
+    const threeDaysAgoDay = threeDaysAgo.toLocaleDateString("en-US", { weekday: "short" });
+    const threeDaysAheadDay = threeDaysAhead.toLocaleDateString("en-US", { weekday: "short" });
+
+    await expect(page.getByText(threeDaysAgoDay)).toBeVisible();
+    await expect(page.getByText(threeDaysAheadDay)).toBeVisible();
+  });
+
+  test("14.7 - can navigate multiple days forward and back", async ({ page }) => {
+    await page.goto("/dashboard");
+
+    // Navigate 5 days forward (one day at a time)
+    for (let i = 0; i < 5; i++) {
+      await page.getByTitle("Next day").first().click();
+    }
+
+    // Navigate 5 days back
+    for (let i = 0; i < 5; i++) {
+      await page.getByTitle("Previous day").first().click();
+    }
+
+    // Should be back at today
+    // Click Today just to confirm we're centered properly
+    await page.getByRole("button", { name: "Today" }).click();
+
+    // Today's date should be visible
+    const today = new Date();
+    const todayDate = today.getDate().toString();
+    await expect(page.locator(`text=${todayDate}`).first()).toBeVisible();
+  });
+});
+// ============================================================================
+// FLOW 15: LINKEDIN INTEGRATION
+// ============================================================================
+test.describe("Flow 15: LinkedIn Integration", () => {
+  test.describe("15A: Settings - LinkedIn Connection", () => {
+    test("15A.1 - settings page shows LinkedIn connection section", async ({ page }) => {
+      await page.goto("/settings");
+
+      // Should show LinkedIn section
+      await expect(page.getByRole("heading", { name: /LinkedIn/i })).toBeVisible();
+      await expect(page.getByText(/Connect your LinkedIn account/i)).toBeVisible();
+    });
+
+    test("15A.2 - shows Connect button when not connected", async ({ page }) => {
+      await page.goto("/settings");
+
+      // Should show connect button (unless already connected in test environment)
+      const connectButton = page.getByRole("link", { name: /Connect LinkedIn/i });
+      const disconnectButton = page.getByRole("button", { name: /Disconnect/i });
+
+      // Either connect or disconnect should be visible
+      const hasConnect = await connectButton.isVisible().catch(() => false);
+      const hasDisconnect = await disconnectButton.isVisible().catch(() => false);
+
+      expect(hasConnect || hasDisconnect).toBe(true);
+    });
+
+    test("15A.3 - connect button links to OAuth start endpoint", async ({ page }) => {
+      await page.goto("/settings");
+
+      const connectButton = page.getByRole("link", { name: /Connect LinkedIn/i });
+
+      if (await connectButton.isVisible()) {
+        // Verify the href points to OAuth endpoint
+        const href = await connectButton.getAttribute("href");
+        expect(href).toContain("/api/auth/linkedin");
+      }
+    });
+
+    test.skip("15A.4 - successful OAuth callback shows success message", async ({ page }) => {
+      // REQUIRES ACTUAL OAUTH FLOW
+      // In E2E, we would need to mock the OAuth flow
+      // Manually test with: /settings?linkedin_connected=true
+      await page.goto("/settings?linkedin_connected=true");
+
+      // Should show success message
+      await expect(page.getByText(/connected/i)).toBeVisible();
+    });
+
+    test.skip("15A.5 - failed OAuth callback shows error message", async ({ page }) => {
+      // Test error handling
+      await page.goto("/settings?linkedin_error=access_denied");
+
+      // Should show error message
+      await expect(page.getByText(/error|denied/i)).toBeVisible();
+    });
+
+    test.skip("15A.6 - disconnect button removes connection", async ({ page }) => {
+      // REQUIRES EXISTING CONNECTION
+      // When implemented, should test:
+      // - Click Disconnect button
+      // - Confirmation dialog appears
+      // - Confirm removes connection
+      // - Connect button reappears
+    });
+  });
+
+  test.describe("15B: Publish Button on Posts", () => {
+    test.skip("15B.1 - publish button not visible on unapproved posts", async ({ page }) => {
+      // REQUIRES COMPLETED RUN WITH POSTS
+      // When implemented, should test:
+      // - Navigate to dashboard with posts
+      // - Find an unapproved post
+      // - Verify Publish button is NOT visible
+    });
+
+    test.skip("15B.2 - publish button visible on approved posts", async ({ page }) => {
+      // REQUIRES COMPLETED RUN WITH APPROVED POSTS + LINKEDIN CONNECTION
+      // When implemented, should test:
+      // - Navigate to dashboard with approved posts
+      // - Find an approved post
+      // - Verify Publish button IS visible
+    });
+
+    test.skip("15B.3 - publish button shows confirmation dialog", async ({ page }) => {
+      // REQUIRES COMPLETED RUN WITH APPROVED POSTS + LINKEDIN CONNECTION
+      // When implemented, should test:
+      // - Click Publish button on approved post
+      // - Confirmation dialog appears
+      // - Shows "Publish this post to LinkedIn?"
+      // - Has Publish and Cancel buttons
+    });
+
+    test.skip("15B.4 - cancel hides confirmation dialog", async ({ page }) => {
+      // REQUIRES COMPLETED RUN WITH APPROVED POSTS + LINKEDIN CONNECTION
+      // When implemented, should test:
+      // - Click Publish button
+      // - Dialog appears
+      // - Click Cancel
+      // - Dialog hides, Publish button still visible
+    });
+
+    test.skip("15B.5 - publish shows loading state", async ({ page }) => {
+      // REQUIRES COMPLETED RUN + LINKEDIN CONNECTION + MOCK API
+      // When implemented, should test:
+      // - Click Publish > Confirm
+      // - Button shows loading spinner
+      // - Disabled during publish
+    });
+
+    test.skip("15B.6 - successful publish shows View button", async ({ page }) => {
+      // REQUIRES COMPLETED RUN + LINKEDIN CONNECTION + MOCK API
+      // When implemented, should test:
+      // - After successful publish
+      // - Publish button replaced with "View" link
+      // - Link points to linkedin.com/feed/update/...
+    });
+
+    test.skip("15B.7 - publish error shows error message", async ({ page }) => {
+      // REQUIRES MOCK API WITH ERROR
+      // When implemented, should test:
+      // - Publish fails (mock 500 response)
+      // - Error message appears
+      // - Dismiss button works
+      // - Can retry publishing
+    });
+
+    test.skip("15B.8 - already published posts show View button", async ({ page }) => {
+      // REQUIRES POST WITH linkedinPostUrn SET
+      // When implemented, should test:
+      // - Post already has linkedinPostUrn
+      // - Shows View button instead of Publish
+      // - View links to LinkedIn post
+    });
+  });
+
+  test.describe("15C: LinkedIn Connection Status API", () => {
+    test("15C.1 - status endpoint returns connection status", async ({ page, request }) => {
+      // Call the status API directly
+      const response = await request.get("/api/auth/linkedin/status");
+
+      expect(response.ok()).toBe(true);
+
+      const data = await response.json();
+      expect(data).toHaveProperty("connected");
+      expect(typeof data.connected).toBe("boolean");
+    });
+
+    test("15C.2 - status includes profile info when connected", async ({ page, request }) => {
+      const response = await request.get("/api/auth/linkedin/status");
+      const data = await response.json();
+
+      if (data.connected) {
+        // Should have profile info
+        expect(data).toHaveProperty("profileName");
+        expect(data).toHaveProperty("expiresAt");
+      }
+    });
+  });
+
+  test.describe("15D: Publish API", () => {
+    test.skip("15D.1 - publish requires authentication", async ({ request }) => {
+      // Test without auth - should fail
+      const response = await request.post("/api/posts/fake-id/publish-linkedin");
+
+      // Should return 401
+      expect(response.status()).toBe(401);
+    });
+
+    test.skip("15D.2 - publish requires post to be approved", async ({ request }) => {
+      // REQUIRES VALID POST ID (UNAPPROVED)
+      // When implemented, should test:
+      // - POST to publish endpoint with unapproved post
+      // - Returns 400 with "must be approved" message
+    });
+
+    test.skip("15D.3 - publish requires LinkedIn connection", async ({ request }) => {
+      // REQUIRES APPROVED POST + NO LINKEDIN CONNECTION
+      // When implemented, should test:
+      // - POST to publish endpoint
+      // - Returns 400 with "not connected" message
+    });
+
+    test.skip("15D.4 - publish returns post URL on success", async ({ request }) => {
+      // REQUIRES APPROVED POST + LINKEDIN CONNECTION + MOCK LINKEDIN API
+      // When implemented, should test:
+      // - POST to publish endpoint
+      // - Returns 200 with postUrn and postUrl
+    });
+  });
+});

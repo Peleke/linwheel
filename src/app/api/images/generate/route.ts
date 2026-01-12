@@ -4,6 +4,7 @@
  * POST /api/images/generate
  *
  * Generates images for post/article image intents using the configured T2I provider.
+ * If the user has an active brand style, it will be applied to the prompt.
  */
 
 import { NextResponse } from "next/server";
@@ -12,6 +13,8 @@ import { imageIntents, articleImageIntents } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { generateImage, getProviderStatus } from "@/lib/t2i";
 import type { T2IProviderType, StylePreset } from "@/lib/t2i";
+import { createClient } from "@/lib/supabase/server";
+import { getActiveBrandStyle, composePromptWithBrandStyle, composeNegativeWithBrandStyle } from "@/lib/brand-styles";
 
 interface GenerateRequest {
   /** ID of the image intent to generate */
@@ -33,6 +36,10 @@ export async function POST(request: Request) {
         { status: 400 }
       );
     }
+
+    // Get current user for brand style
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
 
     // Fetch the image intent based on type
     let intent;
@@ -63,11 +70,31 @@ export async function POST(request: Request) {
       });
     }
 
+    // Fetch user's active brand style (if authenticated and has one)
+    let finalPrompt = intent.prompt;
+    let finalNegativePrompt = intent.negativePrompt;
+
+    console.log(`[API] Image generation - User authenticated: ${!!user}, userId: ${user?.id?.slice(0, 8)}...`);
+
+    if (user) {
+      const brandStyle = await getActiveBrandStyle(user.id);
+      console.log(`[API] Brand style lookup result: ${brandStyle ? `Found "${brandStyle.name}" (active: ${brandStyle.isActive})` : "None found"}`);
+      if (brandStyle) {
+        console.log(`[API] Applying brand style "${brandStyle.name}" to image generation`);
+        console.log(`[API] Brand colors: ${JSON.stringify(brandStyle.primaryColors?.slice(0, 2))}`);
+        finalPrompt = composePromptWithBrandStyle(intent.prompt, brandStyle);
+        finalNegativePrompt = composeNegativeWithBrandStyle(intent.negativePrompt || "", brandStyle);
+        console.log(`[API] Final prompt (first 200 chars): ${finalPrompt.slice(0, 200)}...`);
+      }
+    } else {
+      console.log(`[API] No user authenticated, skipping brand style`);
+    }
+
     // Generate the image
     const result = await generateImage(
       {
-        prompt: intent.prompt,
-        negativePrompt: intent.negativePrompt,
+        prompt: finalPrompt,
+        negativePrompt: finalNegativePrompt,
         headlineText: intent.headlineText,
         stylePreset: intent.stylePreset as StylePreset,
         aspectRatio: "1.91:1", // LinkedIn cover image ratio

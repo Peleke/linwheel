@@ -31,9 +31,11 @@ export default async function DashboardPage() {
         db.query.imageIntents.findFirst({
           where: eq(imageIntents.postId, post.id),
         }),
-        db.query.generationRuns.findFirst({
-          where: eq(generationRuns.id, post.runId),
-        }),
+        post.runId
+          ? db.query.generationRuns.findFirst({
+              where: eq(generationRuns.id, post.runId),
+            })
+          : null,
       ]);
 
       return {
@@ -44,8 +46,10 @@ export default async function DashboardPage() {
         contentType: post.postType,
         scheduledAt: safeToISOString(post.scheduledAt),
         imageUrl: intent?.generatedImageUrl || null,
-        runId: post.runId,
+        runId: post.runId || "",
         runLabel: run?.sourceLabel || "Unknown",
+        linkedinPostUrn: post.linkedinPostUrn || null,
+        autoPublish: post.autoPublish ?? true,
       };
     })
   );
@@ -76,6 +80,8 @@ export default async function DashboardPage() {
         imageUrl: intent?.generatedImageUrl || null,
         runId: article.runId,
         runLabel: run?.sourceLabel || "Unknown",
+        linkedinPostUrn: null, // Articles don't have direct LinkedIn publishing yet
+        autoPublish: true,
       };
     })
   );
