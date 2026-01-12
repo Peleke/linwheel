@@ -80,6 +80,7 @@ export async function GET(request: NextRequest) {
       expiresAt,
       linkedinProfileId: userInfo.sub,
       linkedinProfileName: userInfo.name,
+      linkedinProfilePicture: userInfo.picture || null,
       createdAt: new Date(),
       updatedAt: new Date(),
     });

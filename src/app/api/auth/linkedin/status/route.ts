@@ -13,6 +13,7 @@ import { requireAuth } from "@/lib/auth";
 export interface LinkedInStatusResponse {
   connected: boolean;
   profileName: string | null;
+  profilePicture: string | null;
   expiresAt: string | null;
   isExpired: boolean;
 }
@@ -31,6 +32,7 @@ export async function GET() {
     const connection = await db
       .select({
         linkedinProfileName: linkedinConnections.linkedinProfileName,
+        linkedinProfilePicture: linkedinConnections.linkedinProfilePicture,
         expiresAt: linkedinConnections.expiresAt,
       })
       .from(linkedinConnections)
@@ -41,17 +43,19 @@ export async function GET() {
       return NextResponse.json<LinkedInStatusResponse>({
         connected: false,
         profileName: null,
+        profilePicture: null,
         expiresAt: null,
         isExpired: false,
       });
     }
 
-    const { linkedinProfileName, expiresAt } = connection[0];
+    const { linkedinProfileName, linkedinProfilePicture, expiresAt } = connection[0];
     const isExpired = expiresAt ? new Date(expiresAt) < new Date() : false;
 
     return NextResponse.json<LinkedInStatusResponse>({
       connected: true,
       profileName: linkedinProfileName,
+      profilePicture: linkedinProfilePicture,
       expiresAt: expiresAt?.toISOString() ?? null,
       isExpired,
     });

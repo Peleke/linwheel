@@ -297,6 +297,7 @@ export const linkedinConnections = sqliteTable("linkedin_connections", {
   expiresAt: integer("expires_at", { mode: "timestamp" }),
   linkedinProfileId: text("linkedin_profile_id"),
   linkedinProfileName: text("linkedin_profile_name"),
+  linkedinProfilePicture: text("linkedin_profile_picture"),
   createdAt: integer("created_at", { mode: "timestamp" }).$defaultFn(() => new Date()),
   updatedAt: integer("updated_at", { mode: "timestamp" }).$defaultFn(() => new Date()),
 });
