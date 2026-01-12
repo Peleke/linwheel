@@ -18,6 +18,7 @@ import { uploadImage } from "@/lib/storage";
 import { incrementImageUsage, canGenerateImages } from "@/lib/usage";
 import { getActiveBrandStyle, composePromptWithBrandStyle, composeNegativeWithBrandStyle } from "@/lib/brand-styles";
 import { generateImageIntent } from "@/lib/generate";
+import { getPostImageDimensions, DEFAULT_POST_IMAGE_SIZE } from "@/lib/linkedin-image-config";
 
 interface RouteParams {
   params: Promise<{ postId: string }>;
@@ -72,11 +73,12 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
 
     const { postId } = await params;
     const body = await request.json().catch(() => ({}));
-    const { provider, model, customPrompt, customHeadline } = body as {
+    const { provider, model, customPrompt, customHeadline, imageSize } = body as {
       provider?: T2IProviderType;
       model?: string;
       customPrompt?: string;
       customHeadline?: string;
+      imageSize?: "square" | "portrait" | "landscape";
     };
 
     // Check usage limits
@@ -160,14 +162,16 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       finalNegativePrompt = composeNegativeWithBrandStyle(intent.negativePrompt || "", brandStyle);
     }
 
-    // Generate the image
+    // Generate the image using LinkedIn-optimized dimensions
+    const sizeKey = imageSize || DEFAULT_POST_IMAGE_SIZE;
+    const postDimensions = getPostImageDimensions(sizeKey);
     const result = await generateImage(
       {
         prompt: finalPrompt,
         negativePrompt: finalNegativePrompt,
         headlineText: "",
         stylePreset: intent.stylePreset as StylePreset,
-        aspectRatio: "1.91:1",
+        aspectRatio: postDimensions.aspectRatio,
         quality: "hd",
       },
       provider,
@@ -198,8 +202,8 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
         console.log(`[PostImage] Overlaying headline text...`);
         const compositedBuffer = await overlayCoverTextFromUrl(result.imageUrl, {
           headline: intent.headlineText,
-          width: 1200,
-          height: 628,
+          width: postDimensions.width,
+          height: postDimensions.height,
         });
 
         const filename = `post-cover-${intent.id}.png`;
