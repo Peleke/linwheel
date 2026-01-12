@@ -1,7 +1,7 @@
 /**
  * GET /api/cron/auto-publish
  *
- * Cron job to auto-publish scheduled posts AND articles to LinkedIn.
+ * Cron job to auto-publish scheduled posts, articles, AND carousels to LinkedIn.
  * Runs every 5 minutes. Publishes content where:
  * - autoPublish is true
  * - scheduledAt has passed
@@ -15,6 +15,7 @@ import { db } from "@/db";
 import {
   linkedinPosts,
   articles,
+  articleCarouselIntents,
   linkedinConnections,
   pushSubscriptions,
   imageIntents,
@@ -83,7 +84,29 @@ export async function GET(request: NextRequest) {
 
     console.log(`[AutoPublish] Found ${articlesToPublish.length} articles to publish`);
 
-    if (postsToPublish.length === 0 && articlesToPublish.length === 0) {
+    // Find carousels ready for auto-publish
+    const carouselsToPublish = await db
+      .select({
+        carousel: articleCarouselIntents,
+        article: articles,
+        run: generationRuns,
+      })
+      .from(articleCarouselIntents)
+      .innerJoin(articles, eq(articleCarouselIntents.articleId, articles.id))
+      .leftJoin(generationRuns, eq(articles.runId, generationRuns.id))
+      .where(
+        and(
+          eq(articleCarouselIntents.status, "scheduled"),
+          eq(articleCarouselIntents.autoPublish, true),
+          isNotNull(articleCarouselIntents.scheduledAt),
+          lte(articleCarouselIntents.scheduledAt, now),
+          isNull(articleCarouselIntents.linkedinPostUrn)
+        )
+      );
+
+    console.log(`[AutoPublish] Found ${carouselsToPublish.length} carousels to publish`);
+
+    if (postsToPublish.length === 0 && articlesToPublish.length === 0 && carouselsToPublish.length === 0) {
       return NextResponse.json({
         success: true,
         message: "No content to auto-publish",
@@ -93,7 +116,7 @@ export async function GET(request: NextRequest) {
 
     const results: Array<{
       contentId: string;
-      contentType: "post" | "article";
+      contentType: "post" | "article" | "carousel";
       success: boolean;
       postUrn?: string;
       postUrl?: string;
@@ -468,6 +491,196 @@ export async function GET(request: NextRequest) {
         results.push({
           contentId: article.id,
           contentType: "article",
+          success: false,
+          error: errorMessage,
+          notificationSent: false,
+        });
+      }
+    }
+
+    // Process carousels
+    for (const { carousel, article, run } of carouselsToPublish) {
+      const userId = run?.userId;
+
+      if (!userId) {
+        console.log(`[AutoPublish] Skipping carousel ${carousel.id} - no userId available`);
+        results.push({
+          contentId: carousel.id,
+          contentType: "carousel",
+          success: false,
+          error: "No user ID available for this carousel",
+          notificationSent: false,
+        });
+        continue;
+      }
+
+      // Check carousel has a generated PDF
+      if (!carousel.generatedPdfUrl) {
+        console.log(`[AutoPublish] Skipping carousel ${carousel.id} - no PDF generated`);
+        await db
+          .update(articleCarouselIntents)
+          .set({
+            publishError: "Carousel PDF not generated",
+            status: "failed"
+          })
+          .where(eq(articleCarouselIntents.id, carousel.id));
+        results.push({
+          contentId: carousel.id,
+          contentType: "carousel",
+          success: false,
+          error: "Carousel PDF not generated",
+          notificationSent: false,
+        });
+        continue;
+      }
+
+      // Get LinkedIn connection for this user
+      const connection = await db
+        .select()
+        .from(linkedinConnections)
+        .where(eq(linkedinConnections.userId, userId))
+        .limit(1);
+
+      if (connection.length === 0) {
+        console.log(`[AutoPublish] User ${userId} has no LinkedIn connection`);
+        await db
+          .update(articleCarouselIntents)
+          .set({ publishError: "LinkedIn not connected" })
+          .where(eq(articleCarouselIntents.id, carousel.id));
+        results.push({
+          contentId: carousel.id,
+          contentType: "carousel",
+          success: false,
+          error: "LinkedIn not connected",
+          notificationSent: false,
+        });
+        continue;
+      }
+
+      const linkedinConnection = connection[0];
+
+      // Check if token expired
+      if (linkedinConnection.expiresAt && linkedinConnection.expiresAt < now) {
+        console.log(`[AutoPublish] LinkedIn token expired for user ${userId}`);
+        await db
+          .update(articleCarouselIntents)
+          .set({ publishError: "LinkedIn connection expired" })
+          .where(eq(articleCarouselIntents.id, carousel.id));
+        results.push({
+          contentId: carousel.id,
+          contentType: "carousel",
+          success: false,
+          error: "LinkedIn connection expired",
+          notificationSent: false,
+        });
+        continue;
+      }
+
+      // Decrypt access token
+      const accessToken = decryptToken(linkedinConnection.accessToken);
+      const profileId = linkedinConnection.linkedinProfileId;
+
+      if (!profileId) {
+        console.log(`[AutoPublish] Missing LinkedIn profile ID for user ${userId}`);
+        await db
+          .update(articleCarouselIntents)
+          .set({ publishError: "LinkedIn profile ID missing" })
+          .where(eq(articleCarouselIntents.id, carousel.id));
+        results.push({
+          contentId: carousel.id,
+          contentType: "carousel",
+          success: false,
+          error: "LinkedIn profile ID missing",
+          notificationSent: false,
+        });
+        continue;
+      }
+
+      // Ensure the profile ID is a valid URN format
+      const personUrn = profileId.startsWith("urn:li:person:")
+        ? profileId
+        : `urn:li:person:${profileId}`;
+
+      // Publish carousel to LinkedIn as document post
+      const client = new LinkedInClient(accessToken, personUrn);
+
+      // Use carousel caption or generate from article title
+      const carouselText = carousel.caption || `${article.title}\n\n📄 Swipe through to learn more!`;
+
+      try {
+        const publishResult = await client.createDocumentPost({
+          text: carouselText,
+          documentUrl: carousel.generatedPdfUrl,
+          title: article.title,
+        });
+
+        // Update carousel intent with success
+        await db
+          .update(articleCarouselIntents)
+          .set({
+            linkedinPostUrn: publishResult.postUrn,
+            publishedAt: new Date(),
+            publishError: null,
+            status: "published",
+          })
+          .where(eq(articleCarouselIntents.id, carousel.id));
+
+        console.log(`[AutoPublish] Published carousel ${carousel.id} as ${publishResult.postUrn}`);
+
+        // Send push notification
+        let notificationSent = false;
+        const subscriptions = await db
+          .select()
+          .from(pushSubscriptions)
+          .where(eq(pushSubscriptions.userId, userId));
+
+        for (const sub of subscriptions) {
+          const notifResult = await sendPostPublishedNotification(
+            {
+              endpoint: sub.endpoint,
+              keys: {
+                p256dh: sub.p256dh,
+                auth: sub.auth,
+              },
+            },
+            {
+              title: `Carousel: ${article.title.slice(0, 50)}`,
+              postUrl: publishResult.postUrl,
+              contentId: carousel.id,
+            }
+          );
+          if (notifResult.success) {
+            notificationSent = true;
+          }
+        }
+
+        results.push({
+          contentId: carousel.id,
+          contentType: "carousel",
+          success: true,
+          postUrn: publishResult.postUrn,
+          postUrl: publishResult.postUrl,
+          notificationSent,
+        });
+      } catch (error) {
+        const errorMessage =
+          error instanceof LinkedInError
+            ? error.userMessage
+            : "Failed to publish carousel to LinkedIn";
+
+        console.error(`[AutoPublish] Failed to publish carousel ${carousel.id}:`, error);
+
+        await db
+          .update(articleCarouselIntents)
+          .set({
+            publishError: errorMessage,
+            status: "failed"
+          })
+          .where(eq(articleCarouselIntents.id, carousel.id));
+
+        results.push({
+          contentId: carousel.id,
+          contentType: "carousel",
           success: false,
           error: errorMessage,
           notificationSent: false,
