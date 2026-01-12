@@ -247,11 +247,10 @@ function ComposePageContent() {
       const scheduledDateTime = new Date(`${scheduleDate}T${scheduleTime}`);
 
       const res = await fetch(`/api/posts/${postId}/schedule`, {
-        method: "POST",
+        method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           scheduledAt: scheduledDateTime.toISOString(),
-          autoPublish: true,
         }),
       });
 
@@ -269,6 +268,37 @@ function ComposePageContent() {
     } catch (err) {
       console.error("Schedule error:", err);
       setError("Failed to schedule post");
+    } finally {
+      setIsScheduling(false);
+    }
+  };
+
+  const handleUnschedule = async () => {
+    if (!postId) return;
+
+    setIsScheduling(true);
+    setError(null);
+
+    try {
+      const res = await fetch(`/api/posts/${postId}/schedule`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ scheduledAt: null }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setError(data.error || "Failed to unschedule");
+        return;
+      }
+
+      setIsScheduled(false);
+      setScheduledAt(null);
+      setSuccessMessage("Post unscheduled");
+    } catch (err) {
+      console.error("Unschedule error:", err);
+      setError("Failed to unschedule post");
     } finally {
       setIsScheduling(false);
     }
@@ -365,9 +395,18 @@ function ComposePageContent() {
                 {postId ? "Edit Post" : "New Post"}
               </h1>
               {isScheduled && scheduledAt && (
-                <p className="text-emerald-600 dark:text-emerald-400 text-sm mt-1">
-                  Scheduled for {new Date(scheduledAt).toLocaleString()}
-                </p>
+                <div className="flex items-center gap-2 mt-1">
+                  <p className="text-emerald-600 dark:text-emerald-400 text-sm">
+                    Scheduled for {new Date(scheduledAt).toLocaleString()}
+                  </p>
+                  <button
+                    onClick={handleUnschedule}
+                    disabled={isScheduling}
+                    className="text-xs text-amber-600 dark:text-amber-400 hover:text-amber-700 dark:hover:text-amber-300 underline"
+                  >
+                    {isScheduling ? "..." : "Unschedule"}
+                  </button>
+                </div>
               )}
             </div>
 
@@ -712,6 +751,9 @@ function ComposePageContent() {
                   onChange={(e) => setScheduleTime(e.target.value)}
                   className="w-full px-3 py-2 border border-zinc-300 dark:border-zinc-700 rounded-lg bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
+                <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">
+                  {Intl.DateTimeFormat().resolvedOptions().timeZone}
+                </p>
               </div>
 
               <div className="flex items-center gap-2 p-3 bg-emerald-50 dark:bg-emerald-900/20 rounded-lg">

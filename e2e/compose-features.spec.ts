@@ -310,20 +310,20 @@ test.describe("Flow 4: Schedule Modal", () => {
     await expect(timeInput).toBeVisible();
   });
 
-  test("4.5 - schedule modal has auto-publish toggle", async ({ page }) => {
+  test("4.5 - schedule modal shows timezone info", async ({ page }) => {
     await page.goto("/compose");
 
     const textarea = page.getByPlaceholder("What do you want to share?");
-    await textarea.fill("Post for auto-publish test");
+    await textarea.fill("Post for timezone test");
 
     await page.getByRole("button", { name: "Save Draft" }).click();
     await page.waitForURL(/\/compose\?draft=/);
 
     await page.getByRole("button", { name: "Schedule" }).click();
 
-    // Should have auto-publish toggle or checkbox
-    const autoPublishToggle = page.locator("text=/Auto-publish|Automatically publish/i");
-    await expect(autoPublishToggle).toBeVisible();
+    // Should show timezone info
+    const timezoneHint = page.locator("text=/America|Europe|Asia|Pacific|UTC/i");
+    await expect(timezoneHint).toBeVisible();
   });
 
   test("4.6 - cancel closes schedule modal", async ({ page }) => {
@@ -380,6 +380,66 @@ test.describe("Flow 4: Schedule Modal", () => {
     today.setHours(0, 0, 0, 0);
 
     expect(selectedDate >= today).toBe(true);
+  });
+});
+
+// ============================================================================
+// FLOW 4.5: UNSCHEDULE FROM COMPOSE PAGE
+// ============================================================================
+test.describe("Flow 4.5: Unschedule from Compose", () => {
+  async function createAndScheduleDraft(page: import("@playwright/test").Page, content: string) {
+    await page.goto("/compose");
+    const textarea = page.getByPlaceholder("What do you want to share?");
+    await textarea.fill(content);
+    await page.getByRole("button", { name: "Save Draft" }).click();
+    await page.waitForURL(/\/compose\?draft=/);
+
+    // Schedule it
+    await page.getByRole("button", { name: "Schedule" }).click();
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    await page.locator("input[type='date']").fill(tomorrow.toISOString().split("T")[0]);
+    await page.locator("input[type='time']").fill("09:00");
+    await page.getByRole("button", { name: /Schedule|Confirm/i }).last().click();
+    await page.waitForTimeout(1000);
+  }
+
+  test("4.5.1 - scheduled post shows unschedule option", async ({ page }) => {
+    await createAndScheduleDraft(page, "Post for unschedule visibility test");
+
+    // Page should show scheduled status with unschedule link
+    await expect(page.getByText(/Scheduled for/i)).toBeVisible();
+    await expect(page.getByText("Unschedule")).toBeVisible();
+  });
+
+  test("4.5.2 - clicking unschedule removes schedule", async ({ page }) => {
+    await createAndScheduleDraft(page, "Post for unschedule action test");
+
+    // Click unschedule
+    await page.getByText("Unschedule").click();
+
+    // Should show success message or schedule button should reappear
+    await page.waitForTimeout(1000);
+
+    // Either success message or Schedule button should appear
+    const hasSuccess = await page.getByText(/unscheduled/i).isVisible().catch(() => false);
+    const hasScheduleBtn = await page.getByRole("button", { name: "Schedule" }).isVisible().catch(() => false);
+
+    expect(hasSuccess || hasScheduleBtn).toBe(true);
+  });
+
+  test("4.5.3 - after unschedule, post returns to queue", async ({ page }) => {
+    await createAndScheduleDraft(page, "Post for queue return test " + Date.now());
+
+    // Unschedule
+    await page.getByText("Unschedule").click();
+    await page.waitForTimeout(1000);
+
+    // Go to dashboard
+    await page.goto("/dashboard");
+
+    // Post should be in queue (Ready to Schedule section)
+    await expect(page.getByText("Ready to Schedule")).toBeVisible();
   });
 });
 

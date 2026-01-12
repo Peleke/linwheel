@@ -51,6 +51,12 @@ export function DashboardClient({ content }: DashboardClientProps) {
   const [dayOffset, setDayOffset] = useState(0); // Days offset from today (for day-by-day nav)
   const { isSupported, isSubscribed, isLoading: pushLoading, subscribe, unsubscribe } = usePushNotifications();
 
+  // Schedule modal state
+  const [showScheduleModal, setShowScheduleModal] = useState(false);
+  const [scheduleDate, setScheduleDate] = useState("");
+  const [scheduleTime, setScheduleTime] = useState("09:00");
+  const [scheduleItemId, setScheduleItemId] = useState<string | null>(null);
+
   // Scroll to center day on mount/change (mobile)
   useEffect(() => {
     if (scrollContainerRef.current) {
@@ -108,7 +114,61 @@ export function DashboardClient({ content }: DashboardClientProps) {
     router.refresh();
   };
 
-  const handleSchedule = async (itemId: string, date: Date) => {
+  // Open schedule modal for an item
+  const openScheduleModal = (itemId: string, preSelectedDate?: Date) => {
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const defaultDate = preSelectedDate || tomorrow;
+
+    setScheduleItemId(itemId);
+    setScheduleDate(defaultDate.toISOString().split("T")[0]);
+    setScheduleTime("09:00");
+    setShowScheduleModal(true);
+    setSchedulingItem(null); // Close inline scheduling mode if open
+  };
+
+  const handleScheduleSubmit = async () => {
+    if (!scheduleItemId || !scheduleDate || !scheduleTime) return;
+
+    const item = content.find(c => c.id === scheduleItemId);
+    if (!item) return;
+
+    setIsScheduling(true);
+
+    try {
+      // Combine date and time
+      const scheduledDateTime = new Date(`${scheduleDate}T${scheduleTime}`);
+
+      const endpoint = item.type === "post"
+        ? `/api/posts/${scheduleItemId}/schedule`
+        : `/api/articles/${scheduleItemId}/schedule`;
+
+      const res = await fetch(endpoint, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ scheduledAt: scheduledDateTime.toISOString() }),
+      });
+
+      if (!res.ok) {
+        const err = await res.json();
+        console.error("Schedule failed:", err);
+        alert("Failed to schedule. Please try again.");
+        return;
+      }
+
+      // Close modal and refresh
+      setShowScheduleModal(false);
+      setScheduleItemId(null);
+      router.refresh();
+    } catch (err) {
+      console.error("Schedule error:", err);
+      alert("Failed to schedule. Please try again.");
+    } finally {
+      setIsScheduling(false);
+    }
+  };
+
+  const handleUnschedule = async (itemId: string) => {
     const item = content.find(c => c.id === itemId);
     if (!item) return;
 
@@ -122,25 +182,29 @@ export function DashboardClient({ content }: DashboardClientProps) {
       const res = await fetch(endpoint, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ scheduledAt: date.toISOString() }),
+        body: JSON.stringify({ scheduledAt: null }),
       });
 
       if (!res.ok) {
         const err = await res.json();
-        console.error("Schedule failed:", err);
-        alert("Failed to schedule. Please try again.");
+        console.error("Unschedule failed:", err);
+        alert("Failed to unschedule. Please try again.");
         return;
       }
 
-      // Refresh the page data
       router.refresh();
     } catch (err) {
-      console.error("Schedule error:", err);
-      alert("Failed to schedule. Please try again.");
+      console.error("Unschedule error:", err);
+      alert("Failed to unschedule. Please try again.");
     } finally {
       setIsScheduling(false);
-      setSchedulingItem(null);
     }
+  };
+
+  // Legacy handler for inline calendar scheduling (still used for quick-pick)
+  const handleSchedule = async (itemId: string, date: Date) => {
+    // Open modal with pre-selected date instead of immediately scheduling
+    openScheduleModal(itemId, date);
   };
 
   const handleDelete = async (itemId: string) => {
@@ -356,7 +420,7 @@ export function DashboardClient({ content }: DashboardClientProps) {
                         </div>
                       ) : (
                         dayContent.map((item) => (
-                          <CalendarItem key={item.id} item={item} />
+                          <CalendarItem key={item.id} item={item} onUnschedule={handleUnschedule} />
                         ))
                       )}
                     </div>
@@ -484,7 +548,7 @@ export function DashboardClient({ content }: DashboardClientProps) {
                   >
                     <div className="space-y-2">
                       {dayContent.map((item) => (
-                        <CalendarItem key={item.id} item={item} />
+                        <CalendarItem key={item.id} item={item} onUnschedule={handleUnschedule} />
                       ))}
                     </div>
 
@@ -532,6 +596,7 @@ export function DashboardClient({ content }: DashboardClientProps) {
                   isScheduling={schedulingItem === item.id}
                   onStartScheduling={() => setSchedulingItem(item.id)}
                   onCancelScheduling={() => setSchedulingItem(null)}
+                  onOpenScheduleModal={() => openScheduleModal(item.id)}
                   onPublish={handlePublish}
                   onDelete={handleDelete}
                 />
@@ -540,52 +605,162 @@ export function DashboardClient({ content }: DashboardClientProps) {
           </div>
         </div>
       </div>
+
+      {/* Schedule Modal with date and time */}
+      {showScheduleModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setShowScheduleModal(false)}>
+          <div className="bg-white dark:bg-zinc-900 rounded-2xl p-6 max-w-sm mx-4 shadow-xl" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center">
+                <svg className="w-5 h-5 text-emerald-600 dark:text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+              </div>
+              <div>
+                <h3 className="font-semibold text-zinc-900 dark:text-zinc-100">Schedule Content</h3>
+                <p className="text-sm text-zinc-500 dark:text-zinc-400">Pick a date and time</p>
+              </div>
+            </div>
+
+            {/* Date picker */}
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1.5">
+                Date
+              </label>
+              <input
+                type="date"
+                value={scheduleDate}
+                onChange={(e) => setScheduleDate(e.target.value)}
+                min={new Date().toISOString().split("T")[0]}
+                className="w-full px-3 py-2 bg-zinc-50 dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+              />
+            </div>
+
+            {/* Time picker */}
+            <div className="mb-6">
+              <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1.5">
+                Time
+              </label>
+              <input
+                type="time"
+                value={scheduleTime}
+                onChange={(e) => setScheduleTime(e.target.value)}
+                className="w-full px-3 py-2 bg-zinc-50 dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+              />
+              <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">
+                {getUserTimezone()}
+              </p>
+            </div>
+
+            {/* Action buttons */}
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowScheduleModal(false)}
+                className="flex-1 px-4 py-2 text-sm font-medium border border-zinc-300 dark:border-zinc-700 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleScheduleSubmit}
+                disabled={isScheduling || !scheduleDate || !scheduleTime}
+                className="flex-1 px-4 py-2 text-sm font-medium bg-emerald-600 text-white rounded-lg hover:bg-emerald-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isScheduling ? "Scheduling..." : "Schedule"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
 
-function CalendarItem({ item }: { item: ContentItem }) {
+function CalendarItem({ item, onUnschedule }: { item: ContentItem; onUnschedule?: (itemId: string) => void }) {
+  const [isUnscheduling, setIsUnscheduling] = useState(false);
   const isPost = item.type === "post";
-  const editUrl = isPost ? `/compose?draft=${item.id}` : `/results/${item.runId}`;
+  const editUrl = isPost ? `/compose?draft=${item.id}` : `/article/${item.id}`;
+
+  // Format scheduled time
+  const scheduledTime = item.scheduledAt
+    ? new Date(item.scheduledAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    : null;
+
+  const handleUnschedule = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!onUnschedule) return;
+    setIsUnscheduling(true);
+    try {
+      await onUnschedule(item.id);
+    } finally {
+      setIsUnscheduling(false);
+    }
+  };
 
   return (
-    <Link
-      href={editUrl}
-      onClick={(e) => e.stopPropagation()}
-      className={`group block relative rounded-lg p-2 transition-colors border-l-3 ${
+    <div
+      className={`group relative rounded-lg p-2 transition-colors border-l-3 ${
         isPost
           ? "bg-blue-50 dark:bg-blue-900/20 border-l-blue-500 hover:bg-blue-100 dark:hover:bg-blue-900/30"
           : "bg-purple-50 dark:bg-purple-900/20 border-l-purple-500 hover:bg-purple-100 dark:hover:bg-purple-900/30"
       }`}
     >
-      <div className="flex items-start gap-2">
-        {item.imageUrl ? (
-          <div className="relative w-8 h-8 rounded overflow-hidden flex-shrink-0">
-            <Image src={item.imageUrl} alt="" fill className="object-cover" sizes="32px" />
-          </div>
-        ) : (
-          <div className={`w-8 h-8 rounded flex-shrink-0 flex items-center justify-center text-white text-[10px] font-bold ${
-            isPost ? "bg-blue-500" : "bg-purple-500"
-          }`}>
-            {isPost ? "P" : "A"}
-          </div>
-        )}
-        <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-1.5 mb-0.5">
-            <span className={`px-1.5 py-0.5 text-[9px] font-semibold uppercase rounded ${
-              isPost
-                ? "bg-blue-500 text-white"
-                : "bg-purple-500 text-white"
+      <Link
+        href={editUrl}
+        onClick={(e) => e.stopPropagation()}
+        className="block"
+      >
+        <div className="flex items-start gap-2">
+          {item.imageUrl ? (
+            <div className="relative w-8 h-8 rounded overflow-hidden flex-shrink-0">
+              <Image src={item.imageUrl} alt="" fill className="object-cover" sizes="32px" />
+            </div>
+          ) : (
+            <div className={`w-8 h-8 rounded flex-shrink-0 flex items-center justify-center text-white text-[10px] font-bold ${
+              isPost ? "bg-blue-500" : "bg-purple-500"
             }`}>
-              {isPost ? "Post" : "Article"}
-            </span>
+              {isPost ? "P" : "A"}
+            </div>
+          )}
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-1.5 mb-0.5">
+              <span className={`px-1.5 py-0.5 text-[9px] font-semibold uppercase rounded ${
+                isPost
+                  ? "bg-blue-500 text-white"
+                  : "bg-purple-500 text-white"
+              }`}>
+                {isPost ? "Post" : "Article"}
+              </span>
+              {scheduledTime && (
+                <span className="text-[9px] text-zinc-500 dark:text-zinc-400">
+                  {scheduledTime}
+                </span>
+              )}
+            </div>
+            <p className="text-xs font-medium text-zinc-900 dark:text-zinc-100 line-clamp-2">
+              {item.title}
+            </p>
           </div>
-          <p className="text-xs font-medium text-zinc-900 dark:text-zinc-100 line-clamp-2">
-            {item.title}
-          </p>
         </div>
-      </div>
-    </Link>
+      </Link>
+      {/* Unschedule button - appears on hover */}
+      {onUnschedule && (
+        <button
+          onClick={handleUnschedule}
+          disabled={isUnscheduling}
+          className="absolute top-1 right-1 p-1 opacity-0 group-hover:opacity-100 text-zinc-400 hover:text-amber-600 dark:hover:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded transition-all"
+          title="Unschedule"
+        >
+          {isUnscheduling ? (
+            <div className="w-3 h-3 border border-current border-t-transparent rounded-full animate-spin" />
+          ) : (
+            <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          )}
+        </button>
+      )}
+    </div>
   );
 }
 
@@ -594,6 +769,7 @@ function QueueItem({
   isScheduling,
   onStartScheduling,
   onCancelScheduling,
+  onOpenScheduleModal,
   onPublish,
   onDelete,
 }: {
@@ -601,6 +777,7 @@ function QueueItem({
   isScheduling: boolean;
   onStartScheduling: () => void;
   onCancelScheduling: () => void;
+  onOpenScheduleModal: () => void;
   onPublish: (itemId: string) => Promise<void>;
   onDelete: (itemId: string) => Promise<void>;
 }) {
@@ -636,7 +813,7 @@ function QueueItem({
     }
   };
 
-  const editUrl = isPost ? `/compose?draft=${item.id}` : `/results/${item.runId}`;
+  const editUrl = isPost ? `/compose?draft=${item.id}` : `/article/${item.id}`;
 
   return (
     <div className={`rounded-xl border-l-4 transition-all ${
@@ -745,7 +922,7 @@ function QueueItem({
                 </button>
               )}
               <button
-                onClick={onStartScheduling}
+                onClick={onOpenScheduleModal}
                 className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg transition-colors"
               >
                 <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
