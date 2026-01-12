@@ -49,6 +49,10 @@ function ComposePageContent() {
   const [isScheduled, setIsScheduled] = useState(false);
   const [scheduledAt, setScheduledAt] = useState<string | null>(null);
 
+  // Delete state
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+
   // User profile state
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
 
@@ -300,6 +304,34 @@ function ComposePageContent() {
     }
   };
 
+  const handleDelete = async () => {
+    if (!postId) return;
+
+    setIsDeleting(true);
+    setError(null);
+
+    try {
+      const res = await fetch(`/api/posts/${postId}`, {
+        method: "DELETE",
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        setError(data.error || "Failed to delete");
+        return;
+      }
+
+      // Redirect to dashboard after successful delete
+      router.push("/dashboard");
+    } catch (err) {
+      console.error("Delete error:", err);
+      setError("Failed to delete post");
+    } finally {
+      setIsDeleting(false);
+      setShowDeleteModal(false);
+    }
+  };
+
   // Get default schedule date (tomorrow)
   const getDefaultScheduleDate = () => {
     const tomorrow = new Date();
@@ -355,6 +387,17 @@ function ComposePageContent() {
                 </a>
               ) : (
                 <>
+                  {postId && (
+                    <button
+                      onClick={() => setShowDeleteModal(true)}
+                      className="p-2 text-zinc-500 dark:text-zinc-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                      title="Delete post"
+                    >
+                      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      </svg>
+                    </button>
+                  )}
                   <button
                     onClick={handleSave}
                     disabled={isSaving || isEmpty || isOverLimit}
@@ -694,6 +737,36 @@ function ComposePageContent() {
                 className="flex-1 px-4 py-2 text-sm font-medium text-white bg-emerald-600 rounded-lg hover:bg-emerald-500 transition-colors disabled:opacity-50"
               >
                 {isScheduling ? "Scheduling..." : "Schedule"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white dark:bg-zinc-900 rounded-xl p-6 w-full max-w-md mx-4 shadow-xl">
+            <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100 mb-2">
+              Delete Post?
+            </h3>
+            <p className="text-sm text-zinc-600 dark:text-zinc-400 mb-6">
+              This action cannot be undone. The post and any associated cover images will be permanently deleted.
+            </p>
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowDeleteModal(false)}
+                className="flex-1 px-4 py-2 text-sm font-medium text-zinc-700 dark:text-zinc-300 bg-zinc-200 dark:bg-zinc-800 rounded-lg hover:bg-zinc-300 dark:hover:bg-zinc-700 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDelete}
+                disabled={isDeleting}
+                className="flex-1 px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-500 transition-colors disabled:opacity-50"
+              >
+                {isDeleting ? "Deleting..." : "Delete"}
               </button>
             </div>
           </div>

@@ -1,5 +1,5 @@
 /**
- * GET/PATCH /api/posts/[postId] - Get or update a post
+ * GET/PATCH/DELETE /api/posts/[postId] - Get, update, or delete a post
  */
 
 import { NextRequest, NextResponse } from "next/server";
@@ -156,6 +156,51 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
     console.error("Update post error:", error);
     return NextResponse.json(
       { error: "Failed to update post" },
+      { status: 500 }
+    );
+  }
+}
+
+export async function DELETE(request: NextRequest, { params }: RouteParams) {
+  try {
+    // Require authenticated user
+    try {
+      await requireAuth();
+    } catch {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const { postId } = await params;
+
+    // Check post exists
+    const post = await db
+      .select()
+      .from(linkedinPosts)
+      .where(eq(linkedinPosts.id, postId))
+      .limit(1);
+
+    if (post.length === 0) {
+      return NextResponse.json({ error: "Post not found" }, { status: 404 });
+    }
+
+    // Delete associated image intents first (if any)
+    await db
+      .delete(imageIntents)
+      .where(eq(imageIntents.postId, postId));
+
+    // Delete the post
+    await db
+      .delete(linkedinPosts)
+      .where(eq(linkedinPosts.id, postId));
+
+    return NextResponse.json({
+      success: true,
+      message: "Post deleted successfully",
+    });
+  } catch (error) {
+    console.error("Delete post error:", error);
+    return NextResponse.json(
+      { error: "Failed to delete post" },
       { status: 500 }
     );
   }

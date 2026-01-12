@@ -143,6 +143,24 @@ export function DashboardClient({ content }: DashboardClientProps) {
     }
   };
 
+  const handleDelete = async (itemId: string) => {
+    const item = content.find(c => c.id === itemId);
+    if (!item) return;
+
+    const endpoint = item.type === "post"
+      ? `/api/posts/${itemId}`
+      : `/api/articles/${itemId}`;
+
+    const res = await fetch(endpoint, { method: "DELETE" });
+
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.error || "Failed to delete");
+    }
+
+    router.refresh();
+  };
+
   const isToday = (date: Date) => {
     const today = new Date();
     return date.toDateString() === today.toDateString();
@@ -515,6 +533,7 @@ export function DashboardClient({ content }: DashboardClientProps) {
                   onStartScheduling={() => setSchedulingItem(item.id)}
                   onCancelScheduling={() => setSchedulingItem(null)}
                   onPublish={handlePublish}
+                  onDelete={handleDelete}
                 />
               ))
             )}
@@ -576,17 +595,33 @@ function QueueItem({
   onStartScheduling,
   onCancelScheduling,
   onPublish,
+  onDelete,
 }: {
   item: ContentItem;
   isScheduling: boolean;
   onStartScheduling: () => void;
   onCancelScheduling: () => void;
   onPublish: (itemId: string) => Promise<void>;
+  onDelete: (itemId: string) => Promise<void>;
 }) {
   const [isPublishing, setIsPublishing] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [publishError, setPublishError] = useState<string | null>(null);
   const isPost = item.type === "post";
   const isPublished = !!item.linkedinPostUrn;
+
+  const handleDelete = async () => {
+    setIsDeleting(true);
+    try {
+      await onDelete(item.id);
+    } catch (err) {
+      console.error("Delete failed:", err);
+    } finally {
+      setIsDeleting(false);
+      setShowDeleteConfirm(false);
+    }
+  };
 
   const handlePublish = async () => {
     if (!isPost) return; // Only posts can be published directly
@@ -720,6 +755,16 @@ function QueueItem({
               </button>
             </>
           )}
+          {/* Delete button */}
+          <button
+            onClick={() => setShowDeleteConfirm(true)}
+            className="p-1.5 text-zinc-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors ml-auto"
+            title="Delete"
+          >
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+            </svg>
+          </button>
         </div>
       </div>
 
@@ -732,6 +777,43 @@ function QueueItem({
           >
             From: {item.runLabel}
           </Link>
+        </div>
+      )}
+
+      {/* Delete confirmation modal */}
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setShowDeleteConfirm(false)}>
+          <div className="bg-white dark:bg-zinc-900 rounded-2xl p-6 max-w-sm mx-4 shadow-xl" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
+                <svg className="w-5 h-5 text-red-600 dark:text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+              </div>
+              <div>
+                <h3 className="font-semibold text-zinc-900 dark:text-zinc-100">Delete {isPost ? "post" : "article"}?</h3>
+                <p className="text-sm text-zinc-500 dark:text-zinc-400">This cannot be undone.</p>
+              </div>
+            </div>
+            <p className="text-sm text-zinc-600 dark:text-zinc-300 mb-4 line-clamp-2">
+              &ldquo;{item.title}&rdquo;
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowDeleteConfirm(false)}
+                className="flex-1 px-4 py-2 text-sm font-medium border border-zinc-300 dark:border-zinc-700 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDelete}
+                disabled={isDeleting}
+                className="flex-1 px-4 py-2 text-sm font-medium bg-red-600 text-white rounded-lg hover:bg-red-500 transition-colors disabled:opacity-50"
+              >
+                {isDeleting ? "Deleting..." : "Delete"}
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>
