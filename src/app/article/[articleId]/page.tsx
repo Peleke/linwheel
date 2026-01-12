@@ -494,39 +494,33 @@ export default function ArticleEditPage({
                 {isSaving ? "Saving..." : "Save"}
               </button>
 
-              {/* Publish Now or View on LinkedIn */}
-              {linkedinPostUrn ? (
+              {/* Create Article on LinkedIn */}
+              <div className="relative group">
                 <a
-                  href={`https://www.linkedin.com/feed/update/${linkedinPostUrn}`}
+                  href="https://www.linkedin.com/article/new/"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-lg transition-colors hover:bg-blue-200 dark:hover:bg-blue-900/50"
+                  className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium bg-blue-600 hover:bg-blue-500 text-white rounded-lg transition-colors"
                 >
                   <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M19 3a2 2 0 012 2v14a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h14m-.5 15.5v-5.3a3.26 3.26 0 00-3.26-3.26c-.85 0-1.84.52-2.32 1.3v-1.11h-2.79v8.37h2.79v-4.93c0-.77.62-1.4 1.39-1.4a1.4 1.4 0 011.4 1.4v4.93h2.79M6.88 8.56a1.68 1.68 0 001.68-1.68c0-.93-.75-1.69-1.68-1.69a1.69 1.69 0 00-1.69 1.69c0 .93.76 1.68 1.69 1.68m1.39 9.94v-8.37H5.5v8.37h2.77z" />
                   </svg>
-                  View on LinkedIn
+                  Create on LinkedIn
                 </a>
-              ) : (
-                <button
-                  onClick={handlePublish}
-                  disabled={isPublishing || !title.trim()}
-                  className={`flex items-center gap-1.5 px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
-                    isPublishing
-                      ? "bg-blue-300 text-white cursor-wait"
-                      : "bg-blue-600 hover:bg-blue-500 text-white"
-                  } disabled:opacity-50 disabled:cursor-not-allowed`}
-                >
-                  {isPublishing ? (
-                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  ) : (
-                    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
-                      <path d="M19 3a2 2 0 012 2v14a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h14m-.5 15.5v-5.3a3.26 3.26 0 00-3.26-3.26c-.85 0-1.84.52-2.32 1.3v-1.11h-2.79v8.37h2.79v-4.93c0-.77.62-1.4 1.39-1.4a1.4 1.4 0 011.4 1.4v4.93h2.79M6.88 8.56a1.68 1.68 0 001.68-1.68c0-.93-.75-1.69-1.68-1.69a1.69 1.69 0 00-1.69 1.69c0 .93.76 1.68 1.69 1.68m1.39 9.94v-8.37H5.5v8.37h2.77z" />
+                {/* Info icon with tooltip */}
+                <div className="absolute -right-6 top-1/2 -translate-y-1/2">
+                  <div className="relative group/tooltip">
+                    <svg className="w-4 h-4 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 cursor-help" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
-                  )}
-                  {isPublishing ? "Publishing..." : "Publish Now"}
-                </button>
-              )}
+                    <div className="absolute bottom-full right-0 mb-2 w-64 p-3 bg-zinc-900 dark:bg-zinc-800 text-white text-xs rounded-lg shadow-lg opacity-0 invisible group-hover/tooltip:opacity-100 group-hover/tooltip:visible transition-all z-50">
+                      <p className="mb-1 font-medium">Why can&apos;t we auto-publish articles?</p>
+                      <p className="text-zinc-300">LinkedIn&apos;s API only supports creating posts, not native long-form articles. To publish as a full article, you&apos;ll need to create it directly on LinkedIn and paste your content.</p>
+                      <div className="absolute bottom-0 right-4 translate-y-1/2 rotate-45 w-2 h-2 bg-zinc-900 dark:bg-zinc-800"></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
 
               {!isScheduled && (
                 <button

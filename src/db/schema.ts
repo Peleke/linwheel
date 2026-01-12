@@ -127,7 +127,7 @@ export const articles = sqliteTable("articles", {
   scheduledAt: integer("scheduled_at", { mode: "timestamp" }),
   scheduledPosition: integer("scheduled_position"),
   // Publishing
-  autoPublish: integer("auto_publish", { mode: "boolean" }).default(true),
+  autoPublish: integer("auto_publish", { mode: "boolean" }).default(false),
   linkedinPostUrn: text("linkedin_post_urn"),
   linkedinPublishedAt: integer("linkedin_published_at", { mode: "timestamp" }),
   linkedinPublishError: text("linkedin_publish_error"),
