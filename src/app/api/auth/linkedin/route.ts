@@ -29,8 +29,9 @@ export async function GET() {
     return NextResponse.redirect(authUrl);
   } catch (error) {
     console.error("LinkedIn OAuth start error:", error);
+    const message = error instanceof Error ? error.message : "Unknown error";
     return NextResponse.json(
-      { error: "Failed to start LinkedIn authorization" },
+      { error: "Failed to start LinkedIn authorization", details: message },
       { status: 500 }
     );
   }
