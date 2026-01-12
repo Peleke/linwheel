@@ -3,14 +3,28 @@
 import { useState, useEffect, useCallback, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { AppHeader } from "@/components/app-header";
+import Image from "next/image";
 
 const LINKEDIN_CHAR_LIMIT = 3000;
+
+interface UserProfile {
+  id: string;
+  email: string;
+  linkedin: {
+    name: string;
+    picture: string | null;
+  } | null;
+}
 
 function ComposePageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const draftId = searchParams.get("draft");
 
+  // Tab state
+  const [activeTab, setActiveTab] = useState<"write" | "preview">("write");
+
+  // Content state
   const [content, setContent] = useState("");
   const [isLoading, setIsLoading] = useState(!!draftId);
   const [isSaving, setIsSaving] = useState(false);
@@ -20,10 +34,39 @@ function ComposePageContent() {
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [isPublished, setIsPublished] = useState(false);
   const [linkedinPostUrn, setLinkedinPostUrn] = useState<string | null>(null);
+
+  // Cover image state
   const [coverImageUrl, setCoverImageUrl] = useState<string | null>(null);
   const [isGeneratingImage, setIsGeneratingImage] = useState(false);
   const [imageError, setImageError] = useState<string | null>(null);
   const [isCoverImageExpanded, setIsCoverImageExpanded] = useState(true);
+
+  // Schedule state
+  const [showScheduleModal, setShowScheduleModal] = useState(false);
+  const [scheduleDate, setScheduleDate] = useState("");
+  const [scheduleTime, setScheduleTime] = useState("09:00");
+  const [isScheduling, setIsScheduling] = useState(false);
+  const [isScheduled, setIsScheduled] = useState(false);
+  const [scheduledAt, setScheduledAt] = useState<string | null>(null);
+
+  // User profile state
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+
+  // Load user profile
+  useEffect(() => {
+    const loadProfile = async () => {
+      try {
+        const res = await fetch("/api/me");
+        if (res.ok) {
+          const data = await res.json();
+          setUserProfile(data);
+        }
+      } catch (err) {
+        console.error("Failed to load user profile:", err);
+      }
+    };
+    loadProfile();
+  }, []);
 
   // Load existing draft if provided
   useEffect(() => {
@@ -34,9 +77,11 @@ function ComposePageContent() {
         const res = await fetch(`/api/posts/${draftId}`);
         if (res.ok) {
           const data = await res.json();
-          setContent(data.fullText);
+          setContent(data.fullText || "");
           setIsPublished(!!data.linkedinPostUrn);
           setLinkedinPostUrn(data.linkedinPostUrn);
+          setIsScheduled(!!data.scheduledAt);
+          setScheduledAt(data.scheduledAt);
         } else {
           setError("Failed to load draft");
         }
@@ -113,7 +158,6 @@ function ComposePageContent() {
 
         const data = await res.json();
         setPostId(data.postId);
-        // Update URL without reload
         window.history.replaceState({}, "", `/compose?draft=${data.postId}`);
         setSuccessMessage("Draft created");
       }
@@ -128,7 +172,6 @@ function ComposePageContent() {
   const handlePublish = async () => {
     if (isEmpty || isOverLimit) return;
 
-    // Save first if needed
     let currentPostId = postId;
     if (!currentPostId) {
       setIsSaving(true);
@@ -157,11 +200,9 @@ function ComposePageContent() {
       }
       setIsSaving(false);
     } else {
-      // Save any pending changes
       await handleSave();
     }
 
-    // Now publish
     setIsPublishing(true);
     setError(null);
 
@@ -188,10 +229,44 @@ function ComposePageContent() {
     }
   };
 
-  const handleSchedule = () => {
-    // Navigate to dashboard with this post ready to schedule
-    if (postId) {
-      router.push("/dashboard");
+  const handleSchedule = async () => {
+    if (!postId || !scheduleDate || !scheduleTime) return;
+
+    // Save any pending changes first
+    await handleSave();
+
+    setIsScheduling(true);
+    setError(null);
+
+    try {
+      // Combine date and time into ISO string
+      const scheduledDateTime = new Date(`${scheduleDate}T${scheduleTime}`);
+
+      const res = await fetch(`/api/posts/${postId}/schedule`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          scheduledAt: scheduledDateTime.toISOString(),
+          autoPublish: true,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setError(data.error || "Failed to schedule");
+        return;
+      }
+
+      setIsScheduled(true);
+      setScheduledAt(scheduledDateTime.toISOString());
+      setShowScheduleModal(false);
+      setSuccessMessage("Post scheduled!");
+    } catch (err) {
+      console.error("Schedule error:", err);
+      setError("Failed to schedule post");
+    } finally {
+      setIsScheduling(false);
     }
   };
 
@@ -225,6 +300,13 @@ function ComposePageContent() {
     }
   };
 
+  // Get default schedule date (tomorrow)
+  const getDefaultScheduleDate = () => {
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    return tomorrow.toISOString().split("T")[0];
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen flex flex-col bg-zinc-50 dark:bg-zinc-950">
@@ -235,6 +317,9 @@ function ComposePageContent() {
       </div>
     );
   }
+
+  const userName = userProfile?.linkedin?.name || "Your Name";
+  const userPicture = userProfile?.linkedin?.picture;
 
   return (
     <div className="min-h-screen flex flex-col bg-zinc-50 dark:bg-zinc-950">
@@ -247,9 +332,11 @@ function ComposePageContent() {
               <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">
                 {postId ? "Edit Post" : "New Post"}
               </h1>
-              <p className="text-zinc-500 dark:text-zinc-400 mt-1">
-                Write your LinkedIn post
-              </p>
+              {isScheduled && scheduledAt && (
+                <p className="text-emerald-600 dark:text-emerald-400 text-sm mt-1">
+                  Scheduled for {new Date(scheduledAt).toLocaleString()}
+                </p>
+              )}
             </div>
 
             {/* Actions */}
@@ -276,9 +363,12 @@ function ComposePageContent() {
                     {isSaving ? "Saving..." : "Save Draft"}
                   </button>
 
-                  {postId && (
+                  {postId && !isScheduled && (
                     <button
-                      onClick={handleSchedule}
+                      onClick={() => {
+                        setScheduleDate(getDefaultScheduleDate());
+                        setShowScheduleModal(true);
+                      }}
                       disabled={isEmpty || isOverLimit}
                       className="px-4 py-2 text-sm font-medium text-white bg-emerald-600 rounded-lg hover:bg-emerald-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     >
@@ -328,7 +418,7 @@ function ComposePageContent() {
             </div>
           )}
 
-          {/* Cover Image Section - Collapsible, above editor when editing */}
+          {/* Cover Image Section - Collapsible, at top */}
           {postId && !isPublished && (
             <div className="mb-6">
               <button
@@ -414,11 +504,7 @@ function ComposePageContent() {
                             stroke="currentColor"
                             strokeWidth={1.5}
                           >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              d="M12 4.5v15m7.5-7.5h-15"
-                            />
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
                           </svg>
                           <span className="text-sm text-zinc-500 dark:text-zinc-400 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
                             Generate AI cover image
@@ -432,60 +518,99 @@ function ComposePageContent() {
             </div>
           )}
 
-          {/* Editor */}
-          <div className="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 overflow-hidden">
-            <textarea
-              value={content}
-              onChange={(e) => setContent(e.target.value)}
-              placeholder="What do you want to share?"
-              disabled={isPublished}
-              className="w-full h-96 p-6 text-lg text-zinc-900 dark:text-zinc-100 bg-transparent resize-none focus:outline-none placeholder:text-zinc-400 disabled:opacity-50 disabled:cursor-not-allowed"
-              autoFocus
-            />
+          {/* Tab Bar */}
+          <div className="flex border-b border-zinc-200 dark:border-zinc-700 mb-0">
+            <button
+              onClick={() => setActiveTab("write")}
+              className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+                activeTab === "write"
+                  ? "border-blue-600 text-blue-600 dark:text-blue-400"
+                  : "border-transparent text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200"
+              }`}
+            >
+              <span className="flex items-center gap-2">
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                </svg>
+                Write
+              </span>
+            </button>
+            <button
+              onClick={() => setActiveTab("preview")}
+              className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+                activeTab === "preview"
+                  ? "border-blue-600 text-blue-600 dark:text-blue-400"
+                  : "border-transparent text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200"
+              }`}
+            >
+              <span className="flex items-center gap-2">
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                </svg>
+                Preview
+              </span>
+            </button>
+          </div>
 
-            {/* Footer */}
-            <div className="px-6 py-3 border-t border-zinc-200 dark:border-zinc-800 flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                {/* Character count */}
-                <span className={`text-sm font-medium ${
-                  isOverLimit
-                    ? "text-red-600 dark:text-red-400"
-                    : charCount > LINKEDIN_CHAR_LIMIT * 0.9
-                    ? "text-amber-600 dark:text-amber-400"
-                    : "text-zinc-500 dark:text-zinc-400"
-                }`}>
-                  {charCount.toLocaleString()} / {LINKEDIN_CHAR_LIMIT.toLocaleString()}
-                </span>
+          {/* Editor / Preview Content */}
+          {activeTab === "write" ? (
+            <div className="bg-white dark:bg-zinc-900 rounded-b-xl border border-t-0 border-zinc-200 dark:border-zinc-800 overflow-hidden">
+              <textarea
+                value={content}
+                onChange={(e) => setContent(e.target.value)}
+                placeholder="What do you want to share?"
+                className="w-full h-96 p-6 text-lg text-zinc-900 dark:text-zinc-100 bg-transparent resize-none focus:outline-none placeholder:text-zinc-400"
+                autoFocus
+              />
 
-                {isOverLimit && (
-                  <span className="text-xs text-red-600 dark:text-red-400">
-                    {(charCount - LINKEDIN_CHAR_LIMIT).toLocaleString()} over limit
+              {/* Footer */}
+              <div className="px-6 py-3 border-t border-zinc-200 dark:border-zinc-800 flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <span className={`text-sm font-medium ${
+                    isOverLimit
+                      ? "text-red-600 dark:text-red-400"
+                      : charCount > LINKEDIN_CHAR_LIMIT * 0.9
+                      ? "text-amber-600 dark:text-amber-400"
+                      : "text-zinc-500 dark:text-zinc-400"
+                  }`}>
+                    {charCount.toLocaleString()} / {LINKEDIN_CHAR_LIMIT.toLocaleString()}
+                  </span>
+
+                  {isOverLimit && (
+                    <span className="text-xs text-red-600 dark:text-red-400">
+                      {(charCount - LINKEDIN_CHAR_LIMIT).toLocaleString()} over limit
+                    </span>
+                  )}
+                </div>
+
+                {postId && !isPublished && (
+                  <span className="text-xs text-zinc-400">
+                    Draft saved
                   </span>
                 )}
               </div>
-
-              {postId && !isPublished && (
-                <span className="text-xs text-zinc-400">
-                  Draft saved
-                </span>
-              )}
             </div>
-          </div>
-
-          {/* LinkedIn Preview (optional) */}
-          {content.trim() && !isOverLimit && (
-            <div className="mt-6">
-              <h3 className="text-sm font-medium text-zinc-600 dark:text-zinc-400 mb-3">
-                Preview
-              </h3>
-              <div className="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 p-4">
+          ) : (
+            <div className="bg-white dark:bg-zinc-900 rounded-b-xl border border-t-0 border-zinc-200 dark:border-zinc-800 p-6">
+              {content.trim() ? (
                 <div className="flex items-start gap-3">
-                  <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-bold">
-                    Y
-                  </div>
+                  {userPicture ? (
+                    <Image
+                      src={userPicture}
+                      alt={userName}
+                      width={48}
+                      height={48}
+                      className="rounded-full"
+                    />
+                  ) : (
+                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-bold">
+                      {userName.charAt(0).toUpperCase()}
+                    </div>
+                  )}
                   <div className="flex-1 min-w-0">
                     <p className="font-semibold text-zinc-900 dark:text-zinc-100">
-                      Your Name
+                      {userName}
                     </p>
                     <p className="text-xs text-zinc-500">Just now</p>
                     <div className="mt-3 text-sm text-zinc-800 dark:text-zinc-200 whitespace-pre-wrap">
@@ -502,11 +627,78 @@ function ComposePageContent() {
                     )}
                   </div>
                 </div>
-              </div>
+              ) : (
+                <div className="text-center py-12 text-zinc-400">
+                  <p>Write something to see the preview</p>
+                </div>
+              )}
             </div>
           )}
         </div>
       </main>
+
+      {/* Schedule Modal */}
+      {showScheduleModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white dark:bg-zinc-900 rounded-xl p-6 w-full max-w-md mx-4 shadow-xl">
+            <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100 mb-4">
+              Schedule Post
+            </h3>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
+                  Date
+                </label>
+                <input
+                  type="date"
+                  value={scheduleDate}
+                  onChange={(e) => setScheduleDate(e.target.value)}
+                  min={new Date().toISOString().split("T")[0]}
+                  className="w-full px-3 py-2 border border-zinc-300 dark:border-zinc-700 rounded-lg bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
+                  Time
+                </label>
+                <input
+                  type="time"
+                  value={scheduleTime}
+                  onChange={(e) => setScheduleTime(e.target.value)}
+                  className="w-full px-3 py-2 border border-zinc-300 dark:border-zinc-700 rounded-lg bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+
+              <div className="flex items-center gap-2 p-3 bg-emerald-50 dark:bg-emerald-900/20 rounded-lg">
+                <svg className="w-5 h-5 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                </svg>
+                <span className="text-sm text-emerald-700 dark:text-emerald-300">
+                  Auto-publish enabled
+                </span>
+              </div>
+            </div>
+
+            <div className="flex gap-3 mt-6">
+              <button
+                onClick={() => setShowScheduleModal(false)}
+                className="flex-1 px-4 py-2 text-sm font-medium text-zinc-700 dark:text-zinc-300 bg-zinc-200 dark:bg-zinc-800 rounded-lg hover:bg-zinc-300 dark:hover:bg-zinc-700 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSchedule}
+                disabled={isScheduling || !scheduleDate}
+                className="flex-1 px-4 py-2 text-sm font-medium text-white bg-emerald-600 rounded-lg hover:bg-emerald-500 transition-colors disabled:opacity-50"
+              >
+                {isScheduling ? "Scheduling..." : "Schedule"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

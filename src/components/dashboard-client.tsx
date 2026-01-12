@@ -62,8 +62,10 @@ export function DashboardClient({ content }: DashboardClientProps) {
   }, [dayOffset]); // Re-scroll when day offset changes
 
   // Split content
+  // Scheduled = has scheduledAt date (regardless of publish status)
+  // Unscheduled = no scheduledAt AND not yet published
   const scheduled = content.filter(c => c.scheduledAt);
-  const unscheduled = content.filter(c => !c.scheduledAt);
+  const unscheduled = content.filter(c => !c.scheduledAt && !c.linkedinPostUrn);
 
   // Get 7 days centered on today + dayOffset (3 days before, center day, 3 days after)
   const weekDates = useMemo(() => {
