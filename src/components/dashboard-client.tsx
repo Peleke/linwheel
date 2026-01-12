@@ -56,6 +56,7 @@ export function DashboardClient({ content }: DashboardClientProps) {
   const [scheduleDate, setScheduleDate] = useState("");
   const [scheduleTime, setScheduleTime] = useState("09:00");
   const [scheduleItemId, setScheduleItemId] = useState<string | null>(null);
+  const [scheduleAutoPublish, setScheduleAutoPublish] = useState(true);
 
   // Scroll to center day on mount/change (mobile)
   useEffect(() => {
@@ -126,9 +127,14 @@ export function DashboardClient({ content }: DashboardClientProps) {
     tomorrow.setDate(tomorrow.getDate() + 1);
     const defaultDate = preSelectedDate || tomorrow;
 
+    // Get the item's current autoPublish setting
+    const item = content.find(c => c.id === itemId);
+    const defaultAutoPublish = item?.autoPublish ?? true;
+
     setScheduleItemId(itemId);
     setScheduleDate(defaultDate.toISOString().split("T")[0]);
     setScheduleTime("09:00");
+    setScheduleAutoPublish(defaultAutoPublish);
     setShowScheduleModal(true);
     setSchedulingItem(null); // Close inline scheduling mode if open
   };
@@ -152,7 +158,10 @@ export function DashboardClient({ content }: DashboardClientProps) {
       const res = await fetch(endpoint, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ scheduledAt: scheduledDateTime.toISOString() }),
+        body: JSON.stringify({
+          scheduledAt: scheduledDateTime.toISOString(),
+          autoPublish: scheduleAutoPublish,
+        }),
       });
 
       if (!res.ok) {
@@ -643,7 +652,7 @@ export function DashboardClient({ content }: DashboardClientProps) {
             </div>
 
             {/* Time picker */}
-            <div className="mb-6">
+            <div className="mb-4">
               <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1.5">
                 Time
               </label>
@@ -656,6 +665,39 @@ export function DashboardClient({ content }: DashboardClientProps) {
               <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">
                 {getUserTimezone()}
               </p>
+            </div>
+
+            {/* Auto-publish toggle */}
+            <div className="mb-6">
+              <label className="flex items-center justify-between cursor-pointer">
+                <div>
+                  <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                    Auto-publish
+                  </span>
+                  <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                    {scheduleAutoPublish
+                      ? "Will post to LinkedIn automatically"
+                      : "Reminder only - you'll publish manually"}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  role="switch"
+                  aria-checked={scheduleAutoPublish}
+                  onClick={() => setScheduleAutoPublish(!scheduleAutoPublish)}
+                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                    scheduleAutoPublish
+                      ? "bg-emerald-500"
+                      : "bg-zinc-300 dark:bg-zinc-600"
+                  }`}
+                >
+                  <span
+                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                      scheduleAutoPublish ? "translate-x-6" : "translate-x-1"
+                    }`}
+                  />
+                </button>
+              </label>
             </div>
 
             {/* Action buttons */}
