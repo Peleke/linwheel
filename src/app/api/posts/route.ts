@@ -53,6 +53,8 @@ export async function POST(request: NextRequest) {
       // No runId or insightId for manual drafts
       runId: null,
       insightId: null,
+      // Store userId directly on post for manual drafts (required for auto-publish)
+      userId: user.id,
       hook: extractedHook,
       bodyBeats: [], // Not applicable for manual drafts
       openQuestion: "", // Not applicable for manual drafts
