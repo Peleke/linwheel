@@ -72,43 +72,40 @@ test.describe("Flow 1: Generation", () => {
 
     // Form elements
     await expect(page.getByRole("heading", { name: "Generate content" })).toBeVisible();
-    await expect(page.getByLabel("Source label")).toBeVisible();
-    await expect(page.getByText("LinkedIn Post angles")).toBeVisible();
-    await expect(page.getByLabel("Transcript")).toBeVisible();
-    await expect(page.getByRole("button", { name: /Generate content/i })).toBeVisible();
-
-    // Help text
-    await expect(page.getByText(/Tip: Copy the full transcript/i)).toBeVisible();
+    await expect(page.locator("input#sourceLabel")).toBeVisible();
+    await expect(page.getByText("Posts").first()).toBeVisible();
+    await expect(page.locator("textarea#transcript")).toBeVisible();
+    await expect(page.getByRole("button", { name: /Generate/i })).toBeVisible();
   });
 
   test("1.2 - submit disabled until transcript provided", async ({ page }) => {
     await page.goto("/generate");
 
-    const submitButton = page.getByRole("button", { name: /Generate content/i });
+    const submitButton = page.getByRole("button", { name: /Paste your transcript/i });
 
     // Initially disabled (empty transcript)
     await expect(submitButton).toBeDisabled();
 
     // Still disabled with just source label
-    await page.getByLabel("Source label").fill("Test Episode");
+    await page.locator("input#sourceLabel").fill("Test Episode");
     await expect(submitButton).toBeDisabled();
 
     // Enabled once transcript added
-    await page.getByLabel("Transcript").fill("Some content");
-    await expect(submitButton).toBeEnabled();
+    await page.locator("textarea#transcript").fill("Some content");
+    await expect(page.getByRole("button", { name: /Generate/i })).toBeEnabled();
   });
 
   test("1.3 - source label is optional", async ({ page }) => {
     await page.goto("/generate");
 
     // Fill only transcript (no source label)
-    await page.getByLabel("Transcript").fill(SAMPLE_TRANSCRIPT);
+    await page.locator("textarea#transcript").fill(SAMPLE_TRANSCRIPT);
 
     // Submit should be enabled
-    await expect(page.getByRole("button", { name: /Generate content/i })).toBeEnabled();
+    await expect(page.getByRole("button", { name: /Generate/i })).toBeEnabled();
 
     // Submit and verify redirect works
-    await page.getByRole("button", { name: /Generate content/i }).click();
+    await page.getByRole("button", { name: /Generate/i }).click();
     await expect(page).toHaveURL(/\/results\/[\w-]+/, { timeout: 10000 });
 
     // Should show "Untitled" as default label
@@ -118,11 +115,11 @@ test.describe("Flow 1: Generation", () => {
   test("1.4 - submit shows loading state then redirects", async ({ page }) => {
     await page.goto("/generate");
 
-    await page.getByLabel("Source label").fill("Test Episode");
-    await page.getByLabel("Transcript").fill(SAMPLE_TRANSCRIPT);
+    await page.locator("input#sourceLabel").fill("Test Episode");
+    await page.locator("textarea#transcript").fill(SAMPLE_TRANSCRIPT);
 
     // Click submit
-    const submitButton = page.getByRole("button", { name: /Generate content/i });
+    const submitButton = page.getByRole("button", { name: /Generate/i });
     await submitButton.click();
 
     // Should redirect to results page
@@ -135,8 +132,8 @@ test.describe("Flow 1: Generation", () => {
   test("1.5 - dashboard shows processing state after redirect", async ({ page }) => {
     await page.goto("/generate");
 
-    await page.getByLabel("Transcript").fill(SAMPLE_TRANSCRIPT);
-    await page.getByRole("button", { name: /Generate content/i }).click();
+    await page.locator("textarea#transcript").fill(SAMPLE_TRANSCRIPT);
+    await page.getByRole("button", { name: /Generate/i }).click();
 
     await expect(page).toHaveURL(/\/results\/[\w-]+/, { timeout: 10000 });
 
@@ -154,14 +151,14 @@ test.describe("Flow 1: Generation", () => {
   test("1.6 - angle count reflected in button text", async ({ page }) => {
     await page.goto("/generate");
 
-    await page.getByLabel("Transcript").fill("Some content");
+    await page.locator("textarea#transcript").fill("Some content");
 
-    // Default: all 7 post angles
-    await expect(page.getByRole("button", { name: /7 post angles/i })).toBeVisible();
+    // Default: all 7 post angles - button shows "7 posts"
+    await expect(page.getByRole("button", { name: /7 posts/i })).toBeVisible();
 
-    // Deselect one
-    await page.locator('input[type="checkbox"]').first().click();
-    await expect(page.getByRole("button", { name: /6 post angles/i })).toBeVisible();
+    // Deselect one by clicking the pill button
+    await page.getByRole("button", { name: /Contrarian/ }).first().click();
+    await expect(page.getByRole("button", { name: /6 posts/i })).toBeVisible();
   });
 
   test.skip("1.7 - completed generation shows posts", async ({ page }) => {
@@ -305,7 +302,7 @@ test.describe("Flow 3: Angle Selection", () => {
     await page.goto("/generate");
 
     // Check for post angle section
-    await expect(page.getByText("LinkedIn Post angles")).toBeVisible();
+    await expect(page.getByText("Posts").first()).toBeVisible();
 
     // These unique labels should be visible (avoid "Contrarian" which appears in both)
     const uniquePostAngles = [
@@ -318,86 +315,76 @@ test.describe("Flow 3: Angle Selection", () => {
     ];
 
     for (const angle of uniquePostAngles) {
-      await expect(page.getByText(angle)).toBeVisible();
+      await expect(page.getByRole("button", { name: new RegExp(angle) })).toBeVisible();
     }
   });
 
   test("3.2 - all 7 post angles selected by default", async ({ page }) => {
     await page.goto("/generate");
 
-    // Total: 7 posts + 4 articles = 11 checkboxes
-    const checkboxes = page.locator('input[type="checkbox"]');
-    await expect(checkboxes).toHaveCount(11);
-
-    // First 7 (post angles) should be checked by default
-    for (let i = 0; i < 7; i++) {
-      await expect(checkboxes.nth(i)).toBeChecked();
-    }
+    // Posts section should show count badge of 7
+    await expect(page.locator("div").filter({ hasText: /^Posts7$/ }).first()).toBeVisible();
   });
 
   test("3.3 - can toggle individual angles", async ({ page }) => {
     await page.goto("/generate");
 
-    const firstCheckbox = page.locator('input[type="checkbox"]').first();
+    const fieldNoteButton = page.getByRole("button", { name: /Field Note/ });
 
-    // Deselect
-    await expect(firstCheckbox).toBeChecked();
-    await firstCheckbox.click();
-    await expect(firstCheckbox).not.toBeChecked();
+    // Initially selected (has dark background)
+    await expect(fieldNoteButton).toHaveClass(/bg-zinc-900/);
 
-    // Reselect
-    await firstCheckbox.click();
-    await expect(firstCheckbox).toBeChecked();
+    // Click to deselect
+    await fieldNoteButton.click();
+    await expect(fieldNoteButton).not.toHaveClass(/bg-zinc-900/);
+
+    // Click to reselect
+    await fieldNoteButton.click();
+    await expect(fieldNoteButton).toHaveClass(/bg-zinc-900/);
   });
 
-  test("3.4 - Clear button deselects all post angles", async ({ page }) => {
+  test("3.4 - None button deselects all post angles", async ({ page }) => {
     await page.goto("/generate");
 
-    // Click Clear in the post angles section (first Clear button)
-    await page.getByRole("button", { name: "Clear" }).first().click();
+    // Click None in the post angles section (first None button)
+    await page.getByRole("button", { name: "None" }).first().click();
 
-    const checkboxes = page.locator('input[type="checkbox"]');
-    // First 7 should be unchecked
-    for (let i = 0; i < 7; i++) {
-      await expect(checkboxes.nth(i)).not.toBeChecked();
-    }
+    // Count badge should not show 7 anymore
+    await expect(page.locator("div").filter({ hasText: /^Posts7$/ })).not.toBeVisible();
   });
 
-  test("3.5 - Select all button selects all post angles", async ({ page }) => {
+  test("3.5 - All button selects all post angles", async ({ page }) => {
     await page.goto("/generate");
 
-    // Clear first (first Clear button is for posts)
-    await page.getByRole("button", { name: "Clear" }).first().click();
+    // Clear first
+    await page.getByRole("button", { name: "None" }).first().click();
 
-    // Then select all (first Select all button is for posts)
-    await page.getByRole("button", { name: "Select all" }).first().click();
+    // Then select all
+    await page.getByRole("button", { name: "All" }).first().click();
 
-    const checkboxes = page.locator('input[type="checkbox"]');
-    // First 7 should be checked
-    for (let i = 0; i < 7; i++) {
-      await expect(checkboxes.nth(i)).toBeChecked();
-    }
+    // Count badge should show 7
+    await expect(page.locator("div").filter({ hasText: /^Posts7$/ }).first()).toBeVisible();
   });
 
   test("3.6 - submit disabled when no content types selected", async ({ page }) => {
     await page.goto("/generate");
 
-    await page.getByLabel("Transcript").fill("Some content");
+    await page.locator("textarea#transcript").fill("Some content");
     // Clear post angles
-    await page.getByRole("button", { name: "Clear" }).first().click();
+    await page.getByRole("button", { name: "None" }).first().click();
     // Don't select any articles either
 
     // Button text should change and be disabled
-    const submitButton = page.getByRole("button", { name: /Select at least one/i });
+    const submitButton = page.getByRole("button", { name: /Select content types/i });
     await expect(submitButton).toBeDisabled();
   });
 
-  test("3.7 - angle descriptions shown", async ({ page }) => {
+  test("3.7 - angle buttons show emoji and label", async ({ page }) => {
     await page.goto("/generate");
 
-    // Check that post angle descriptions are visible
-    await expect(page.getByText("Challenges widely-held beliefs")).toBeVisible();
-    await expect(page.getByText("Observations from real work")).toBeVisible();
+    // Check that post angle buttons show emoji
+    await expect(page.getByText("🔥")).toBeVisible();
+    await expect(page.getByText("📝")).toBeVisible();
   });
 });
 
@@ -539,27 +526,27 @@ test.describe("Flow 8: Error States", () => {
   test("8.1 - empty transcript shows disabled button", async ({ page }) => {
     await page.goto("/generate");
 
-    const submitButton = page.getByRole("button", { name: /Generate content/i });
+    const submitButton = page.getByRole("button", { name: /Paste your transcript/i });
     await expect(submitButton).toBeDisabled();
   });
 
   test("8.2 - whitespace-only transcript keeps button disabled", async ({ page }) => {
     await page.goto("/generate");
 
-    await page.getByLabel("Transcript").fill("   \n\t  ");
+    await page.locator("textarea#transcript").fill("   \n\t  ");
 
-    const submitButton = page.getByRole("button", { name: /Generate content/i });
+    const submitButton = page.getByRole("button", { name: /Paste your transcript/i });
     await expect(submitButton).toBeDisabled();
   });
 
   test("8.3 - no content types shows specific message", async ({ page }) => {
     await page.goto("/generate");
 
-    await page.getByLabel("Transcript").fill("Some content");
-    await page.getByRole("button", { name: "Clear" }).first().click();
+    await page.locator("textarea#transcript").fill("Some content");
+    await page.getByRole("button", { name: "None" }).first().click();
 
     await expect(
-      page.getByRole("button", { name: /Select at least one/i })
+      page.getByRole("button", { name: /Select content types/i })
     ).toBeVisible();
   });
 
@@ -581,30 +568,33 @@ test.describe("Flow 9: Form UX", () => {
   test("9.1 - form fields disabled during submission", async ({ page }) => {
     await page.goto("/generate");
 
-    await page.getByLabel("Transcript").fill(SAMPLE_TRANSCRIPT);
-    await page.getByRole("button", { name: /Generate content/i }).click();
+    await page.locator("textarea#transcript").fill(SAMPLE_TRANSCRIPT);
+    await page.getByRole("button", { name: /Generate/i }).click();
 
     // Very brief window - form should be disabled
     // Note: This is hard to test reliably because redirect is fast
     // The important thing is the test doesn't fail
+    await expect(page).toHaveURL(/\/results\/[\w-]+/, { timeout: 10000 });
   });
 
-  test("9.2 - content count estimate updates with angle selection", async ({ page }) => {
+  test("9.2 - button count updates with angle selection", async ({ page }) => {
     await page.goto("/generate");
 
-    // With all 7 post angles: 7 * 2 * 3 = 42 posts max
-    await expect(page.getByText(/up to 42 posts/i)).toBeVisible();
+    await page.locator("textarea#transcript").fill("Some content");
 
-    // Clear 3 post angles: 4 * 2 * 3 = 24 posts max
-    await page.locator('input[type="checkbox"]').nth(0).click();
-    await page.locator('input[type="checkbox"]').nth(1).click();
-    await page.locator('input[type="checkbox"]').nth(2).click();
+    // With all 7 post angles: button shows "7 posts"
+    await expect(page.getByRole("button", { name: /7 posts/i })).toBeVisible();
 
-    await expect(page.getByText(/up to 24 posts/i)).toBeVisible();
+    // Deselect 3 post angles
+    await page.getByRole("button", { name: /Contrarian/ }).first().click();
+    await page.getByRole("button", { name: /Field Note/ }).click();
+    await page.getByRole("button", { name: /Demystification/ }).click();
 
-    // Select an article angle: should also show article count
-    await page.locator('input[type="checkbox"]').nth(7).check();
-    await expect(page.getByText(/3 articles/i)).toBeVisible();
+    await expect(page.getByRole("button", { name: /4 posts/i })).toBeVisible();
+
+    // Select an article angle
+    await page.getByRole("button", { name: /Deep Dive/ }).click();
+    await expect(page.getByRole("button", { name: /1 article/i })).toBeVisible();
   });
 });
 
@@ -730,8 +720,9 @@ test.describe("Flow 12: Article Generation", () => {
   test("12.1 - article angles section visible on generate page", async ({ page }) => {
     await page.goto("/generate");
 
-    // Should show article angles section
-    await expect(page.getByText("Article angles")).toBeVisible();
+    // Should show articles section
+    await expect(page.getByText("Articles").first()).toBeVisible();
+    await expect(page.getByText("(long-form)")).toBeVisible();
 
     // Check unique article angles (avoid "Contrarian" which appears in both posts and articles)
     const uniqueArticleAngles = [
@@ -741,72 +732,65 @@ test.describe("Flow 12: Article Generation", () => {
     ];
 
     for (const angle of uniqueArticleAngles) {
-      await expect(page.getByText(angle)).toBeVisible();
+      await expect(page.getByRole("button", { name: new RegExp(angle) })).toBeVisible();
     }
   });
 
   test("12.2 - article angles not selected by default", async ({ page }) => {
     await page.goto("/generate");
 
-    // Find article checkboxes (they're after the post checkboxes)
-    // Total checkboxes: 7 posts + 4 articles = 11
-    const allCheckboxes = page.locator('input[type="checkbox"]');
-    await expect(allCheckboxes).toHaveCount(11);
-
-    // Article checkboxes are the last 4 (indices 7-10)
-    for (let i = 7; i < 11; i++) {
-      await expect(allCheckboxes.nth(i)).not.toBeChecked();
-    }
+    // Article buttons should not have selected styling
+    const deepDive = page.getByRole("button", { name: /Deep Dive/ });
+    await expect(deepDive).not.toHaveClass(/bg-zinc-900/);
   });
 
   test("12.3 - can select article angles", async ({ page }) => {
     await page.goto("/generate");
 
-    // Article checkboxes are indices 7-10
-    const articleCheckbox = page.locator('input[type="checkbox"]').nth(7);
+    const deepDive = page.getByRole("button", { name: /Deep Dive/ });
 
     // Select it
-    await articleCheckbox.check();
-    await expect(articleCheckbox).toBeChecked();
+    await deepDive.click();
+    await expect(deepDive).toHaveClass(/bg-zinc-900/);
 
     // Deselect it
-    await articleCheckbox.uncheck();
-    await expect(articleCheckbox).not.toBeChecked();
+    await deepDive.click();
+    await expect(deepDive).not.toHaveClass(/bg-zinc-900/);
   });
 
   test("12.4 - submit button shows article count when selected", async ({ page }) => {
     await page.goto("/generate");
 
-    await page.getByLabel("Transcript").fill(SAMPLE_TRANSCRIPT);
+    await page.locator("textarea#transcript").fill(SAMPLE_TRANSCRIPT);
 
     // Initially just shows post angles
-    await expect(page.getByRole("button", { name: /7 post angles/i })).toBeVisible();
+    await expect(page.getByRole("button", { name: /7 posts/i })).toBeVisible();
 
-    // Select one article angle (first article checkbox is index 7)
-    await page.locator('input[type="checkbox"]').nth(7).check();
+    // Select one article angle
+    await page.getByRole("button", { name: /Deep Dive/ }).click();
 
     // Button should now show both posts and articles
-    await expect(page.getByRole("button", { name: /1 article angles/i })).toBeVisible();
+    await expect(page.getByRole("button", { name: /1 article/i })).toBeVisible();
 
     // Select another article angle
-    await page.locator('input[type="checkbox"]').nth(8).check();
+    await page.getByRole("button", { name: /How To/ }).click();
 
-    await expect(page.getByRole("button", { name: /2 article angles/i })).toBeVisible();
+    await expect(page.getByRole("button", { name: /2 articles/i })).toBeVisible();
   });
 
   test("12.5 - can submit with only articles (no posts)", async ({ page }) => {
     await page.goto("/generate");
 
-    await page.getByLabel("Transcript").fill(SAMPLE_TRANSCRIPT);
+    await page.locator("textarea#transcript").fill(SAMPLE_TRANSCRIPT);
 
-    // Clear all post angles using the Clear button in post section
-    await page.getByRole("button", { name: "Clear" }).first().click();
+    // Clear all post angles using the None button in post section
+    await page.getByRole("button", { name: "None" }).first().click();
 
     // Select one article angle
-    await page.locator('input[type="checkbox"]').nth(7).check();
+    await page.getByRole("button", { name: /Deep Dive/ }).click();
 
     // Should still be able to submit (has at least one content type)
-    const submitButton = page.getByRole("button", { name: /Generate content/i });
+    const submitButton = page.getByRole("button", { name: /Generate/i });
     await expect(submitButton).toBeEnabled();
 
     // Submit and verify redirect
@@ -817,26 +801,26 @@ test.describe("Flow 12: Article Generation", () => {
   test("12.6 - cannot submit with no posts and no articles", async ({ page }) => {
     await page.goto("/generate");
 
-    await page.getByLabel("Transcript").fill(SAMPLE_TRANSCRIPT);
+    await page.locator("textarea#transcript").fill(SAMPLE_TRANSCRIPT);
 
     // Clear all post angles
-    await page.getByRole("button", { name: "Clear" }).first().click();
+    await page.getByRole("button", { name: "None" }).first().click();
 
     // Don't select any article angles either
 
     // Submit should be disabled
-    const submitButton = page.getByRole("button", { name: /Select at least one/i });
+    const submitButton = page.getByRole("button", { name: /Select content types/i });
     await expect(submitButton).toBeDisabled();
   });
 
   test("12.7 - dashboard shows both posts and articles stats", async ({ page }) => {
     // Create a run with articles selected
     await page.goto("/generate");
-    await page.getByLabel("Source label").fill("Articles Test");
-    await page.getByLabel("Transcript").fill(SAMPLE_TRANSCRIPT);
+    await page.locator("input#sourceLabel").fill("Articles Test");
+    await page.locator("textarea#transcript").fill(SAMPLE_TRANSCRIPT);
 
     // Select one article angle
-    await page.locator('input[type="checkbox"]').nth(7).check();
+    await page.getByRole("button", { name: /Deep Dive/ }).click();
 
     await page.getByRole("button", { name: /Generate/i }).click();
     await expect(page).toHaveURL(/\/results\/[\w-]+/, { timeout: 10000 });
