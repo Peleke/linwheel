@@ -34,6 +34,8 @@ interface ContentItem {
   imageUrl: string | null;
   runId: string;
   runLabel: string;
+  linkedinPostUrn: string | null;
+  autoPublish: boolean;
 }
 
 interface DashboardClientProps {
@@ -88,6 +90,21 @@ export function DashboardClient({ content }: DashboardClientProps) {
     }
     return groups;
   }, [scheduled]);
+
+  const handlePublish = async (itemId: string) => {
+    const response = await fetch(`/api/posts/${itemId}/publish-linkedin`, {
+      method: "POST",
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error || "Failed to publish");
+    }
+
+    // Refresh to update the UI
+    router.refresh();
+  };
 
   const handleSchedule = async (itemId: string, date: Date) => {
     const item = content.find(c => c.id === itemId);
@@ -173,6 +190,16 @@ export function DashboardClient({ content }: DashboardClientProps) {
         </div>
 
         <div className="flex items-center gap-4">
+          {/* Quick Compose button */}
+          <Link
+            href="/compose"
+            className="flex items-center gap-2 px-4 py-2 text-sm font-medium bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 rounded-lg hover:bg-zinc-800 dark:hover:bg-zinc-100 transition-colors"
+          >
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+            </svg>
+            New Post
+          </Link>
           {/* Notification toggle */}
           {isSupported && (
             <button
@@ -485,6 +512,7 @@ export function DashboardClient({ content }: DashboardClientProps) {
                   isScheduling={schedulingItem === item.id}
                   onStartScheduling={() => setSchedulingItem(item.id)}
                   onCancelScheduling={() => setSchedulingItem(null)}
+                  onPublish={handlePublish}
                 />
               ))
             )}
@@ -539,13 +567,32 @@ function QueueItem({
   isScheduling,
   onStartScheduling,
   onCancelScheduling,
+  onPublish,
 }: {
   item: ContentItem;
   isScheduling: boolean;
   onStartScheduling: () => void;
   onCancelScheduling: () => void;
+  onPublish: (itemId: string) => Promise<void>;
 }) {
+  const [isPublishing, setIsPublishing] = useState(false);
+  const [publishError, setPublishError] = useState<string | null>(null);
   const isPost = item.type === "post";
+  const isPublished = !!item.linkedinPostUrn;
+
+  const handlePublish = async () => {
+    if (!isPost) return; // Only posts can be published directly
+    setIsPublishing(true);
+    setPublishError(null);
+    try {
+      await onPublish(item.id);
+    } catch (err) {
+      setPublishError(err instanceof Error ? err.message : "Failed to publish");
+    } finally {
+      setIsPublishing(false);
+    }
+  };
+
   return (
     <div className={`rounded-xl border-l-4 transition-all ${
       isScheduling
@@ -590,6 +637,13 @@ function QueueItem({
           </div>
         </div>
 
+        {/* Error message */}
+        {publishError && (
+          <div className="mt-2 p-2 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+            <p className="text-xs text-red-600 dark:text-red-400">{publishError}</p>
+          </div>
+        )}
+
         <div className="flex items-center gap-2 mt-3">
           {isScheduling ? (
             <>
@@ -603,16 +657,51 @@ function QueueItem({
                 Cancel
               </button>
             </>
-          ) : (
-            <button
-              onClick={onStartScheduling}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg transition-colors"
+          ) : isPublished ? (
+            <a
+              href={`https://www.linkedin.com/feed/update/${item.linkedinPostUrn}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-lg transition-colors hover:bg-blue-200 dark:hover:bg-blue-900/50"
             >
-              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M19 3a2 2 0 012 2v14a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h14m-.5 15.5v-5.3a3.26 3.26 0 00-3.26-3.26c-.85 0-1.84.52-2.32 1.3v-1.11h-2.79v8.37h2.79v-4.93c0-.77.62-1.4 1.39-1.4a1.4 1.4 0 011.4 1.4v4.93h2.79M6.88 8.56a1.68 1.68 0 001.68-1.68c0-.93-.75-1.69-1.68-1.69a1.69 1.69 0 00-1.69 1.69c0 .93.76 1.68 1.69 1.68m1.39 9.94v-8.37H5.5v8.37h2.77z" />
               </svg>
-              Schedule
-            </button>
+              View on LinkedIn
+            </a>
+          ) : (
+            <>
+              {/* Publish Now button - only for posts */}
+              {isPost && (
+                <button
+                  onClick={handlePublish}
+                  disabled={isPublishing}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${
+                    isPublishing
+                      ? "bg-blue-300 text-white cursor-wait"
+                      : "bg-blue-600 hover:bg-blue-500 text-white"
+                  }`}
+                >
+                  {isPublishing ? (
+                    <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  ) : (
+                    <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M19 3a2 2 0 012 2v14a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h14m-.5 15.5v-5.3a3.26 3.26 0 00-3.26-3.26c-.85 0-1.84.52-2.32 1.3v-1.11h-2.79v8.37h2.79v-4.93c0-.77.62-1.4 1.39-1.4a1.4 1.4 0 011.4 1.4v4.93h2.79M6.88 8.56a1.68 1.68 0 001.68-1.68c0-.93-.75-1.69-1.68-1.69a1.69 1.69 0 00-1.69 1.69c0 .93.76 1.68 1.69 1.68m1.39 9.94v-8.37H5.5v8.37h2.77z" />
+                    </svg>
+                  )}
+                  {isPublishing ? "Publishing..." : "Publish Now"}
+                </button>
+              )}
+              <button
+                onClick={onStartScheduling}
+                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg transition-colors"
+              >
+                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+                Schedule
+              </button>
+            </>
           )}
         </div>
       </div>

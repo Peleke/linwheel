@@ -55,8 +55,9 @@ export const insights = sqliteTable("insights", {
 // LinkedIn posts table
 export const linkedinPosts = sqliteTable("linkedin_posts", {
   id: text("id").primaryKey(),
-  insightId: text("insight_id").notNull().references(() => insights.id),
-  runId: text("run_id").notNull().references(() => generationRuns.id),
+  // Nullable for manual drafts (not AI-generated)
+  insightId: text("insight_id").references(() => insights.id),
+  runId: text("run_id").references(() => generationRuns.id),
   hook: text("hook").notNull(),
   bodyBeats: text("body_beats", { mode: "json" }).$type<string[]>().notNull(),
   openQuestion: text("open_question").notNull(),
@@ -68,6 +69,10 @@ export const linkedinPosts = sqliteTable("linkedin_posts", {
   versionNumber: integer("version_number").default(1),
   // Approval workflow
   approved: integer("approved", { mode: "boolean" }).default(false),
+  // Manual draft flag - true for user-created posts, false for AI-generated
+  isManualDraft: integer("is_manual_draft", { mode: "boolean" }).default(false),
+  // Auto-publish flag - when true, cron will publish at scheduledAt time
+  autoPublish: integer("auto_publish", { mode: "boolean" }).default(true),
   // Scheduling
   scheduledAt: integer("scheduled_at", { mode: "timestamp" }),
   scheduledPosition: integer("scheduled_position"),
@@ -171,6 +176,27 @@ export const articleCarouselIntents = sqliteTable("article_carousel_intents", {
   }),
   generationError: text("generation_error"),
   createdAt: integer("created_at", { mode: "timestamp" }).$defaultFn(() => new Date()),
+});
+
+// Post carousels table - carousels attached to LinkedIn posts
+export const postCarousels = sqliteTable("post_carousels", {
+  id: text("id").primaryKey(),
+  postId: text("post_id").notNull().references(() => linkedinPosts.id, { onDelete: "cascade" }),
+  // Generated carousel data
+  carouselUrl: text("carousel_url"), // URL to generated carousel image/PDF
+  pages: text("pages", { mode: "json" }).$type<CarouselPage[]>(),
+  stylePreset: text("style_preset", { enum: STYLE_PRESETS }),
+  // Offset scheduling - publish carousel X days after post
+  offsetDays: integer("offset_days").default(0),
+  scheduledAt: integer("scheduled_at", { mode: "timestamp" }),
+  // Publishing status
+  status: text("status", { enum: ["pending", "generating", "ready", "scheduled", "published", "failed"] }).default("pending"),
+  publishedAt: integer("published_at", { mode: "timestamp" }),
+  linkedinPostUrn: text("linkedin_post_urn"),
+  publishError: text("publish_error"),
+  // Metadata
+  createdAt: integer("created_at", { mode: "timestamp" }).$defaultFn(() => new Date()),
+  updatedAt: integer("updated_at", { mode: "timestamp" }).$defaultFn(() => new Date()),
 });
 
 // Carousel slide versions table - tracks version history for each slide
@@ -329,3 +355,5 @@ export type LinkedinConnection = typeof linkedinConnections.$inferSelect;
 export type NewLinkedinConnection = typeof linkedinConnections.$inferInsert;
 export type BrandStyleProfile = typeof brandStyleProfiles.$inferSelect;
 export type NewBrandStyleProfile = typeof brandStyleProfiles.$inferInsert;
+export type PostCarousel = typeof postCarousels.$inferSelect;
+export type NewPostCarousel = typeof postCarousels.$inferInsert;

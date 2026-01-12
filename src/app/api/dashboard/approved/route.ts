@@ -21,9 +21,11 @@ export async function GET() {
           db.query.imageIntents.findFirst({
             where: eq(imageIntents.postId, post.id),
           }),
-          db.query.generationRuns.findFirst({
-            where: eq(generationRuns.id, post.runId),
-          }),
+          post.runId
+            ? db.query.generationRuns.findFirst({
+                where: eq(generationRuns.id, post.runId),
+              })
+            : null,
         ]);
 
         return {
@@ -36,8 +38,9 @@ export async function GET() {
           scheduledPosition: post.scheduledPosition,
           imageUrl: intent?.generatedImageUrl || null,
           runId: post.runId,
-          runLabel: run?.sourceLabel || "Unknown",
+          runLabel: run?.sourceLabel || (post.isManualDraft ? "Manual Draft" : "Unknown"),
           createdAt: run?.createdAt || null,
+          isManualDraft: post.isManualDraft || false,
         };
       })
     );
