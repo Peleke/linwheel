@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, use } from "react";
 import { useRouter } from "next/navigation";
 import { AppHeader } from "@/components/app-header";
+import { FormattedTextarea } from "@/components/formatting-toolbar";
 import Image from "next/image";
 import ReactMarkdown from "react-markdown";
 
@@ -617,18 +618,13 @@ export default function ArticleEditPage({
               </div>
 
               {/* Introduction */}
-              <div>
-                <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
-                  Introduction
-                </label>
-                <textarea
-                  value={introduction}
-                  onChange={(e) => setIntroduction(e.target.value)}
-                  placeholder="Set the stage for your article..."
-                  rows={4}
-                  className="w-full px-4 py-3 text-zinc-900 dark:text-zinc-100 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 resize-none"
-                />
-              </div>
+              <FormattedTextarea
+                label="Introduction"
+                value={introduction}
+                onChange={setIntroduction}
+                placeholder="Set the stage for your article..."
+                rows={4}
+              />
 
               {/* Sections */}
               <div>
@@ -645,45 +641,40 @@ export default function ArticleEditPage({
                 </div>
                 <div className="space-y-4">
                   {sections.map((section, index) => (
-                    <div key={index} className="relative">
-                      <div className="flex items-center justify-between mb-1">
-                        <span className="text-xs font-medium text-zinc-500">
-                          Section {index + 1}
-                        </span>
-                        {sections.length > 1 && (
-                          <button
-                            onClick={() => removeSection(index)}
-                            className="text-xs text-red-500 hover:text-red-400"
-                          >
-                            Remove
-                          </button>
-                        )}
-                      </div>
-                      <textarea
-                        value={section}
-                        onChange={(e) => handleSectionChange(index, e.target.value)}
-                        placeholder={`Section ${index + 1} content...`}
-                        rows={4}
-                        className="w-full px-4 py-3 text-zinc-900 dark:text-zinc-100 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 resize-none"
-                      />
-                    </div>
+                    <FormattedTextarea
+                      key={index}
+                      value={section}
+                      onChange={(value) => handleSectionChange(index, value)}
+                      placeholder={`Section ${index + 1} content...`}
+                      rows={4}
+                      header={
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-medium text-zinc-500">
+                            Section {index + 1}
+                          </span>
+                          {sections.length > 1 && (
+                            <button
+                              onClick={() => removeSection(index)}
+                              className="text-xs text-red-500 hover:text-red-400"
+                            >
+                              Remove
+                            </button>
+                          )}
+                        </div>
+                      }
+                    />
                   ))}
                 </div>
               </div>
 
               {/* Conclusion */}
-              <div>
-                <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
-                  Conclusion
-                </label>
-                <textarea
-                  value={conclusion}
-                  onChange={(e) => setConclusion(e.target.value)}
-                  placeholder="Wrap up your article..."
-                  rows={4}
-                  className="w-full px-4 py-3 text-zinc-900 dark:text-zinc-100 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 resize-none"
-                />
-              </div>
+              <FormattedTextarea
+                label="Conclusion"
+                value={conclusion}
+                onChange={setConclusion}
+                placeholder="Wrap up your article..."
+                rows={4}
+              />
             </div>
           ) : (
             <div className="bg-white dark:bg-zinc-900 rounded-b-xl border border-t-0 border-zinc-200 dark:border-zinc-800 p-6">
