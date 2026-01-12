@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { db } from "@/db";
 import {
-  generationRuns, linkedinPosts, imageIntents, articles, articleImageIntents,
+  generationRuns, linkedinPosts, imageIntents, articles, articleImageIntents, articleCarouselIntents,
   POST_ANGLES, ARTICLE_ANGLES, type PostAngle, type ArticleAngle
 } from "@/db/schema";
 import { eq } from "drizzle-orm";
@@ -70,6 +70,11 @@ type ArticleWithIntent = {
     stylePreset: string;
     generatedImageUrl?: string | null;
   };
+  carousel?: {
+    id: string;
+    scheduledAt?: string | null;
+    status?: "pending" | "ready" | "scheduled" | "published";
+  } | null;
 };
 
 type ArticlesByAngle = Record<ArticleAngle, ArticleWithIntent[]>;
@@ -130,12 +135,17 @@ export default async function ResultsDashboardPage({ params }: Props) {
     where: eq(articles.runId, runId),
   });
 
-  // Fetch article image intents and build lookup
+  // Fetch article image intents and carousel info
   const articlesWithIntents: ArticleWithIntent[] = await Promise.all(
     articleRecords.map(async (article) => {
-      const intent = await db.query.articleImageIntents.findFirst({
-        where: eq(articleImageIntents.articleId, article.id),
-      });
+      const [intent, carousel] = await Promise.all([
+        db.query.articleImageIntents.findFirst({
+          where: eq(articleImageIntents.articleId, article.id),
+        }),
+        db.query.articleCarouselIntents.findFirst({
+          where: eq(articleCarouselIntents.articleId, article.id),
+        }),
+      ]);
       return {
         id: article.id,
         title: article.title,
@@ -156,6 +166,11 @@ export default async function ResultsDashboardPage({ params }: Props) {
           stylePreset: intent.stylePreset,
           generatedImageUrl: intent.generatedImageUrl,
         } : undefined,
+        carousel: carousel ? {
+          id: carousel.id,
+          scheduledAt: carousel.scheduledAt?.toISOString() || null,
+          status: carousel.status as "pending" | "ready" | "scheduled" | "published" | undefined,
+        } : null,
       };
     })
   );

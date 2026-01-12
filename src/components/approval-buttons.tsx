@@ -149,6 +149,7 @@ export function ApprovalButtons({
           isOpen={showImageModal}
           onClose={() => setShowImageModal(false)}
           intentId={intentId}
+          entityId={postId}
           type={isArticle ? "article" : "post"}
           onImageGenerated={handleImageGenerated}
         />

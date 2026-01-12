@@ -1571,6 +1571,7 @@ export default function ArticleEditPage({
           isOpen={showImageModal}
           onClose={() => setShowImageModal(false)}
           intentId={article.imageIntent.id}
+          entityId={articleId}
           type="article"
           onImageGenerated={handleImageGenerated}
         />

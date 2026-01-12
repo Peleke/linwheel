@@ -9,6 +9,7 @@ import { CopyButton } from "./copy-button";
 import { ImagePreview } from "./image-preview";
 import { CarouselButton } from "./carousel-button";
 import { RegeneratePromptButton } from "./regenerate-prompt-button";
+import { UnifiedScheduleModal } from "./unified-schedule-modal";
 
 /**
  * Fix markdown formatting issues in sections
@@ -50,6 +51,7 @@ interface ArticleWithIntent {
   articleType: string;
   versionNumber: number | null;
   approved: boolean | null;
+  scheduledAt?: Date | null;
   imageIntent?: {
     id: string;
     headlineText: string;
@@ -58,6 +60,11 @@ interface ArticleWithIntent {
     stylePreset: string;
     generatedImageUrl?: string | null;
   };
+  carousel?: {
+    id: string;
+    scheduledAt?: string | null;
+    status?: "pending" | "ready" | "scheduled" | "published";
+  } | null;
 }
 
 export function ArticleCard({
@@ -69,6 +76,13 @@ export function ArticleCard({
 }) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [showImageDetails, setShowImageDetails] = useState(false);
+  const [showScheduleModal, setShowScheduleModal] = useState(false);
+  const [articleScheduledAt, setArticleScheduledAt] = useState<string | null>(
+    article.scheduledAt ? new Date(article.scheduledAt).toISOString() : null
+  );
+  const [carouselScheduledAt, setCarouselScheduledAt] = useState<string | null>(
+    article.carousel?.scheduledAt || null
+  );
 
   const wordCount = article.fullText.split(/\s+/).length;
   const hasImage = !!article.imageIntent?.generatedImageUrl;
@@ -311,17 +325,48 @@ export function ArticleCard({
 
         {/* Action bar - icon-based */}
         <div className="px-4 py-2.5 border-t border-zinc-100 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/50 flex items-center justify-between gap-2">
-          <ApprovalButtons
-            postId={article.id}
-            approved={article.approved ?? false}
-            isArticle
-            intentId={article.imageIntent?.id}
-            hasImage={hasImage}
-            imageUrl={article.imageIntent?.generatedImageUrl}
-          />
+          <div className="flex items-center gap-2">
+            <ApprovalButtons
+              postId={article.id}
+              approved={article.approved ?? false}
+              isArticle
+              intentId={article.imageIntent?.id}
+              hasImage={hasImage}
+              imageUrl={article.imageIntent?.generatedImageUrl}
+            />
+            {/* Schedule button */}
+            <button
+              onClick={() => setShowScheduleModal(true)}
+              className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-md transition-colors ${
+                articleScheduledAt
+                  ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
+                  : "bg-blue-50 text-blue-700 hover:bg-blue-100 dark:bg-blue-900/30 dark:text-blue-400 dark:hover:bg-blue-900/50"
+              }`}
+              title={articleScheduledAt ? `Scheduled: ${new Date(articleScheduledAt).toLocaleString()}` : "Schedule article"}
+            >
+              <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+              {articleScheduledAt ? "Scheduled" : "Schedule"}
+            </button>
+          </div>
           <CopyButton text={article.fullText} />
         </div>
       </motion.div>
+
+      {/* Unified Schedule Modal */}
+      <UnifiedScheduleModal
+        isOpen={showScheduleModal}
+        onClose={() => setShowScheduleModal(false)}
+        articleId={article.id}
+        articleTitle={article.title}
+        hasCarousel={!!article.carousel}
+        articleScheduledAt={articleScheduledAt}
+        carouselScheduledAt={carouselScheduledAt}
+        carouselStatus={article.carousel?.status}
+        onArticleScheduled={(scheduled) => setArticleScheduledAt(scheduled || null)}
+        onCarouselScheduled={(scheduled) => setCarouselScheduledAt(scheduled || null)}
+      />
     </motion.div>
   );
 }

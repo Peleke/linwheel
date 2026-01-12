@@ -947,6 +947,7 @@ function ComposePageContent() {
           isOpen={showImageModal}
           onClose={() => setShowImageModal(false)}
           intentId={imageIntentId}
+          entityId={postId || ""}
           type="post"
           onImageGenerated={handleImageGenerated}
         />
