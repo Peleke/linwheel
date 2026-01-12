@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useEffect, useCallback, Suspense } from "react";
+import { useState, useEffect, useCallback, Suspense, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { AppHeader } from "@/components/app-header";
+import { FormattingToolbar } from "@/components/formatting-toolbar";
 import Image from "next/image";
 
 const LINKEDIN_CHAR_LIMIT = 3000;
@@ -57,6 +58,9 @@ function ComposePageContent() {
 
   // User profile state
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+
+  // Textarea ref for formatting toolbar
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   // Load user profile
   useEffect(() => {
@@ -728,7 +732,13 @@ function ComposePageContent() {
           {/* Editor / Preview Content */}
           {activeTab === "write" ? (
             <div className="bg-white dark:bg-zinc-900 rounded-b-xl border border-t-0 border-zinc-200 dark:border-zinc-800 overflow-hidden">
+              <FormattingToolbar
+                textareaRef={textareaRef}
+                value={content}
+                onChange={setContent}
+              />
               <textarea
+                ref={textareaRef}
                 value={content}
                 onChange={(e) => setContent(e.target.value)}
                 placeholder="What do you want to share?"
