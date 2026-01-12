@@ -113,8 +113,9 @@ describe("generateCarouselPages", () => {
       const format = createMockFormat();
       const pages = generateCarouselPages(article, format, "typographic_minimal");
 
-      expect(pages[0].prompt).toContain("LinkedIn carousel title slide");
-      expect(pages[0].prompt).toContain("Main headline");
+      // Prompt should contain style and slide type prompts
+      expect(pages[0].prompt).toContain("minimalist");
+      expect(pages[0].prompt).toContain("Hero image quality");
     });
 
     it("should truncate long titles", () => {
@@ -167,8 +168,9 @@ describe("generateCarouselPages", () => {
       const format = createMockFormat();
       const pages = generateCarouselPages(article, format, "typographic_minimal");
 
-      expect(pages[1].prompt).toContain("LinkedIn carousel content slide");
-      expect(pages[1].prompt).toContain("Headline");
+      // Content slides use style prompt + slide type prompt
+      expect(pages[1].prompt).toContain("minimalist");
+      expect(pages[1].prompt).toContain("Rich colors");
     });
 
     it("should handle empty sections gracefully", () => {
@@ -204,8 +206,9 @@ describe("generateCarouselPages", () => {
       const format = createMockFormat();
       const pages = generateCarouselPages(article, format, "typographic_minimal");
 
-      expect(pages[4].prompt).toContain("CTA");
-      expect(pages[4].prompt).toContain("call-to-action");
+      // CTA slides use style prompt + slide type prompt with energetic mood
+      expect(pages[4].prompt).toContain("minimalist");
+      expect(pages[4].prompt).toContain("action-inspiring");
     });
 
     it("should use fallback when no action words in conclusion", () => {
@@ -270,26 +273,28 @@ describe("generateCarouselPages", () => {
       const pages = generateCarouselPages(article, format, "typographic_minimal");
 
       pages.forEach((page) => {
-        expect(page.prompt).toContain("Square format (1:1 aspect ratio)");
+        expect(page.prompt).toContain("Square 1:1 aspect ratio");
       });
     });
 
-    it("should include avoid instructions", () => {
+    it("should include high quality specifications", () => {
       const article = createMockArticle();
       const format = createMockFormat();
       const pages = generateCarouselPages(article, format, "typographic_minimal");
 
+      // All pages should have quality specifications
       pages.forEach((page) => {
-        expect(page.prompt).toContain("Avoid:");
+        expect(page.prompt.toLowerCase()).toMatch(/quality|resolution/);
       });
     });
 
-    it("should include text content in prompts", () => {
+    it("should set headline text correctly", () => {
       const article = createMockArticle({ title: "Unique Title Here" });
       const format = createMockFormat();
       const pages = generateCarouselPages(article, format, "typographic_minimal");
 
-      expect(pages[0].prompt).toContain("Unique Title Here");
+      // Title is in headlineText, not in the prompt
+      expect(pages[0].headlineText).toBe("Unique Title Here");
     });
   });
 

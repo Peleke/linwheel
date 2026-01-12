@@ -207,6 +207,61 @@ export const voiceProfiles = sqliteTable("voice_profiles", {
   updatedAt: integer("updated_at", { mode: "timestamp" }).$defaultFn(() => new Date()),
 });
 
+// Imagery approach enum for brand styles
+export const IMAGERY_APPROACHES = ["photography", "illustration", "abstract", "3d_render", "mixed"] as const;
+export type ImageryApproach = typeof IMAGERY_APPROACHES[number];
+
+// Color definition for brand palettes
+export interface ColorDefinition {
+  hex: string;
+  name: string;
+  usage: "primary" | "accent" | "background" | "text";
+}
+
+// Brand style profiles table - for consistent AI image generation
+export const brandStyleProfiles = sqliteTable("brand_style_profiles", {
+  id: text("id").primaryKey(),
+  userId: text("user_id").notNull(),
+  name: text("name").notNull(),
+  description: text("description"),
+
+  // Core Visual Identity
+  primaryColors: text("primary_colors", { mode: "json" }).$type<ColorDefinition[]>().notNull(),
+  secondaryColors: text("secondary_colors", { mode: "json" }).$type<ColorDefinition[]>(),
+  colorMood: text("color_mood"), // e.g., "warm and energetic", "cool and professional"
+
+  // Typography Style (for text-in-image generation)
+  typographyStyle: text("typography_style"), // e.g., "bold sans-serif", "elegant serif"
+  headlineWeight: text("headline_weight"), // e.g., "ultra-bold", "light", "medium"
+
+  // Imagery Direction
+  imageryApproach: text("imagery_approach", { enum: IMAGERY_APPROACHES }).notNull(),
+  artisticReferences: text("artistic_references", { mode: "json" }).$type<string[]>(), // Reference artists/photographers/styles
+  lightingPreference: text("lighting_preference"), // e.g., "soft natural", "dramatic studio"
+  compositionStyle: text("composition_style"), // e.g., "minimalist", "layered", "centered"
+
+  // Mood & Atmosphere
+  moodDescriptors: text("mood_descriptors", { mode: "json" }).$type<string[]>(), // e.g., ["bold", "innovative"]
+  texturePreference: text("texture_preference"), // e.g., "clean and flat", "grainy and vintage"
+
+  // Technical Preferences
+  aspectRatioPreference: text("aspect_ratio_preference", { enum: ["1:1", "16:9", "4:3", "1.91:1"] }),
+  depthOfField: text("depth_of_field", { enum: ["shallow", "deep", "varied"] }),
+
+  // Prompt Engineering - auto-injected into all image prompts
+  stylePrefix: text("style_prefix"), // Auto-prepended to all prompts
+  styleSuffix: text("style_suffix"), // Auto-appended to all prompts
+  negativeConcepts: text("negative_concepts", { mode: "json" }).$type<string[]>(), // Things to avoid
+
+  // Reference Images (URLs for image-to-image consistency)
+  referenceImageUrls: text("reference_image_urls", { mode: "json" }).$type<string[]>(),
+
+  // Status
+  isActive: integer("is_active", { mode: "boolean" }).default(false),
+  createdAt: integer("created_at", { mode: "timestamp" }).$defaultFn(() => new Date()),
+  updatedAt: integer("updated_at", { mode: "timestamp" }).$defaultFn(() => new Date()),
+});
+
 // Push notification subscriptions
 export const pushSubscriptions = sqliteTable("push_subscriptions", {
   id: text("id").primaryKey(),
@@ -271,3 +326,5 @@ export type PublishingStatus = typeof publishingStatus.$inferSelect;
 export type NewPublishingStatus = typeof publishingStatus.$inferInsert;
 export type LinkedinConnection = typeof linkedinConnections.$inferSelect;
 export type NewLinkedinConnection = typeof linkedinConnections.$inferInsert;
+export type BrandStyleProfile = typeof brandStyleProfiles.$inferSelect;
+export type NewBrandStyleProfile = typeof brandStyleProfiles.$inferInsert;

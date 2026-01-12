@@ -7,6 +7,7 @@ import { usePushNotifications } from "@/hooks/use-push-notifications";
 import { AppHeader } from "@/components/app-header";
 import { SubscriptionStatus } from "@/components/subscription/subscription-status";
 import { LinkedInConnection } from "@/components/settings/linkedin-connection";
+import { BrandStylesSection } from "@/components/settings/brand-styles-section";
 
 // Common timezones for scheduling content
 const COMMON_TIMEZONES = [
@@ -686,6 +687,9 @@ export default function SettingsPage() {
             </div>
           ) : null}
         </section>
+
+        {/* Brand Management Section */}
+        <BrandStylesSection />
 
         {/* LinkedIn Integration Section */}
         <section className="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 p-6 mb-6">

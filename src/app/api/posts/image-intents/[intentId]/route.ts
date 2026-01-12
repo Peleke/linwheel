@@ -8,6 +8,7 @@ import { overlayCoverTextFromUrl } from "@/lib/carousel/text-overlay-satori";
 import { uploadImage } from "@/lib/storage";
 import { getCurrentUser } from "@/lib/auth";
 import { incrementImageUsage, canGenerateImages } from "@/lib/usage";
+import { getActiveBrandStyle, composePromptWithBrandStyle, composeNegativeWithBrandStyle } from "@/lib/brand-styles";
 
 interface RouteParams {
   params: Promise<{ intentId: string }>;
@@ -126,8 +127,10 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
  * Generates T2I background, overlays headline text with Satori, uploads to storage.
  */
 export async function POST(request: NextRequest, { params }: RouteParams) {
+  console.log(`[PostImage] ========== POST HANDLER CALLED ==========`);
   try {
     const { intentId } = await params;
+    console.log(`[PostImage] Intent ID: ${intentId}`);
     const body = await request.json();
     const { provider, model } = body as {
       provider?: T2IProviderType;
@@ -165,11 +168,32 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       );
     }
 
+    // Apply brand style to prompts if user has an active one
+    let finalPrompt = intent.prompt;
+    let finalNegativePrompt = intent.negativePrompt;
+
+    console.log(`[PostImage] User check: ${user ? `authenticated (${user.id.slice(0, 8)}...)` : "NOT authenticated"}`);
+
+    if (user) {
+      const brandStyle = await getActiveBrandStyle(user.id);
+      console.log(`[PostImage] Brand style lookup: ${brandStyle ? `found "${brandStyle.name}" (active: ${brandStyle.isActive})` : "NONE FOUND"}`);
+      if (brandStyle) {
+        console.log(`[PostImage] Applying brand style "${brandStyle.name}" to image generation`);
+        console.log(`[PostImage] Brand colors: ${JSON.stringify(brandStyle.primaryColors?.slice(0, 2))}`);
+        finalPrompt = composePromptWithBrandStyle(intent.prompt, brandStyle);
+        finalNegativePrompt = composeNegativeWithBrandStyle(intent.negativePrompt || "", brandStyle);
+        console.log(`[PostImage] Original prompt: ${intent.prompt.slice(0, 100)}...`);
+        console.log(`[PostImage] Final prompt: ${finalPrompt.slice(0, 150)}...`);
+      }
+    } else {
+      console.log(`[PostImage] Skipping brand style - no authenticated user`);
+    }
+
     // Generate the background image (T2I is unreliable with text, so don't pass headline)
     const result = await generateImage(
       {
-        prompt: intent.prompt,
-        negativePrompt: intent.negativePrompt,
+        prompt: finalPrompt,
+        negativePrompt: finalNegativePrompt,
         headlineText: "", // Don't include text in T2I prompt - we overlay it ourselves
         stylePreset: intent.stylePreset as StylePreset,
         aspectRatio: "1.91:1",
