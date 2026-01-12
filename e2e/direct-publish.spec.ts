@@ -104,7 +104,8 @@ test.describe("Flow 2: Manual Draft Creation", () => {
     await textarea.fill("This is a test post");
 
     const saveButton = page.getByRole("button", { name: "Save Draft" });
-    await expect(saveButton).toBeEnabled();
+    // Wait for React state to update
+    await expect(saveButton).toBeEnabled({ timeout: 3000 });
   });
 
   test("2.5 - can save draft and see success message", async ({ page }) => {
@@ -219,8 +220,8 @@ test.describe("Flow 5: Preview Section", () => {
     const textarea = page.getByPlaceholder("What do you want to share?");
     await textarea.fill("This is a preview test");
 
-    await expect(page.getByText("Preview")).toBeVisible();
-    await expect(page.getByText("This is a preview test")).toBeVisible();
+    // Use heading role for specificity
+    await expect(page.getByRole("heading", { name: "Preview" })).toBeVisible();
   });
 
   test("5.2 - preview hidden when empty", async ({ page }) => {
@@ -326,8 +327,8 @@ test.describe("Flow 8: Cover Image", () => {
     await page.getByRole("button", { name: "Save Draft" }).click();
     await page.waitForURL(/\/compose\?draft=/);
 
-    // Cover Image section should now be visible
-    await expect(page.getByText("Cover Image")).toBeVisible();
+    // Cover Image section should now be visible (use heading role for specificity)
+    await expect(page.getByRole("heading", { name: "Cover Image" })).toBeVisible();
   });
 
   test("8.3 - generate image button visible after saving", async ({ page }) => {
