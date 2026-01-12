@@ -13,20 +13,23 @@ import type { CarouselFormat, SlideType } from "./analyzer";
  *
  * IMPORTANT: These prompts should generate COLORFUL, INTERESTING backgrounds.
  * Text is added via Sharp overlay - don't mention text in prompts.
+ *
+ * NOTE: Colors are intentionally generic - brand colors are applied by
+ * composePromptWithBrandStyle() which front-loads the user's palette.
  */
 
-// Style-specific background prompts - VIBRANT and COLORFUL
+// Style-specific background prompts - COLOR-NEUTRAL (brand colors applied separately)
 const CAROUSEL_STYLE_PROMPTS: Record<StylePreset, string> = {
   typographic_minimal:
-    "Stunning abstract gradient background, deep purple flowing into electric blue and soft pink. Smooth color transitions, subtle light rays, modern professional aesthetic. Bokeh light effects. High quality digital art.",
+    "Clean minimalist editorial background. Smooth color transitions, subtle light rays, modern professional aesthetic. High quality digital art.",
   gradient_text:
-    "Vibrant neon gradient background, magenta to cyan to electric purple. Glowing orbs of light, lens flares, futuristic tech aesthetic. Smooth flowing colors like aurora borealis. Cinematic lighting.",
+    "Vibrant gradient background. Glowing orbs of light, lens flares, futuristic tech aesthetic. Smooth flowing colors. Cinematic lighting.",
   dark_mode:
-    "Rich dark abstract background, deep space blue with purple nebula clouds. Scattered stars, subtle cyan and magenta glows. Cosmic professional aesthetic. Moody atmospheric lighting.",
+    "Dark background with nebula clouds. Scattered stars, subtle glows. Cosmic professional aesthetic. Moody atmospheric lighting.",
   accent_bar:
-    "Bold abstract background with warm sunset colors - orange, coral, golden yellow gradients. Geometric light shapes, professional creative energy. Warm and inviting atmosphere.",
+    "Bold abstract background with geometric light shapes, professional creative energy. Warm and inviting atmosphere.",
   abstract_shapes:
-    "Dreamy abstract background with flowing pastel colors - soft pink, lavender, mint green, peach. Organic flowing shapes like silk or smoke. Gentle ethereal glow. Calming yet visually rich.",
+    "Dreamy abstract background with flowing shapes. Organic flowing shapes like silk or smoke. Gentle ethereal glow. Calming yet visually rich.",
 };
 
 // Slide type variations - add visual drama

@@ -1,0 +1,187 @@
+/**
+ * Brand Styles Service
+ *
+ * Manages brand style profiles for consistent AI image generation.
+ * Similar to voice profiles but for visual identity.
+ */
+
+import { db } from "@/db";
+import { brandStyleProfiles, type BrandStyleProfile, type ColorDefinition } from "@/db/schema";
+import { eq, and } from "drizzle-orm";
+
+// Re-export types for consumers
+export type { BrandStyleProfile, ColorDefinition };
+
+/**
+ * Get the active brand style for a user
+ */
+export async function getActiveBrandStyle(userId: string): Promise<BrandStyleProfile | null> {
+  const result = await db.query.brandStyleProfiles.findFirst({
+    where: and(
+      eq(brandStyleProfiles.userId, userId),
+      eq(brandStyleProfiles.isActive, true)
+    ),
+  });
+  return result ?? null;
+}
+
+/**
+ * Get all brand styles for a user
+ */
+export async function getUserBrandStyles(userId: string): Promise<BrandStyleProfile[]> {
+  return db.query.brandStyleProfiles.findMany({
+    where: eq(brandStyleProfiles.userId, userId),
+    orderBy: (profiles, { desc }) => [desc(profiles.isActive), desc(profiles.updatedAt)],
+  });
+}
+
+/**
+ * Compose a FLUX-optimized prompt with brand style applied
+ *
+ * Follows FLUX best practices:
+ * - Subject-first detail prioritization
+ * - Explicit style hierarchy
+ * - Concrete references over abstractions
+ * - Technical specification layering
+ */
+export function composePromptWithBrandStyle(
+  basePrompt: string,
+  style: BrandStyleProfile
+): string {
+  const parts: string[] = [];
+
+  // 1. COLOR PALETTE FIRST (FLUX pays most attention to start)
+  // This overrides any colors in the base prompt
+  if (style.primaryColors?.length > 0) {
+    const colorHexes = style.primaryColors
+      .slice(0, 3)
+      .map((c: ColorDefinition) => c.hex)
+      .join(", ");
+    const colorNames = style.primaryColors
+      .slice(0, 3)
+      .map((c: ColorDefinition) => c.name || c.hex)
+      .join(" and ");
+    parts.push(`Color palette: ${colorHexes}. Use ${colorNames} colors exclusively`);
+  } else if (style.colorMood) {
+    parts.push(`${style.colorMood} color palette`);
+  }
+
+  // 2. Style prefix
+  if (style.stylePrefix) {
+    parts.push(style.stylePrefix);
+  }
+
+  // 3. Imagery approach
+  const imageryDescriptions: Record<string, string> = {
+    photography: "professional photography style",
+    illustration: "polished illustration style",
+    abstract: "abstract artistic style",
+    "3d_render": "high-quality 3D rendered style",
+    mixed: "mixed media style",
+  };
+  parts.push(imageryDescriptions[style.imageryApproach] || style.imageryApproach);
+
+  // 4. Base prompt content (strip common color words to reduce conflict)
+  let cleanedPrompt = basePrompt
+    .replace(/\b(blue|cyan|purple|pink|red|orange|yellow|green|teal|navy|violet|magenta)\b\s*(gradient|background|accent|color|tone|hue)?s?/gi, "")
+    .replace(/\s+/g, " ")
+    .trim();
+  parts.push(cleanedPrompt);
+
+  // 5. Artistic references (concrete > abstract per FLUX guidance)
+  if (style.artisticReferences?.length) {
+    parts.push(`in the style of ${style.artisticReferences.slice(0, 2).join(" and ")}`);
+  }
+
+  // 6. Lighting
+  if (style.lightingPreference) {
+    parts.push(`${style.lightingPreference} lighting`);
+  }
+
+  // 7. Composition
+  if (style.compositionStyle) {
+    parts.push(`${style.compositionStyle} composition`);
+  }
+
+  // 8. Mood descriptors
+  if (style.moodDescriptors?.length) {
+    parts.push(`${style.moodDescriptors.slice(0, 3).join(", ")} mood`);
+  }
+
+  // 9. Texture
+  if (style.texturePreference) {
+    parts.push(`${style.texturePreference} texture`);
+  }
+
+  // 10. Technical specs
+  if (style.depthOfField && style.depthOfField !== "varied") {
+    parts.push(`${style.depthOfField} depth of field`);
+  }
+
+  // 11. Style suffix
+  if (style.styleSuffix) {
+    parts.push(style.styleSuffix);
+  }
+
+  // Join with periods for clear separation (FLUX handles this well)
+  return parts.join(". ");
+}
+
+/**
+ * Compose negative prompt with brand style
+ * Note: FLUX mostly ignores negative prompts, but we include for other providers
+ */
+export function composeNegativeWithBrandStyle(
+  baseNegative: string,
+  style: BrandStyleProfile
+): string {
+  const parts: string[] = [];
+
+  if (baseNegative) {
+    parts.push(baseNegative);
+  }
+
+  // Add negative concepts from brand style
+  if (style.negativeConcepts?.length) {
+    parts.push(...style.negativeConcepts);
+  }
+
+  return parts.join(", ");
+}
+
+/**
+ * Validate brand style data before saving
+ */
+export function validateBrandStyle(data: Partial<BrandStyleProfile>): {
+  valid: boolean;
+  errors: string[];
+} {
+  const errors: string[] = [];
+
+  if (!data.name?.trim()) {
+    errors.push("Name is required");
+  }
+
+  if (!data.imageryApproach) {
+    errors.push("Imagery approach is required");
+  }
+
+  if (!data.primaryColors || data.primaryColors.length === 0) {
+    errors.push("At least one primary color is required");
+  } else {
+    // Validate color format
+    for (const color of data.primaryColors) {
+      if (!color.hex?.match(/^#[0-9A-Fa-f]{6}$/)) {
+        errors.push(`Invalid hex color: ${color.hex}`);
+      }
+    }
+  }
+
+  return {
+    valid: errors.length === 0,
+    errors,
+  };
+}
+
+// Re-export presets from separate file (safe for client-side import)
+export { BRAND_STYLE_PRESETS } from "./presets";
