@@ -27,18 +27,25 @@ export async function POST(request: NextRequest, { params }: Props) {
     }
 
     // Update post approval status
+    console.log(`[Approve] Updating post ${postId} to approved=${approved}`);
+
     const result = await db
       .update(linkedinPosts)
       .set({ approved })
       .where(eq(linkedinPosts.id, postId))
       .returning({ id: linkedinPosts.id });
 
+    console.log(`[Approve] Update result:`, result);
+
     if (result.length === 0) {
+      console.log(`[Approve] Post not found: ${postId}`);
       return NextResponse.json(
         { error: "Post not found" },
         { status: 404 }
       );
     }
+
+    console.log(`[Approve] Successfully updated post ${postId}`);
 
     // Get image intent status (but don't generate)
     let imageIntent = null;
