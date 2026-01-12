@@ -346,6 +346,9 @@ export const linkedinConnections = sqliteTable("linkedin_connections", {
   linkedinProfileId: text("linkedin_profile_id"),
   linkedinProfileName: text("linkedin_profile_name"),
   linkedinProfilePicture: text("linkedin_profile_picture"),
+  // Browser session cookie for native article publishing (PyDoll automation)
+  liAtCookie: text("li_at_cookie"), // Encrypted LinkedIn session cookie
+  liAtCookieUpdatedAt: integer("li_at_cookie_updated_at", { mode: "timestamp" }),
   createdAt: integer("created_at", { mode: "timestamp" }).$defaultFn(() => new Date()),
   updatedAt: integer("updated_at", { mode: "timestamp" }).$defaultFn(() => new Date()),
 });

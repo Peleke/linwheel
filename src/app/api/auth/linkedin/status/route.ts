@@ -16,6 +16,9 @@ export interface LinkedInStatusResponse {
   profilePicture: string | null;
   expiresAt: string | null;
   isExpired: boolean;
+  // Browser session cookie status for native article publishing
+  hasLiAtCookie: boolean;
+  liAtCookieUpdatedAt: string | null;
 }
 
 export async function GET() {
@@ -34,6 +37,8 @@ export async function GET() {
         linkedinProfileName: linkedinConnections.linkedinProfileName,
         linkedinProfilePicture: linkedinConnections.linkedinProfilePicture,
         expiresAt: linkedinConnections.expiresAt,
+        liAtCookie: linkedinConnections.liAtCookie,
+        liAtCookieUpdatedAt: linkedinConnections.liAtCookieUpdatedAt,
       })
       .from(linkedinConnections)
       .where(eq(linkedinConnections.userId, user.id))
@@ -46,10 +51,12 @@ export async function GET() {
         profilePicture: null,
         expiresAt: null,
         isExpired: false,
+        hasLiAtCookie: false,
+        liAtCookieUpdatedAt: null,
       });
     }
 
-    const { linkedinProfileName, linkedinProfilePicture, expiresAt } = connection[0];
+    const { linkedinProfileName, linkedinProfilePicture, expiresAt, liAtCookie, liAtCookieUpdatedAt } = connection[0];
     const isExpired = expiresAt ? new Date(expiresAt) < new Date() : false;
 
     return NextResponse.json<LinkedInStatusResponse>({
@@ -58,6 +65,8 @@ export async function GET() {
       profilePicture: linkedinProfilePicture,
       expiresAt: expiresAt?.toISOString() ?? null,
       isExpired,
+      hasLiAtCookie: !!liAtCookie,
+      liAtCookieUpdatedAt: liAtCookieUpdatedAt?.toISOString() ?? null,
     });
   } catch (error) {
     console.error("LinkedIn status error:", error);
