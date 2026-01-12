@@ -58,11 +58,11 @@ Paste your content. Select your angles. Get a month of scroll-stopping content.
 
 - **One-click connect** — OAuth integration with LinkedIn
 - **Instant publishing** — Approve a post, click Publish, done
+- **Scheduled auto-publish** — Set a date/time, posts go live automatically
 - **Image support** — AI-generated cover images publish with your post
+- **Push notifications** — Get notified when posts are published
 - **Published tracking** — See which posts are live with direct links
 - **Secure tokens** — AES-256-GCM encryption for your credentials
-
-> *Coming soon: Scheduled publishing — set it and forget it.*
 
 ### 🎭 Six Distinct Content Angles
 
@@ -116,6 +116,24 @@ Train LinWheel on your writing style:
 - **Add samples** — Paste examples of your best posts
 - **Style matching** — Generated content matches your voice
 - **One active profile** — Switch between different personas
+
+### ✍️ Rich Text Formatting
+
+LinkedIn doesn't support markdown, but LinWheel does—using Unicode magic:
+
+- **Bold, italic, bold-italic** — Select text, click B/I/BI
+- **Works everywhere** — Formatting renders correctly on LinkedIn
+- **Toggle on/off** — Click again to remove formatting
+- **Compose & edit** — Available on all text editors
+
+### 🖼️ Cover Image Management
+
+Full control over your post images:
+
+- **Toggle include/exclude** — Keep images but choose not to post them
+- **Delete images** — Remove cover images you don't want
+- **Regenerate anytime** — Generate new images with one click
+- **Per-post control** — Different settings for each post
 
 ### ⚡ Progressive Web App
 
@@ -324,7 +342,7 @@ STRIPE_PRO_MONTHLY_PRICE_ID=price_...
 STRIPE_PRO_YEARLY_PRICE_ID=price_...       # Optional
 
 # App URL (for Stripe redirects)
-NEXT_PUBLIC_APP_URL=https://linwheel.ai    # Your production domain
+NEXT_PUBLIC_APP_URL=https://linwheel.io    # Your production domain
 ```
 
 ### Database Setup
@@ -507,6 +525,11 @@ At 90 posts per run, that's **$0.03 per post with image**.
 - [x] Usage gating with upgrade prompts
 - [x] Supabase authentication
 - [x] **🚀 Direct LinkedIn Publishing** — Connect account, publish with one click
+- [x] **📅 Scheduled Auto-Publishing** — Set date/time, posts go live automatically
+- [x] **🔔 Push Notifications** — Get notified when posts are published
+- [x] **✍️ Unicode Text Formatting** — Bold/italic toolbar for LinkedIn posts
+- [x] **🖼️ Cover Image Management** — Toggle include/exclude, delete images
+- [x] **📝 Manual Drafts** — Compose posts from scratch, not just AI-generated
 
 ### 🎨 Brand Style Profiles
 *Voice profiles, but for visuals*
@@ -525,16 +548,6 @@ At 90 posts per run, that's **$0.03 per post with image**.
 - Full air-gapped deployment option
 - Bring your own LLM (Claude, GPT, Llama, Mistral)
 - Custom T2I pipelines for compliance-heavy industries (healthcare, finance, gov)
-
-### 📅 Scheduled Publishing
-*Set it and forget it*
-
-> ✅ Direct publishing is live! Scheduled auto-posting coming next.
-
-- ✅ ~~Native LinkedIn API integration~~ **SHIPPED**
-- Calendar view of scheduled posts
-- Automatic publishing at scheduled times
-- Optimal timing suggestions based on your audience
 
 ### 👥 Team & Agency Mode
 *One dashboard, infinite brands*
