@@ -10,14 +10,17 @@ interface RouteParams {
 /**
  * PATCH /api/posts/[postId]/schedule
  *
- * Updates the scheduled date for a post
- * Body: { scheduledAt: string | null }
+ * Updates the scheduled date and auto-publish setting for a post
+ * Body: { scheduledAt: string | null, autoPublish?: boolean }
  */
 export async function PATCH(request: NextRequest, { params }: RouteParams) {
   try {
     const { postId } = await params;
     const body = await request.json();
-    const { scheduledAt } = body as { scheduledAt: string | null };
+    const { scheduledAt, autoPublish } = body as {
+      scheduledAt: string | null;
+      autoPublish?: boolean;
+    };
 
     // Check post exists
     const post = await db.query.linkedinPosts.findFirst({
@@ -31,18 +34,27 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
       );
     }
 
+    // Build update object
+    const updates: { scheduledAt: Date | null; autoPublish?: boolean } = {
+      scheduledAt: scheduledAt ? new Date(scheduledAt) : null,
+    };
+
+    // Only update autoPublish if explicitly provided
+    if (typeof autoPublish === "boolean") {
+      updates.autoPublish = autoPublish;
+    }
+
     // Update the schedule
     await db
       .update(linkedinPosts)
-      .set({
-        scheduledAt: scheduledAt ? new Date(scheduledAt) : null,
-      })
+      .set(updates)
       .where(eq(linkedinPosts.id, postId));
 
     return NextResponse.json({
       success: true,
       postId,
       scheduledAt: scheduledAt ? new Date(scheduledAt) : null,
+      autoPublish: typeof autoPublish === "boolean" ? autoPublish : post.autoPublish,
     });
   } catch (error) {
     console.error("Error scheduling post:", error);
