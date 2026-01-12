@@ -4,6 +4,8 @@ import { useState, useEffect, useCallback, Suspense, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { AppHeader } from "@/components/app-header";
 import { FormattingToolbar } from "@/components/formatting-toolbar";
+import { GenerateImageModal } from "@/components/generate-image-modal";
+import { getStoredPreferences } from "@/hooks/use-image-preferences";
 import Image from "next/image";
 
 const LINKEDIN_CHAR_LIMIT = 3000;
@@ -43,6 +45,8 @@ function ComposePageContent() {
   const [isCoverImageExpanded, setIsCoverImageExpanded] = useState(true);
   const [includeImageInPost, setIncludeImageInPost] = useState(true);
   const [isDeletingImage, setIsDeletingImage] = useState(false);
+  const [imageIntentId, setImageIntentId] = useState<string | null>(null);
+  const [showImageModal, setShowImageModal] = useState(false);
 
   // Schedule state
   const [showScheduleModal, setShowScheduleModal] = useState(false);
@@ -101,6 +105,7 @@ function ComposePageContent() {
         if (imageRes.ok) {
           const imageData = await imageRes.json();
           if (imageData.exists) {
+            setImageIntentId(imageData.intentId);
             if (imageData.generatedImageUrl) {
               setCoverImageUrl(imageData.generatedImageUrl);
             }
@@ -316,14 +321,27 @@ function ComposePageContent() {
   const handleGenerateImage = async () => {
     if (!postId) return;
 
+    // If we already have an intent, open the modal for customization
+    if (imageIntentId) {
+      setShowImageModal(true);
+      return;
+    }
+
+    // First-time generation: create intent + generate image directly
+    // (subsequent regenerations will use the modal)
     setIsGeneratingImage(true);
     setImageError(null);
 
     try {
+      // Use stored provider preferences
+      const prefs = getStoredPreferences();
       const res = await fetch(`/api/posts/${postId}/image`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({}),
+        body: JSON.stringify({
+          provider: prefs.provider,
+          model: prefs.provider === "fal" ? prefs.falModel : prefs.openaiModel,
+        }),
       });
 
       const data = await res.json();
@@ -334,6 +352,7 @@ function ComposePageContent() {
       }
 
       setCoverImageUrl(data.imageUrl);
+      setImageIntentId(data.intentId); // Store intentId for future modal use
       setIncludeImageInPost(true); // Reset to included when generating new image
       setSuccessMessage("Cover image generated!");
     } catch (err) {
@@ -342,6 +361,13 @@ function ComposePageContent() {
     } finally {
       setIsGeneratingImage(false);
     }
+  };
+
+  // Callback when image is generated via modal
+  const handleImageGenerated = (imageUrl: string) => {
+    setCoverImageUrl(imageUrl);
+    setIncludeImageInPost(true);
+    setSuccessMessage("Cover image generated!");
   };
 
   const handleToggleImageInPost = async () => {
@@ -913,6 +939,17 @@ function ComposePageContent() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Image Generation Modal */}
+      {showImageModal && imageIntentId && (
+        <GenerateImageModal
+          isOpen={showImageModal}
+          onClose={() => setShowImageModal(false)}
+          intentId={imageIntentId}
+          type="post"
+          onImageGenerated={handleImageGenerated}
+        />
       )}
     </div>
   );

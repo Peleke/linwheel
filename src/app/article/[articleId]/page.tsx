@@ -1,9 +1,12 @@
 "use client";
 
 import { useState, useEffect, useCallback, use } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { AppHeader } from "@/components/app-header";
 import { FormattedTextarea } from "@/components/formatting-toolbar";
+import { GenerateImageModal } from "@/components/generate-image-modal";
+import { CarouselPreview } from "@/components/carousel-preview";
+import { getStoredPreferences } from "@/hooks/use-image-preferences";
 import Image from "next/image";
 import ReactMarkdown from "react-markdown";
 
@@ -40,6 +43,32 @@ interface ArticleData {
   } | null;
 }
 
+interface CarouselPage {
+  pageNumber: number;
+  slideType: "title" | "content" | "cta";
+  prompt: string;
+  headlineText: string;
+  bodyText?: string;
+  imageUrl?: string;
+  activeVersionId?: string;
+  versionCount?: number;
+}
+
+interface CarouselData {
+  exists: boolean;
+  id?: string;
+  pageCount?: number;
+  pages?: CarouselPage[];
+  pdfUrl?: string;
+  generatedAt?: string;
+  provider?: string;
+  error?: string;
+  scheduledAt?: string | null;
+  autoPublish?: boolean;
+  status?: "pending" | "ready" | "scheduled" | "published";
+  linkedinPostUrn?: string | null;
+}
+
 export default function ArticleEditPage({
   params,
 }: {
@@ -47,9 +76,13 @@ export default function ArticleEditPage({
 }) {
   const { articleId } = use(params);
   const router = useRouter();
+  const searchParams = useSearchParams();
 
-  // Tab state
-  const [activeTab, setActiveTab] = useState<"write" | "preview">("write");
+  // Tab state - default from URL query param if provided
+  const initialTab = searchParams.get("tab");
+  const [activeTab, setActiveTab] = useState<"write" | "preview" | "carousel">(
+    initialTab === "carousel" ? "carousel" : initialTab === "preview" ? "preview" : "write"
+  );
 
   // Article state
   const [article, setArticle] = useState<ArticleData | null>(null);
@@ -81,6 +114,21 @@ export default function ArticleEditPage({
   const [includeImageInPost, setIncludeImageInPost] = useState(true);
   const [isDeletingImage, setIsDeletingImage] = useState(false);
   const [imageError, setImageError] = useState<string | null>(null);
+  const [showImageModal, setShowImageModal] = useState(false);
+  const [isGeneratingImage, setIsGeneratingImage] = useState(false);
+
+  // Carousel state
+  const [carousel, setCarousel] = useState<CarouselData | null>(null);
+  const [isLoadingCarousel, setIsLoadingCarousel] = useState(false);
+  const [isGeneratingCarousel, setIsGeneratingCarousel] = useState(false);
+  const [regeneratingSlide, setRegeneratingSlide] = useState<number | null>(null);
+  const [carouselError, setCarouselError] = useState<string | null>(null);
+  const [showCarouselScheduleModal, setShowCarouselScheduleModal] = useState(false);
+  const [carouselScheduleMode, setCarouselScheduleMode] = useState<"simultaneous" | "stagger">("simultaneous");
+  const [carouselScheduleDate, setCarouselScheduleDate] = useState("");
+  const [carouselScheduleTime, setCarouselScheduleTime] = useState("09:00");
+  const [isSchedulingCarousel, setIsSchedulingCarousel] = useState(false);
+  const [isPublishingCarousel, setIsPublishingCarousel] = useState(false);
 
   // Publishing state
   const [isPublishing, setIsPublishing] = useState(false);
@@ -403,6 +451,293 @@ export default function ArticleEditPage({
     setSections(sections.filter((_, i) => i !== index));
   };
 
+  // Load carousel data
+  const loadCarousel = useCallback(async () => {
+    setIsLoadingCarousel(true);
+    setCarouselError(null);
+    try {
+      // Get carousel status
+      const carouselRes = await fetch(`/api/articles/${articleId}/carousel`);
+      if (carouselRes.ok) {
+        const carouselData = await carouselRes.json();
+
+        // Also get schedule info if carousel exists
+        if (carouselData.exists) {
+          const scheduleRes = await fetch(`/api/articles/${articleId}/carousel/schedule`);
+          if (scheduleRes.ok) {
+            const scheduleData = await scheduleRes.json();
+            setCarousel({
+              ...carouselData,
+              scheduledAt: scheduleData.scheduledAt,
+              autoPublish: scheduleData.autoPublish,
+              status: scheduleData.status,
+              linkedinPostUrn: scheduleData.linkedinPostUrn,
+            });
+          } else {
+            setCarousel(carouselData);
+          }
+        } else {
+          setCarousel(carouselData);
+        }
+      }
+    } catch (err) {
+      console.error("Load carousel error:", err);
+      setCarouselError("Failed to load carousel");
+    } finally {
+      setIsLoadingCarousel(false);
+    }
+  }, [articleId]);
+
+  // Load carousel when switching to carousel tab
+  useEffect(() => {
+    if (activeTab === "carousel" && !carousel) {
+      loadCarousel();
+    }
+  }, [activeTab, carousel, loadCarousel]);
+
+  // Generate carousel
+  const handleGenerateCarousel = async () => {
+    setIsGeneratingCarousel(true);
+    setCarouselError(null);
+    try {
+      const prefs = getStoredPreferences();
+      const res = await fetch(`/api/articles/${articleId}/carousel`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          provider: prefs.provider,
+          model: prefs.provider === "fal" ? prefs.falModel : prefs.openaiModel,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        setCarouselError(data.error || "Failed to generate carousel");
+        return;
+      }
+
+      // Reload carousel data
+      await loadCarousel();
+      setSuccessMessage("Carousel generated!");
+    } catch (err) {
+      console.error("Generate carousel error:", err);
+      setCarouselError("Failed to generate carousel");
+    } finally {
+      setIsGeneratingCarousel(false);
+    }
+  };
+
+  // Regenerate a single slide
+  const handleRegenerateSlide = async (slideNumber: number) => {
+    setRegeneratingSlide(slideNumber);
+    setCarouselError(null);
+    try {
+      const prefs = getStoredPreferences();
+      const res = await fetch(`/api/articles/${articleId}/carousel`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          slideNumber,
+          provider: prefs.provider,
+          model: prefs.provider === "fal" ? prefs.falModel : prefs.openaiModel,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        setCarouselError(data.error || "Failed to regenerate slide");
+        return;
+      }
+
+      // Update carousel with new data
+      setCarousel(prev => prev ? {
+        ...prev,
+        pages: data.pages,
+        pdfUrl: data.pdfUrl,
+      } : prev);
+      setSuccessMessage(`Slide ${slideNumber} regenerated!`);
+    } catch (err) {
+      console.error("Regenerate slide error:", err);
+      setCarouselError("Failed to regenerate slide");
+    } finally {
+      setRegeneratingSlide(null);
+    }
+  };
+
+  // Schedule carousel
+  const handleScheduleCarousel = async () => {
+    // For simultaneous mode, article must be scheduled first
+    if (carouselScheduleMode === "simultaneous" && !article?.scheduledAt) {
+      setCarouselError("Schedule the article first to use simultaneous scheduling");
+      return;
+    }
+
+    // For stagger mode, date/time must be provided
+    if (carouselScheduleMode === "stagger" && (!carouselScheduleDate || !carouselScheduleTime)) {
+      return;
+    }
+
+    setIsSchedulingCarousel(true);
+    setCarouselError(null);
+    try {
+      // Build request body based on mode
+      const requestBody = carouselScheduleMode === "simultaneous"
+        ? {
+            sharedSchedule: true,
+            autoPublish: true,
+          }
+        : {
+            scheduledAt: new Date(`${carouselScheduleDate}T${carouselScheduleTime}`).toISOString(),
+            autoPublish: true,
+          };
+
+      const res = await fetch(`/api/articles/${articleId}/carousel/schedule`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(requestBody),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        setCarouselError(data.error || "Failed to schedule carousel");
+        return;
+      }
+
+      setCarousel(prev => prev ? {
+        ...prev,
+        scheduledAt: data.scheduledAt,
+        autoPublish: data.autoPublish,
+        status: data.status,
+      } : prev);
+      setShowCarouselScheduleModal(false);
+      setSuccessMessage("Carousel scheduled!");
+    } catch (err) {
+      console.error("Schedule carousel error:", err);
+      setCarouselError("Failed to schedule carousel");
+    } finally {
+      setIsSchedulingCarousel(false);
+    }
+  };
+
+  // Unschedule carousel
+  const handleUnscheduleCarousel = async () => {
+    setIsSchedulingCarousel(true);
+    try {
+      const res = await fetch(`/api/articles/${articleId}/carousel/schedule`, {
+        method: "DELETE",
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        setCarouselError(data.error || "Failed to unschedule carousel");
+        return;
+      }
+
+      setCarousel(prev => prev ? {
+        ...prev,
+        scheduledAt: null,
+        autoPublish: false,
+        status: data.status,
+      } : prev);
+      setSuccessMessage("Carousel unscheduled");
+    } catch (err) {
+      console.error("Unschedule carousel error:", err);
+      setCarouselError("Failed to unschedule carousel");
+    } finally {
+      setIsSchedulingCarousel(false);
+    }
+  };
+
+  // Publish carousel immediately
+  const handlePublishCarousel = async () => {
+    setIsPublishingCarousel(true);
+    setCarouselError(null);
+    try {
+      const res = await fetch(`/api/articles/${articleId}/carousel/publish`, {
+        method: "POST",
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        setCarouselError(data.error || "Failed to publish carousel");
+        return;
+      }
+
+      setCarousel(prev => prev ? {
+        ...prev,
+        status: "published",
+        linkedinPostUrn: data.postUrn,
+      } : prev);
+      setSuccessMessage("Carousel published to LinkedIn!");
+    } catch (err) {
+      console.error("Publish carousel error:", err);
+      setCarouselError("Failed to publish carousel");
+    } finally {
+      setIsPublishingCarousel(false);
+    }
+  };
+
+  // Handle image regeneration (open modal if intent exists, else generate first)
+  const handleRegenerateImage = async () => {
+    const intentId = article?.imageIntent?.id;
+    if (intentId) {
+      setShowImageModal(true);
+      return;
+    }
+
+    // No intent exists - generate image first
+    setIsGeneratingImage(true);
+    setImageError(null);
+    try {
+      const prefs = getStoredPreferences();
+      const res = await fetch(`/api/articles/${articleId}/image`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          provider: prefs.provider,
+          model: prefs.provider === "fal" ? prefs.falModel : prefs.openaiModel,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        setImageError(data.error || "Failed to generate image");
+        return;
+      }
+
+      // Update article with new image
+      if (article) {
+        setArticle({
+          ...article,
+          imageIntent: {
+            ...article.imageIntent!,
+            generatedImageUrl: data.imageUrl,
+          },
+        });
+      }
+      setSuccessMessage("Cover image generated!");
+    } catch (err) {
+      console.error("Generate image error:", err);
+      setImageError("Failed to generate image");
+    } finally {
+      setIsGeneratingImage(false);
+    }
+  };
+
+  // Handle image generated via modal callback
+  const handleImageGenerated = (imageUrl: string) => {
+    if (article) {
+      setArticle({
+        ...article,
+        imageIntent: article.imageIntent ? {
+          ...article.imageIntent,
+          generatedImageUrl: imageUrl,
+        } : null,
+      });
+    }
+    setSuccessMessage("Cover image regenerated!");
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen flex flex-col bg-zinc-50 dark:bg-zinc-950">
@@ -615,13 +950,22 @@ export default function ArticleEditPage({
                     Include when publishing
                   </span>
                 </label>
-                <button
-                  onClick={handleDeleteImage}
-                  disabled={isDeletingImage}
-                  className="px-3 py-1.5 text-xs font-medium bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 rounded-lg hover:bg-red-200 dark:hover:bg-red-900/50 transition-colors disabled:opacity-50"
-                >
-                  {isDeletingImage ? "Deleting..." : "Delete Image"}
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={handleRegenerateImage}
+                    disabled={isGeneratingImage}
+                    className="px-3 py-1.5 text-xs font-medium bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 rounded-lg hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors disabled:opacity-50"
+                  >
+                    {isGeneratingImage ? "Generating..." : "Regenerate"}
+                  </button>
+                  <button
+                    onClick={handleDeleteImage}
+                    disabled={isDeletingImage}
+                    className="px-3 py-1.5 text-xs font-medium bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 rounded-lg hover:bg-red-200 dark:hover:bg-red-900/50 transition-colors disabled:opacity-50"
+                  >
+                    {isDeletingImage ? "Deleting..." : "Delete"}
+                  </button>
+                </div>
               </div>
             </div>
           )}
@@ -657,6 +1001,30 @@ export default function ArticleEditPage({
                   <path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                 </svg>
                 Preview
+              </span>
+            </button>
+            <button
+              onClick={() => setActiveTab("carousel")}
+              className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+                activeTab === "carousel"
+                  ? "border-amber-600 text-amber-600 dark:text-amber-400"
+                  : "border-transparent text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200"
+              }`}
+            >
+              <span className="flex items-center gap-2">
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+                Carousel
+                {carousel?.exists && (
+                  <span className={`ml-1 px-1.5 py-0.5 text-xs rounded-full ${
+                    carousel.status === "published" ? "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400" :
+                    carousel.status === "scheduled" ? "bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400" :
+                    "bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400"
+                  }`}>
+                    {carousel.status === "published" ? "Live" : carousel.status === "scheduled" ? "Scheduled" : carousel.pageCount}
+                  </span>
+                )}
               </span>
             </button>
           </div>
@@ -751,7 +1119,7 @@ export default function ArticleEditPage({
                 rows={4}
               />
             </div>
-          ) : (
+          ) : activeTab === "preview" ? (
             <div className="bg-white dark:bg-zinc-900 rounded-b-xl border border-t-0 border-zinc-200 dark:border-zinc-800 p-6">
               {/* Preview */}
               <article className="prose prose-zinc dark:prose-invert max-w-none">
@@ -812,7 +1180,165 @@ export default function ArticleEditPage({
                 )}
               </article>
             </div>
-          )}
+          ) : activeTab === "carousel" ? (
+            <div className="bg-white dark:bg-zinc-900 rounded-b-xl border border-t-0 border-zinc-200 dark:border-zinc-800 p-6">
+              {/* Carousel Tab Content */}
+              {isLoadingCarousel ? (
+                <div className="flex items-center justify-center py-12">
+                  <div className="w-8 h-8 border-2 border-amber-600 border-t-transparent rounded-full animate-spin" />
+                </div>
+              ) : !carousel?.exists ? (
+                <div className="text-center py-12">
+                  <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center">
+                    <svg className="w-8 h-8 text-amber-600 dark:text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                  </div>
+                  <h3 className="text-lg font-medium text-zinc-900 dark:text-zinc-100 mb-2">
+                    No carousel yet
+                  </h3>
+                  <p className="text-sm text-zinc-500 dark:text-zinc-400 mb-6 max-w-md mx-auto">
+                    Generate a 5-slide carousel from your article content. Perfect for repurposing your article as a LinkedIn document post.
+                  </p>
+                  <button
+                    onClick={handleGenerateCarousel}
+                    disabled={isGeneratingCarousel}
+                    className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-medium rounded-xl shadow-lg shadow-amber-500/25 transition-all hover:scale-105 disabled:opacity-50 disabled:hover:scale-100"
+                  >
+                    {isGeneratingCarousel ? (
+                      <>
+                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                        Generating Carousel...
+                      </>
+                    ) : (
+                      <>
+                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+                        </svg>
+                        Generate Carousel
+                      </>
+                    )}
+                  </button>
+                </div>
+              ) : (
+                <div className="space-y-6">
+                  {/* Carousel Error */}
+                  {carouselError && (
+                    <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+                      <p className="text-sm text-red-700 dark:text-red-300">{carouselError}</p>
+                    </div>
+                  )}
+
+                  {/* Carousel Status Bar */}
+                  {carousel.status === "scheduled" && carousel.scheduledAt && (
+                    <div className="flex items-center justify-between p-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-full bg-amber-100 dark:bg-amber-900/50 flex items-center justify-center">
+                          <svg className="w-5 h-5 text-amber-600 dark:text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-amber-700 dark:text-amber-300">Scheduled</p>
+                          <p className="text-xs text-amber-600 dark:text-amber-400">
+                            {new Date(carousel.scheduledAt).toLocaleString()}
+                          </p>
+                        </div>
+                      </div>
+                      <button
+                        onClick={handleUnscheduleCarousel}
+                        disabled={isSchedulingCarousel}
+                        className="text-sm text-amber-700 dark:text-amber-300 hover:text-amber-800 dark:hover:text-amber-200 underline"
+                      >
+                        {isSchedulingCarousel ? "..." : "Unschedule"}
+                      </button>
+                    </div>
+                  )}
+
+                  {carousel.status === "published" && carousel.linkedinPostUrn && (
+                    <div className="flex items-center justify-between p-4 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 rounded-lg">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-full bg-emerald-100 dark:bg-emerald-900/50 flex items-center justify-center">
+                          <svg className="w-5 h-5 text-emerald-600 dark:text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                          </svg>
+                        </div>
+                        <p className="text-sm font-medium text-emerald-700 dark:text-emerald-300">Published to LinkedIn</p>
+                      </div>
+                      <a
+                        href={`https://www.linkedin.com/feed/update/${carousel.linkedinPostUrn}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-sm text-emerald-700 dark:text-emerald-300 hover:text-emerald-800 dark:hover:text-emerald-200 underline"
+                      >
+                        View Post
+                      </a>
+                    </div>
+                  )}
+
+                  {/* Carousel Preview */}
+                  {carousel.pages && (
+                    <CarouselPreview
+                      pages={carousel.pages}
+                      pdfUrl={carousel.pdfUrl}
+                      articleId={articleId}
+                      onRegenerateSlide={handleRegenerateSlide}
+                      regeneratingSlide={regeneratingSlide}
+                    />
+                  )}
+
+                  {/* Carousel Actions */}
+                  {carousel.status !== "published" && (
+                    <div className="flex items-center justify-between pt-4 border-t border-zinc-200 dark:border-zinc-700">
+                      <button
+                        onClick={handleGenerateCarousel}
+                        disabled={isGeneratingCarousel}
+                        className="text-sm text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 flex items-center gap-2"
+                      >
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                        </svg>
+                        {isGeneratingCarousel ? "Regenerating..." : "Regenerate All"}
+                      </button>
+
+                      <div className="flex items-center gap-3">
+                        {carousel.status !== "scheduled" && (
+                          <button
+                            onClick={() => {
+                              setCarouselScheduleDate(getDefaultScheduleDate());
+                              setShowCarouselScheduleModal(true);
+                            }}
+                            className="px-4 py-2 text-sm font-medium text-white bg-amber-600 hover:bg-amber-500 rounded-lg transition-colors"
+                          >
+                            Schedule
+                          </button>
+                        )}
+                        <button
+                          onClick={handlePublishCarousel}
+                          disabled={isPublishingCarousel}
+                          className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-500 rounded-lg transition-colors disabled:opacity-50"
+                        >
+                          {isPublishingCarousel ? (
+                            <>
+                              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                              Publishing...
+                            </>
+                          ) : (
+                            <>
+                              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M19 3a2 2 0 012 2v14a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h14m-.5 15.5v-5.3a3.26 3.26 0 00-3.26-3.26c-.85 0-1.84.52-2.32 1.3v-1.11h-2.79v8.37h2.79v-4.93c0-.77.62-1.4 1.39-1.4a1.4 1.4 0 011.4 1.4v4.93h2.79M6.88 8.56a1.68 1.68 0 001.68-1.68c0-.93-.75-1.69-1.68-1.69a1.69 1.69 0 00-1.69 1.69c0 .93.76 1.68 1.69 1.68m1.39 9.94v-8.37H5.5v8.37h2.77z" />
+                              </svg>
+                              Publish Now
+                            </>
+                          )}
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          ) : null}
         </div>
       </main>
 
@@ -901,6 +1427,153 @@ export default function ArticleEditPage({
             </div>
           </div>
         </div>
+      )}
+
+      {/* Carousel Schedule Modal */}
+      {showCarouselScheduleModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white dark:bg-zinc-900 rounded-xl p-6 w-full max-w-md mx-4 shadow-xl">
+            <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100 mb-4">
+              Schedule Carousel
+            </h3>
+
+            <div className="space-y-4">
+              {/* Schedule Mode Selection */}
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                  When to publish
+                </label>
+                <div className="space-y-2">
+                  <label className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${
+                    carouselScheduleMode === "simultaneous"
+                      ? "border-amber-500 bg-amber-50 dark:bg-amber-900/20"
+                      : "border-zinc-200 dark:border-zinc-700 hover:border-zinc-300 dark:hover:border-zinc-600"
+                  }`}>
+                    <input
+                      type="radio"
+                      name="scheduleMode"
+                      value="simultaneous"
+                      checked={carouselScheduleMode === "simultaneous"}
+                      onChange={() => setCarouselScheduleMode("simultaneous")}
+                      className="mt-0.5 accent-amber-600"
+                    />
+                    <div>
+                      <p className="font-medium text-zinc-900 dark:text-zinc-100">
+                        Simultaneous
+                      </p>
+                      <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                        Publish at the same time as the article
+                        {article?.scheduledAt ? (
+                          <span className="text-amber-600 dark:text-amber-400">
+                            {" "}({new Date(article.scheduledAt).toLocaleString()})
+                          </span>
+                        ) : (
+                          <span className="text-red-500"> (Article not scheduled)</span>
+                        )}
+                      </p>
+                    </div>
+                  </label>
+
+                  <label className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${
+                    carouselScheduleMode === "stagger"
+                      ? "border-amber-500 bg-amber-50 dark:bg-amber-900/20"
+                      : "border-zinc-200 dark:border-zinc-700 hover:border-zinc-300 dark:hover:border-zinc-600"
+                  }`}>
+                    <input
+                      type="radio"
+                      name="scheduleMode"
+                      value="stagger"
+                      checked={carouselScheduleMode === "stagger"}
+                      onChange={() => setCarouselScheduleMode("stagger")}
+                      className="mt-0.5 accent-amber-600"
+                    />
+                    <div>
+                      <p className="font-medium text-zinc-900 dark:text-zinc-100">
+                        Stagger
+                      </p>
+                      <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                        Choose a specific date and time
+                      </p>
+                    </div>
+                  </label>
+                </div>
+              </div>
+
+              {/* Date/Time Picker (only for stagger mode) */}
+              {carouselScheduleMode === "stagger" && (
+                <div className="space-y-3 pt-2">
+                  <div>
+                    <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
+                      Date
+                    </label>
+                    <input
+                      type="date"
+                      value={carouselScheduleDate}
+                      onChange={(e) => setCarouselScheduleDate(e.target.value)}
+                      min={new Date().toISOString().split("T")[0]}
+                      className="w-full px-3 py-2 border border-zinc-300 dark:border-zinc-700 rounded-lg bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-amber-500"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
+                      Time
+                    </label>
+                    <input
+                      type="time"
+                      value={carouselScheduleTime}
+                      onChange={(e) => setCarouselScheduleTime(e.target.value)}
+                      className="w-full px-3 py-2 border border-zinc-300 dark:border-zinc-700 rounded-lg bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-amber-500"
+                    />
+                    <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">
+                      {Intl.DateTimeFormat().resolvedOptions().timeZone}
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              <div className="flex items-center gap-2 p-3 bg-amber-50 dark:bg-amber-900/20 rounded-lg">
+                <svg className="w-5 h-5 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                </svg>
+                <span className="text-sm text-amber-700 dark:text-amber-300">
+                  Auto-publish enabled
+                </span>
+              </div>
+            </div>
+
+            <div className="flex gap-3 mt-6">
+              <button
+                onClick={() => setShowCarouselScheduleModal(false)}
+                className="flex-1 px-4 py-2 text-sm font-medium text-zinc-700 dark:text-zinc-300 bg-zinc-200 dark:bg-zinc-800 rounded-lg hover:bg-zinc-300 dark:hover:bg-zinc-700 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleScheduleCarousel}
+                disabled={
+                  isSchedulingCarousel ||
+                  (carouselScheduleMode === "simultaneous" && !article?.scheduledAt) ||
+                  (carouselScheduleMode === "stagger" && !carouselScheduleDate)
+                }
+                className="flex-1 px-4 py-2 text-sm font-medium text-white bg-amber-600 rounded-lg hover:bg-amber-500 transition-colors disabled:opacity-50"
+              >
+                {isSchedulingCarousel ? "Scheduling..." : "Schedule"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Image Generation Modal */}
+      {showImageModal && article?.imageIntent?.id && (
+        <GenerateImageModal
+          isOpen={showImageModal}
+          onClose={() => setShowImageModal(false)}
+          intentId={article.imageIntent.id}
+          type="article"
+          onImageGenerated={handleImageGenerated}
+        />
       )}
     </div>
   );
