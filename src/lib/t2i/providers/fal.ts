@@ -34,6 +34,7 @@ const STYLE_PROMPTS: Record<StylePreset, string> = {
 const SIZE_MAPPINGS = {
   "1.91:1": "landscape_16_9", // LinkedIn cover image (closest match)
   "16:9": "landscape_16_9",
+  "9:16": "portrait_16_9", // LinkedIn portrait/stories
   "1:1": "square_hd",
   "4:5": "portrait_4_3",
 } as const;
