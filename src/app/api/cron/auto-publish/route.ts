@@ -125,10 +125,8 @@ export async function GET(request: NextRequest) {
     }> = [];
 
     for (const { post, run } of postsToPublish) {
-      // Determine user ID - from run if AI-generated, or we need another way for manual drafts
-      // For manual drafts without runId, we need to store userId on the post itself
-      // For now, skip posts without a way to identify the user
-      const userId = run?.userId;
+      // Get userId from post directly (manual drafts) or from run (AI-generated)
+      const userId = post.userId || run?.userId;
 
       if (!userId) {
         console.log(`[AutoPublish] Skipping post ${post.id} - no userId available`);
