@@ -73,6 +73,11 @@ export default function ArticleEditPage({
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
+  // Cover image state
+  const [includeImageInPost, setIncludeImageInPost] = useState(true);
+  const [isDeletingImage, setIsDeletingImage] = useState(false);
+  const [imageError, setImageError] = useState<string | null>(null);
+
   // User profile state
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
 
@@ -115,6 +120,15 @@ export default function ArticleEditPage({
         setConclusion(data.conclusion);
         setIsScheduled(!!data.scheduledAt);
         setScheduledAt(data.scheduledAt);
+
+        // Load cover image settings
+        const imageRes = await fetch(`/api/articles/${articleId}/cover-image`);
+        if (imageRes.ok) {
+          const imageData = await imageRes.json();
+          if (imageData.exists) {
+            setIncludeImageInPost(imageData.includeInPost ?? true);
+          }
+        }
       } catch (err) {
         console.error("Load article error:", err);
         setError("Failed to load article");
@@ -183,6 +197,60 @@ export default function ArticleEditPage({
       setIsSaving(false);
     }
   }, [articleId, title, subtitle, introduction, sections, conclusion]);
+
+  const handleToggleImageInPost = async () => {
+    const newValue = !includeImageInPost;
+    setIncludeImageInPost(newValue); // Optimistic update
+
+    try {
+      const res = await fetch(`/api/articles/${articleId}/cover-image`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ includeInPost: newValue }),
+      });
+
+      if (!res.ok) {
+        setIncludeImageInPost(!newValue); // Revert on error
+        setImageError("Failed to update image settings");
+      }
+    } catch (err) {
+      console.error("Toggle image error:", err);
+      setIncludeImageInPost(!newValue); // Revert on error
+      setImageError("Failed to update image settings");
+    }
+  };
+
+  const handleDeleteImage = async () => {
+    setIsDeletingImage(true);
+    setImageError(null);
+
+    try {
+      const res = await fetch(`/api/articles/${articleId}/cover-image`, {
+        method: "DELETE",
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        setImageError(data.error || "Failed to delete cover image");
+        return;
+      }
+
+      // Update local state - remove the image from article
+      if (article) {
+        setArticle({
+          ...article,
+          imageIntent: article.imageIntent ? { ...article.imageIntent, generatedImageUrl: null } : null,
+        });
+      }
+      setIncludeImageInPost(true);
+      setSuccessMessage("Cover image deleted");
+    } catch (err) {
+      console.error("Delete image error:", err);
+      setImageError("Failed to delete cover image");
+    } finally {
+      setIsDeletingImage(false);
+    }
+  };
 
   const handleSchedule = async () => {
     if (!scheduleDate || !scheduleTime) return;
@@ -436,12 +504,49 @@ export default function ArticleEditPage({
 
           {/* Cover Image */}
           {coverImageUrl && (
-            <div className="mb-6 rounded-xl overflow-hidden border border-zinc-200 dark:border-zinc-800">
-              <img
-                src={coverImageUrl}
-                alt="Article cover"
-                className="w-full aspect-[2/1] object-cover"
-              />
+            <div className="mb-6 space-y-3">
+              {imageError && (
+                <div className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+                  <p className="text-sm text-red-700 dark:text-red-300">{imageError}</p>
+                </div>
+              )}
+              <div className={`rounded-xl overflow-hidden border border-zinc-200 dark:border-zinc-800 ${!includeImageInPost ? "opacity-50" : ""}`}>
+                <div className="relative">
+                  <img
+                    src={coverImageUrl}
+                    alt="Article cover"
+                    className="w-full aspect-[2/1] object-cover"
+                  />
+                  {!includeImageInPost && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-zinc-900/30">
+                      <span className="px-3 py-1.5 bg-zinc-800/90 text-white text-sm font-medium rounded-lg">
+                        Not included in post
+                      </span>
+                    </div>
+                  )}
+                </div>
+              </div>
+              {/* Cover image controls */}
+              <div className="flex items-center justify-between gap-3">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={includeImageInPost}
+                    onChange={handleToggleImageInPost}
+                    className="w-4 h-4 rounded border-zinc-300 dark:border-zinc-600 text-purple-600 focus:ring-purple-500 dark:bg-zinc-800"
+                  />
+                  <span className="text-sm text-zinc-600 dark:text-zinc-400">
+                    Include when publishing
+                  </span>
+                </label>
+                <button
+                  onClick={handleDeleteImage}
+                  disabled={isDeletingImage}
+                  className="px-3 py-1.5 text-xs font-medium bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 rounded-lg hover:bg-red-200 dark:hover:bg-red-900/50 transition-colors disabled:opacity-50"
+                >
+                  {isDeletingImage ? "Deleting..." : "Delete Image"}
+                </button>
+              </div>
             </div>
           )}
 

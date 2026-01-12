@@ -100,6 +100,8 @@ export const imageIntents = sqliteTable("image_intents", {
     enum: ["openai", "comfyui", "fal"],
   }),
   generationError: text("generation_error"),
+  // Toggle whether to include cover image when publishing
+  includeInPost: integer("include_in_post", { mode: "boolean" }).default(true),
 });
 
 // Style presets constant for reuse
@@ -141,6 +143,8 @@ export const articleImageIntents = sqliteTable("article_image_intents", {
     enum: ["openai", "comfyui", "fal"],
   }),
   generationError: text("generation_error"),
+  // Toggle whether to include cover image when publishing
+  includeInPost: integer("include_in_post", { mode: "boolean" }).default(true),
 });
 
 // Carousel page structure (stored in JSON)

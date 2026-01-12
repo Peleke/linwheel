@@ -40,6 +40,8 @@ function ComposePageContent() {
   const [isGeneratingImage, setIsGeneratingImage] = useState(false);
   const [imageError, setImageError] = useState<string | null>(null);
   const [isCoverImageExpanded, setIsCoverImageExpanded] = useState(true);
+  const [includeImageInPost, setIncludeImageInPost] = useState(true);
+  const [isDeletingImage, setIsDeletingImage] = useState(false);
 
   // Schedule state
   const [showScheduleModal, setShowScheduleModal] = useState(false);
@@ -91,11 +93,14 @@ function ComposePageContent() {
         }
 
         // Also check for existing cover image
-        const imageRes = await fetch(`/api/posts/${draftId}/image`);
+        const imageRes = await fetch(`/api/posts/${draftId}/cover-image`);
         if (imageRes.ok) {
           const imageData = await imageRes.json();
-          if (imageData.exists && imageData.generatedImageUrl) {
-            setCoverImageUrl(imageData.generatedImageUrl);
+          if (imageData.exists) {
+            if (imageData.generatedImageUrl) {
+              setCoverImageUrl(imageData.generatedImageUrl);
+            }
+            setIncludeImageInPost(imageData.includeInPost ?? true);
           }
         }
       } catch (err) {
@@ -325,12 +330,65 @@ function ComposePageContent() {
       }
 
       setCoverImageUrl(data.imageUrl);
+      setIncludeImageInPost(true); // Reset to included when generating new image
       setSuccessMessage("Cover image generated!");
     } catch (err) {
       console.error("Generate image error:", err);
       setImageError("Failed to generate cover image");
     } finally {
       setIsGeneratingImage(false);
+    }
+  };
+
+  const handleToggleImageInPost = async () => {
+    if (!postId) return;
+
+    const newValue = !includeImageInPost;
+    setIncludeImageInPost(newValue); // Optimistic update
+
+    try {
+      const res = await fetch(`/api/posts/${postId}/cover-image`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ includeInPost: newValue }),
+      });
+
+      if (!res.ok) {
+        setIncludeImageInPost(!newValue); // Revert on error
+        setImageError("Failed to update image settings");
+      }
+    } catch (err) {
+      console.error("Toggle image error:", err);
+      setIncludeImageInPost(!newValue); // Revert on error
+      setImageError("Failed to update image settings");
+    }
+  };
+
+  const handleDeleteImage = async () => {
+    if (!postId) return;
+
+    setIsDeletingImage(true);
+    setImageError(null);
+
+    try {
+      const res = await fetch(`/api/posts/${postId}/cover-image`, {
+        method: "DELETE",
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        setImageError(data.error || "Failed to delete cover image");
+        return;
+      }
+
+      setCoverImageUrl(null);
+      setIncludeImageInPost(true);
+      setSuccessMessage("Cover image deleted");
+    } catch (err) {
+      console.error("Delete image error:", err);
+      setImageError("Failed to delete cover image");
+    } finally {
+      setIsDeletingImage(false);
     }
   };
 
@@ -550,19 +608,51 @@ function ComposePageContent() {
                   )}
 
                   {coverImageUrl ? (
-                    <div className="relative bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 overflow-hidden">
-                      <img
-                        src={coverImageUrl}
-                        alt="Cover image"
-                        className="w-full aspect-[1.91/1] object-cover"
-                      />
-                      <button
-                        onClick={handleGenerateImage}
-                        disabled={isGeneratingImage}
-                        className="absolute bottom-3 right-3 px-3 py-1.5 text-xs font-medium bg-white/90 dark:bg-zinc-800/90 text-zinc-700 dark:text-zinc-300 rounded-lg hover:bg-white dark:hover:bg-zinc-800 transition-colors disabled:opacity-50 shadow-sm"
-                      >
-                        {isGeneratingImage ? "Regenerating..." : "Regenerate"}
-                      </button>
+                    <div className="space-y-3">
+                      <div className={`relative bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 overflow-hidden ${!includeImageInPost ? "opacity-50" : ""}`}>
+                        <img
+                          src={coverImageUrl}
+                          alt="Cover image"
+                          className="w-full aspect-[1.91/1] object-cover"
+                        />
+                        {!includeImageInPost && (
+                          <div className="absolute inset-0 flex items-center justify-center bg-zinc-900/30">
+                            <span className="px-3 py-1.5 bg-zinc-800/90 text-white text-sm font-medium rounded-lg">
+                              Not included in post
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                      {/* Cover image controls */}
+                      <div className="flex items-center justify-between gap-3">
+                        <label className="flex items-center gap-2 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={includeImageInPost}
+                            onChange={handleToggleImageInPost}
+                            className="w-4 h-4 rounded border-zinc-300 dark:border-zinc-600 text-blue-600 focus:ring-blue-500 dark:bg-zinc-800"
+                          />
+                          <span className="text-sm text-zinc-600 dark:text-zinc-400">
+                            Include when publishing
+                          </span>
+                        </label>
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={handleGenerateImage}
+                            disabled={isGeneratingImage}
+                            className="px-3 py-1.5 text-xs font-medium bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 rounded-lg hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors disabled:opacity-50"
+                          >
+                            {isGeneratingImage ? "Regenerating..." : "Regenerate"}
+                          </button>
+                          <button
+                            onClick={handleDeleteImage}
+                            disabled={isDeletingImage}
+                            className="px-3 py-1.5 text-xs font-medium bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 rounded-lg hover:bg-red-200 dark:hover:bg-red-900/50 transition-colors disabled:opacity-50"
+                          >
+                            {isDeletingImage ? "Deleting..." : "Delete"}
+                          </button>
+                        </div>
+                      </div>
                     </div>
                   ) : (
                     <button
