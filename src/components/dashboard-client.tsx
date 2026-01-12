@@ -100,7 +100,13 @@ export function DashboardClient({ content }: DashboardClientProps) {
   }, [scheduled]);
 
   const handlePublish = async (itemId: string) => {
-    const response = await fetch(`/api/posts/${itemId}/publish-linkedin`, {
+    // Find the item to determine if it's a post or article
+    const item = content.find(c => c.id === itemId);
+    const endpoint = item?.type === "article"
+      ? `/api/articles/${itemId}/publish-linkedin`
+      : `/api/posts/${itemId}/publish-linkedin`;
+
+    const response = await fetch(endpoint, {
       method: "POST",
     });
 
@@ -801,7 +807,6 @@ function QueueItem({
   };
 
   const handlePublish = async () => {
-    if (!isPost) return; // Only posts can be published directly
     setIsPublishing(true);
     setPublishError(null);
     try {
@@ -900,27 +905,25 @@ function QueueItem({
             </a>
           ) : (
             <>
-              {/* Publish Now button - only for posts */}
-              {isPost && (
-                <button
-                  onClick={handlePublish}
-                  disabled={isPublishing}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${
-                    isPublishing
-                      ? "bg-blue-300 text-white cursor-wait"
-                      : "bg-blue-600 hover:bg-blue-500 text-white"
-                  }`}
-                >
-                  {isPublishing ? (
-                    <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  ) : (
-                    <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor">
-                      <path d="M19 3a2 2 0 012 2v14a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h14m-.5 15.5v-5.3a3.26 3.26 0 00-3.26-3.26c-.85 0-1.84.52-2.32 1.3v-1.11h-2.79v8.37h2.79v-4.93c0-.77.62-1.4 1.39-1.4a1.4 1.4 0 011.4 1.4v4.93h2.79M6.88 8.56a1.68 1.68 0 001.68-1.68c0-.93-.75-1.69-1.68-1.69a1.69 1.69 0 00-1.69 1.69c0 .93.76 1.68 1.69 1.68m1.39 9.94v-8.37H5.5v8.37h2.77z" />
-                    </svg>
-                  )}
-                  {isPublishing ? "Publishing..." : "Publish Now"}
-                </button>
-              )}
+              {/* Publish Now button */}
+              <button
+                onClick={handlePublish}
+                disabled={isPublishing}
+                className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${
+                  isPublishing
+                    ? "bg-blue-300 text-white cursor-wait"
+                    : "bg-blue-600 hover:bg-blue-500 text-white"
+                }`}
+              >
+                {isPublishing ? (
+                  <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                ) : (
+                  <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M19 3a2 2 0 012 2v14a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h14m-.5 15.5v-5.3a3.26 3.26 0 00-3.26-3.26c-.85 0-1.84.52-2.32 1.3v-1.11h-2.79v8.37h2.79v-4.93c0-.77.62-1.4 1.39-1.4a1.4 1.4 0 011.4 1.4v4.93h2.79M6.88 8.56a1.68 1.68 0 001.68-1.68c0-.93-.75-1.69-1.68-1.69a1.69 1.69 0 00-1.69 1.69c0 .93.76 1.68 1.69 1.68m1.39 9.94v-8.37H5.5v8.37h2.77z" />
+                  </svg>
+                )}
+                {isPublishing ? "Publishing..." : "Publish Now"}
+              </button>
               <button
                 onClick={onOpenScheduleModal}
                 className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg transition-colors"
