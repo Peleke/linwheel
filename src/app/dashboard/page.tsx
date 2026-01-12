@@ -25,17 +25,6 @@ export default async function DashboardPage() {
     where: eq(linkedinPosts.approved, true),
   });
 
-  // Debug: Log counts for Vercel
-  console.log(`[Dashboard] Found ${approvedPosts.length} approved posts`);
-  if (approvedPosts.length > 0) {
-    console.log(`[Dashboard] Sample post:`, {
-      id: approvedPosts[0].id,
-      approved: approvedPosts[0].approved,
-      scheduledAt: approvedPosts[0].scheduledAt,
-      linkedinPostUrn: approvedPosts[0].linkedinPostUrn,
-    });
-  }
-
   const postsWithDetails = await Promise.all(
     approvedPosts.map(async (post) => {
       const [intent, run] = await Promise.all([
