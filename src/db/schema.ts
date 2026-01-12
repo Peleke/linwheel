@@ -184,8 +184,17 @@ export const articleCarouselIntents = sqliteTable("article_carousel_intents", {
     enum: ["openai", "comfyui", "fal"],
   }),
   generationError: text("generation_error"),
+  // Scheduling for carousel post
+  offsetDays: integer("offset_days").default(0), // 0 = same time as article, >0 = days after article
+  scheduledAt: integer("scheduled_at", { mode: "timestamp" }), // When to publish carousel as post
+  autoPublish: integer("auto_publish", { mode: "boolean" }).default(false),
+  // Publishing status
+  status: text("status", { enum: ["pending", "ready", "scheduled", "published", "failed"] }).default("pending"),
+  linkedinPostUrn: text("linkedin_post_urn"),
+  publishedAt: integer("published_at", { mode: "timestamp" }),
+  publishError: text("publish_error"),
   createdAt: integer("created_at", { mode: "timestamp" }).$defaultFn(() => new Date()),
-});
+});;
 
 // Post carousels table - carousels attached to LinkedIn posts
 export const postCarousels = sqliteTable("post_carousels", {
