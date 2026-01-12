@@ -10,14 +10,17 @@ interface RouteParams {
 /**
  * PATCH /api/articles/[articleId]/schedule
  *
- * Updates the scheduled date for an article
- * Body: { scheduledAt: string | null }
+ * Updates the scheduled date and auto-publish setting for an article
+ * Body: { scheduledAt: string | null, autoPublish?: boolean }
  */
 export async function PATCH(request: NextRequest, { params }: RouteParams) {
   try {
     const { articleId } = await params;
     const body = await request.json();
-    const { scheduledAt } = body as { scheduledAt: string | null };
+    const { scheduledAt, autoPublish } = body as {
+      scheduledAt: string | null;
+      autoPublish?: boolean;
+    };
 
     // Check article exists
     const article = await db.query.articles.findFirst({
@@ -31,18 +34,27 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
       );
     }
 
+    // Build update object
+    const updates: { scheduledAt: Date | null; autoPublish?: boolean } = {
+      scheduledAt: scheduledAt ? new Date(scheduledAt) : null,
+    };
+
+    // Only update autoPublish if explicitly provided
+    if (typeof autoPublish === "boolean") {
+      updates.autoPublish = autoPublish;
+    }
+
     // Update the schedule
     await db
       .update(articles)
-      .set({
-        scheduledAt: scheduledAt ? new Date(scheduledAt) : null,
-      })
+      .set(updates)
       .where(eq(articles.id, articleId));
 
     return NextResponse.json({
       success: true,
       articleId,
       scheduledAt: scheduledAt ? new Date(scheduledAt) : null,
+      autoPublish: typeof autoPublish === "boolean" ? autoPublish : article.autoPublish,
     });
   } catch (error) {
     console.error("Error scheduling article:", error);

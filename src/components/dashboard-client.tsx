@@ -56,6 +56,7 @@ export function DashboardClient({ content }: DashboardClientProps) {
   const [scheduleDate, setScheduleDate] = useState("");
   const [scheduleTime, setScheduleTime] = useState("09:00");
   const [scheduleItemId, setScheduleItemId] = useState<string | null>(null);
+  const [scheduleAutoPublish, setScheduleAutoPublish] = useState(true);
 
   // Scroll to center day on mount/change (mobile)
   useEffect(() => {
@@ -100,7 +101,13 @@ export function DashboardClient({ content }: DashboardClientProps) {
   }, [scheduled]);
 
   const handlePublish = async (itemId: string) => {
-    const response = await fetch(`/api/posts/${itemId}/publish-linkedin`, {
+    // Find the item to determine if it's a post or article
+    const item = content.find(c => c.id === itemId);
+    const endpoint = item?.type === "article"
+      ? `/api/articles/${itemId}/publish-linkedin`
+      : `/api/posts/${itemId}/publish-linkedin`;
+
+    const response = await fetch(endpoint, {
       method: "POST",
     });
 
@@ -120,9 +127,14 @@ export function DashboardClient({ content }: DashboardClientProps) {
     tomorrow.setDate(tomorrow.getDate() + 1);
     const defaultDate = preSelectedDate || tomorrow;
 
+    // Get the item's current autoPublish setting
+    const item = content.find(c => c.id === itemId);
+    const defaultAutoPublish = item?.autoPublish ?? true;
+
     setScheduleItemId(itemId);
     setScheduleDate(defaultDate.toISOString().split("T")[0]);
     setScheduleTime("09:00");
+    setScheduleAutoPublish(defaultAutoPublish);
     setShowScheduleModal(true);
     setSchedulingItem(null); // Close inline scheduling mode if open
   };
@@ -146,7 +158,10 @@ export function DashboardClient({ content }: DashboardClientProps) {
       const res = await fetch(endpoint, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ scheduledAt: scheduledDateTime.toISOString() }),
+        body: JSON.stringify({
+          scheduledAt: scheduledDateTime.toISOString(),
+          autoPublish: scheduleAutoPublish,
+        }),
       });
 
       if (!res.ok) {
@@ -637,7 +652,7 @@ export function DashboardClient({ content }: DashboardClientProps) {
             </div>
 
             {/* Time picker */}
-            <div className="mb-6">
+            <div className="mb-4">
               <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1.5">
                 Time
               </label>
@@ -650,6 +665,39 @@ export function DashboardClient({ content }: DashboardClientProps) {
               <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">
                 {getUserTimezone()}
               </p>
+            </div>
+
+            {/* Auto-publish toggle */}
+            <div className="mb-6">
+              <label className="flex items-center justify-between cursor-pointer">
+                <div>
+                  <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                    Auto-publish
+                  </span>
+                  <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                    {scheduleAutoPublish
+                      ? "Will post to LinkedIn automatically"
+                      : "Reminder only - you'll publish manually"}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  role="switch"
+                  aria-checked={scheduleAutoPublish}
+                  onClick={() => setScheduleAutoPublish(!scheduleAutoPublish)}
+                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                    scheduleAutoPublish
+                      ? "bg-emerald-500"
+                      : "bg-zinc-300 dark:bg-zinc-600"
+                  }`}
+                >
+                  <span
+                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                      scheduleAutoPublish ? "translate-x-6" : "translate-x-1"
+                    }`}
+                  />
+                </button>
+              </label>
             </div>
 
             {/* Action buttons */}
@@ -801,7 +849,6 @@ function QueueItem({
   };
 
   const handlePublish = async () => {
-    if (!isPost) return; // Only posts can be published directly
     setIsPublishing(true);
     setPublishError(null);
     try {
@@ -900,27 +947,25 @@ function QueueItem({
             </a>
           ) : (
             <>
-              {/* Publish Now button - only for posts */}
-              {isPost && (
-                <button
-                  onClick={handlePublish}
-                  disabled={isPublishing}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${
-                    isPublishing
-                      ? "bg-blue-300 text-white cursor-wait"
-                      : "bg-blue-600 hover:bg-blue-500 text-white"
-                  }`}
-                >
-                  {isPublishing ? (
-                    <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  ) : (
-                    <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor">
-                      <path d="M19 3a2 2 0 012 2v14a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h14m-.5 15.5v-5.3a3.26 3.26 0 00-3.26-3.26c-.85 0-1.84.52-2.32 1.3v-1.11h-2.79v8.37h2.79v-4.93c0-.77.62-1.4 1.39-1.4a1.4 1.4 0 011.4 1.4v4.93h2.79M6.88 8.56a1.68 1.68 0 001.68-1.68c0-.93-.75-1.69-1.68-1.69a1.69 1.69 0 00-1.69 1.69c0 .93.76 1.68 1.69 1.68m1.39 9.94v-8.37H5.5v8.37h2.77z" />
-                    </svg>
-                  )}
-                  {isPublishing ? "Publishing..." : "Publish Now"}
-                </button>
-              )}
+              {/* Publish Now button */}
+              <button
+                onClick={handlePublish}
+                disabled={isPublishing}
+                className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${
+                  isPublishing
+                    ? "bg-blue-300 text-white cursor-wait"
+                    : "bg-blue-600 hover:bg-blue-500 text-white"
+                }`}
+              >
+                {isPublishing ? (
+                  <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                ) : (
+                  <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M19 3a2 2 0 012 2v14a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h14m-.5 15.5v-5.3a3.26 3.26 0 00-3.26-3.26c-.85 0-1.84.52-2.32 1.3v-1.11h-2.79v8.37h2.79v-4.93c0-.77.62-1.4 1.39-1.4a1.4 1.4 0 011.4 1.4v4.93h2.79M6.88 8.56a1.68 1.68 0 001.68-1.68c0-.93-.75-1.69-1.68-1.69a1.69 1.69 0 00-1.69 1.69c0 .93.76 1.68 1.69 1.68m1.39 9.94v-8.37H5.5v8.37h2.77z" />
+                  </svg>
+                )}
+                {isPublishing ? "Publishing..." : "Publish Now"}
+              </button>
               <button
                 onClick={onOpenScheduleModal}
                 className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg transition-colors"

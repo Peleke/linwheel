@@ -7,6 +7,7 @@ export type LinkedInErrorCode =
   | "TOKEN_EXPIRED"
   | "RATE_LIMITED"
   | "IMAGE_UPLOAD_FAILED"
+  | "DOCUMENT_UPLOAD_FAILED"
   | "POST_FAILED"
   | "CONTENT_REJECTED"
   | "OAUTH_ERROR"
@@ -49,6 +50,8 @@ export class LinkedInError extends Error {
         return "LinkedIn rate limit reached. Please try again later.";
       case "IMAGE_UPLOAD_FAILED":
         return "Failed to upload image to LinkedIn. Try again or post without an image.";
+      case "DOCUMENT_UPLOAD_FAILED":
+        return "Failed to upload document to LinkedIn. Try again or check PDF format.";
       case "POST_FAILED":
         return "Failed to publish to LinkedIn. Please try again.";
       case "CONTENT_REJECTED":

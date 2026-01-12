@@ -44,3 +44,14 @@ export interface LinkedInImageUploadInit {
   uploadUrl: string;
   imageUrn: string;
 }
+
+export interface LinkedInDocumentUploadInit {
+  uploadUrl: string;
+  documentUrn: string;
+}
+
+export interface CreateDocumentPostParams {
+  text: string;
+  documentUrl: string; // URL to the PDF
+  title?: string; // Document title shown in LinkedIn
+}
