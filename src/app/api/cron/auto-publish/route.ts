@@ -136,9 +136,9 @@ export async function GET(request: NextRequest) {
 
       // Decrypt access token
       const accessToken = decryptToken(linkedinConnection.accessToken);
-      const personUrn = linkedinConnection.linkedinProfileId;
+      const profileId = linkedinConnection.linkedinProfileId;
 
-      if (!personUrn) {
+      if (!profileId) {
         console.log(`[AutoPublish] Missing LinkedIn profile ID for user ${userId}`);
         await db
           .update(linkedinPosts)
@@ -152,6 +152,11 @@ export async function GET(request: NextRequest) {
         });
         continue;
       }
+
+      // Ensure the profile ID is a valid URN format
+      const personUrn = profileId.startsWith("urn:li:person:")
+        ? profileId
+        : `urn:li:person:${profileId}`;
 
       // Get image if exists
       let imageUrl: string | undefined;
