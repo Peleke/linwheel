@@ -58,6 +58,8 @@ export const linkedinPosts = sqliteTable("linkedin_posts", {
   // Nullable for manual drafts (not AI-generated)
   insightId: text("insight_id").references(() => insights.id),
   runId: text("run_id").references(() => generationRuns.id),
+  // User ID - required for manual drafts, optional for AI-generated (can get from run)
+  userId: text("user_id"),
   hook: text("hook").notNull(),
   bodyBeats: text("body_beats", { mode: "json" }).$type<string[]>().notNull(),
   openQuestion: text("open_question").notNull(),
