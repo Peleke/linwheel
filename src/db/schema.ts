@@ -184,6 +184,8 @@ export const articleCarouselIntents = sqliteTable("article_carousel_intents", {
     enum: ["openai", "comfyui", "fal"],
   }),
   generationError: text("generation_error"),
+  // Custom caption for the carousel LinkedIn post
+  caption: text("caption"),
   // Scheduling for carousel post
   offsetDays: integer("offset_days").default(0), // 0 = same time as article, >0 = days after article
   scheduledAt: integer("scheduled_at", { mode: "timestamp" }), // When to publish carousel as post

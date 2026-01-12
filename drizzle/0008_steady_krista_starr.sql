@@ -1,0 +1,1 @@
+ALTER TABLE `article_carousel_intents` ADD `caption` text;
