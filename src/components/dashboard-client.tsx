@@ -599,6 +599,8 @@ function QueueItem({
     }
   };
 
+  const editUrl = isPost ? `/compose?draft=${item.id}` : `/results/${item.runId}`;
+
   return (
     <div className={`rounded-xl border-l-4 transition-all ${
       isScheduling
@@ -607,7 +609,11 @@ function QueueItem({
         ? "border-l-blue-500 bg-white dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700"
         : "border-l-purple-500 bg-white dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700"
     }`}>
-      <div className="p-3">
+      {/* Clickable content area */}
+      <Link
+        href={editUrl}
+        className="block p-3 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors rounded-t-xl"
+      >
         <div className="flex items-start gap-3">
           {item.imageUrl ? (
             <div className="relative w-12 h-12 rounded-lg overflow-hidden flex-shrink-0">
@@ -642,15 +648,18 @@ function QueueItem({
             </p>
           </div>
         </div>
+      </Link>
 
+      {/* Actions area */}
+      <div className="px-3 pb-3">
         {/* Error message */}
         {publishError && (
-          <div className="mt-2 p-2 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+          <div className="mb-2 p-2 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
             <p className="text-xs text-red-600 dark:text-red-400">{publishError}</p>
           </div>
         )}
 
-        <div className="flex items-center gap-2 mt-3">
+        <div className="flex items-center gap-2">
           {isScheduling ? (
             <>
               <span className="text-xs text-emerald-600 dark:text-emerald-400 flex-1">
@@ -712,22 +721,17 @@ function QueueItem({
         </div>
       </div>
 
-      <div className="flex border-t border-zinc-200 dark:border-zinc-700">
-        <Link
-          href={isPost ? `/compose?draft=${item.id}` : `/results/${item.runId}`}
-          className="flex-1 px-3 py-2 text-xs text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors text-center"
-        >
-          Edit
-        </Link>
-        {item.runId && (
+      {/* Footer - show source run if available */}
+      {item.runId && (
+        <div className="flex border-t border-zinc-200 dark:border-zinc-700">
           <Link
             href={`/results/${item.runId}`}
-            className="flex-1 px-3 py-2 text-xs text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors text-center border-l border-zinc-200 dark:border-zinc-700"
+            className="flex-1 px-3 py-2 text-xs text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors text-center"
           >
             From: {item.runLabel}
           </Link>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 }

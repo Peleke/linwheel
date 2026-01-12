@@ -43,6 +43,17 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       .where(eq(imageIntents.postId, postId))
       .limit(1);
 
+    // Helper to safely convert date to ISO string
+    const safeToISOString = (date: Date | null | undefined): string | null => {
+      if (!date) return null;
+      try {
+        const d = new Date(date);
+        return isNaN(d.getTime()) ? null : d.toISOString();
+      } catch {
+        return null;
+      }
+    };
+
     return NextResponse.json({
       id: postData.id,
       hook: postData.hook,
@@ -51,9 +62,9 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       approved: postData.approved,
       isManualDraft: postData.isManualDraft,
       autoPublish: postData.autoPublish,
-      scheduledAt: postData.scheduledAt?.toISOString() ?? null,
+      scheduledAt: safeToISOString(postData.scheduledAt),
       linkedinPostUrn: postData.linkedinPostUrn,
-      linkedinPublishedAt: postData.linkedinPublishedAt?.toISOString() ?? null,
+      linkedinPublishedAt: safeToISOString(postData.linkedinPublishedAt),
       imageIntent: intent.length > 0
         ? {
             id: intent[0].id,

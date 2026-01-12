@@ -23,6 +23,7 @@ function ComposePageContent() {
   const [coverImageUrl, setCoverImageUrl] = useState<string | null>(null);
   const [isGeneratingImage, setIsGeneratingImage] = useState(false);
   const [imageError, setImageError] = useState<string | null>(null);
+  const [isCoverImageExpanded, setIsCoverImageExpanded] = useState(true);
 
   // Load existing draft if provided
   useEffect(() => {
@@ -327,6 +328,110 @@ function ComposePageContent() {
             </div>
           )}
 
+          {/* Cover Image Section - Collapsible, above editor when editing */}
+          {postId && !isPublished && (
+            <div className="mb-6">
+              <button
+                onClick={() => setIsCoverImageExpanded(!isCoverImageExpanded)}
+                className="w-full flex items-center justify-between p-3 bg-zinc-100 dark:bg-zinc-800 rounded-lg hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors"
+              >
+                <div className="flex items-center gap-2">
+                  <svg
+                    className="w-5 h-5 text-zinc-500 dark:text-zinc-400"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth={1.5}
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z"
+                    />
+                  </svg>
+                  <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                    Cover Image
+                  </span>
+                  {coverImageUrl && (
+                    <span className="text-xs text-emerald-600 dark:text-emerald-400">
+                      (Generated)
+                    </span>
+                  )}
+                </div>
+                <svg
+                  className={`w-5 h-5 text-zinc-500 transition-transform ${isCoverImageExpanded ? "rotate-180" : ""}`}
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+
+              {isCoverImageExpanded && (
+                <div className="mt-3">
+                  {imageError && (
+                    <div className="mb-3 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+                      <p className="text-sm text-red-700 dark:text-red-300">{imageError}</p>
+                    </div>
+                  )}
+
+                  {coverImageUrl ? (
+                    <div className="relative bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 overflow-hidden">
+                      <img
+                        src={coverImageUrl}
+                        alt="Cover image"
+                        className="w-full aspect-[1.91/1] object-cover"
+                      />
+                      <button
+                        onClick={handleGenerateImage}
+                        disabled={isGeneratingImage}
+                        className="absolute bottom-3 right-3 px-3 py-1.5 text-xs font-medium bg-white/90 dark:bg-zinc-800/90 text-zinc-700 dark:text-zinc-300 rounded-lg hover:bg-white dark:hover:bg-zinc-800 transition-colors disabled:opacity-50 shadow-sm"
+                      >
+                        {isGeneratingImage ? "Regenerating..." : "Regenerate"}
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={handleGenerateImage}
+                      disabled={isGeneratingImage || isEmpty}
+                      className="w-full p-6 bg-white dark:bg-zinc-900 rounded-xl border-2 border-dashed border-zinc-300 dark:border-zinc-700 hover:border-blue-400 dark:hover:border-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed group"
+                    >
+                      {isGeneratingImage ? (
+                        <div className="flex flex-col items-center gap-3">
+                          <div className="w-8 h-8 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
+                          <span className="text-sm text-zinc-500 dark:text-zinc-400">
+                            Generating cover image...
+                          </span>
+                        </div>
+                      ) : (
+                        <div className="flex flex-col items-center gap-2">
+                          <svg
+                            className="w-8 h-8 text-zinc-400 dark:text-zinc-500 group-hover:text-blue-500 transition-colors"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                            strokeWidth={1.5}
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              d="M12 4.5v15m7.5-7.5h-15"
+                            />
+                          </svg>
+                          <span className="text-sm text-zinc-500 dark:text-zinc-400 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                            Generate AI cover image
+                          </span>
+                        </div>
+                      )}
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+
           {/* Editor */}
           <div className="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 overflow-hidden">
             <textarea
@@ -366,76 +471,6 @@ function ComposePageContent() {
               )}
             </div>
           </div>
-
-          {/* Cover Image Section */}
-          {postId && !isPublished && (
-            <div className="mt-6">
-              <div className="flex items-center justify-between mb-3">
-                <h3 className="text-sm font-medium text-zinc-600 dark:text-zinc-400">
-                  Cover Image
-                </h3>
-                {coverImageUrl && (
-                  <button
-                    onClick={handleGenerateImage}
-                    disabled={isGeneratingImage}
-                    className="text-xs text-blue-600 dark:text-blue-400 hover:underline disabled:opacity-50"
-                  >
-                    Regenerate
-                  </button>
-                )}
-              </div>
-
-              {imageError && (
-                <div className="mb-3 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
-                  <p className="text-sm text-red-700 dark:text-red-300">{imageError}</p>
-                </div>
-              )}
-
-              {coverImageUrl ? (
-                <div className="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 overflow-hidden">
-                  <img
-                    src={coverImageUrl}
-                    alt="Cover image"
-                    className="w-full aspect-[1.91/1] object-cover"
-                  />
-                </div>
-              ) : (
-                <button
-                  onClick={handleGenerateImage}
-                  disabled={isGeneratingImage || isEmpty}
-                  className="w-full p-8 bg-white dark:bg-zinc-900 rounded-xl border-2 border-dashed border-zinc-300 dark:border-zinc-700 hover:border-blue-400 dark:hover:border-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed group"
-                >
-                  {isGeneratingImage ? (
-                    <div className="flex flex-col items-center gap-3">
-                      <div className="w-8 h-8 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
-                      <span className="text-sm text-zinc-500 dark:text-zinc-400">
-                        Generating cover image...
-                      </span>
-                    </div>
-                  ) : (
-                    <div className="flex flex-col items-center gap-3">
-                      <svg
-                        className="w-10 h-10 text-zinc-400 dark:text-zinc-500 group-hover:text-blue-500 transition-colors"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                        strokeWidth={1.5}
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z"
-                        />
-                      </svg>
-                      <span className="text-sm text-zinc-500 dark:text-zinc-400 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
-                        Generate AI cover image
-                      </span>
-                    </div>
-                  )}
-                </button>
-              )}
-            </div>
-          )}
 
           {/* LinkedIn Preview (optional) */}
           {content.trim() && !isOverLimit && (
