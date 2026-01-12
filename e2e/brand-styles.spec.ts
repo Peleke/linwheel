@@ -10,6 +10,7 @@ import { test, expect } from "@playwright/test";
  * - 7d549749 - feat(api): integrate brand styles into image generation
  * - 9723befa - feat(ui): add brand management section to settings
  * - 526ef174 - feat(ui): integrate brand management into settings page
+ * - f5b56333 - feat: sync prompt templates with brand style profiles
  *
  * USER FLOWS COVERED:
  *
@@ -35,12 +36,28 @@ import { test, expect } from "@playwright/test";
  * 5. DELETE PROFILE
  *    - Delete inactive profile
  *    - Confirm deletion
- *    - Cannot delete active profile
  *
  * 6. FORM FIELDS
  *    - Add/remove colors
  *    - Change imagery approach
  *    - Add optional fields
+ *
+ * 7. LOADING AND EMPTY STATES
+ *    - Shows section after loading
+ *    - Shows empty state when no profiles
+ *
+ * 8. EDIT BRAND STYLE
+ *    - Edit button visible
+ *    - Opens form with current values
+ *    - Can modify and save
+ *    - Cancel discards changes
+ *
+ * 9. PERSISTENCE
+ *    - Active profile persists after refresh
+ *    - Profiles persist after refresh
+ *    - Changes persist after navigation
+ *
+ * 10. IMAGE GENERATION INTEGRATION (SKIPPED - requires LLM)
  */
 
 // ============================================================================
@@ -407,10 +424,184 @@ test.describe("Flow 7: Loading and Empty States", () => {
 });
 
 // ============================================================================
-// FLOW 8: INTEGRATION WITH IMAGE GENERATION
+// FLOW 8: EDIT BRAND STYLE
 // ============================================================================
-test.describe.skip("Flow 8: Image Generation Integration (requires LLM)", () => {
-  test("8.1 - active brand style is applied to image generation", async ({ page }) => {
+test.describe("Flow 8: Edit Brand Style", () => {
+  test.beforeEach(async ({ page }) => {
+    // Create a profile to edit
+    await page.goto("/settings");
+
+    await page.getByRole("button", { name: /\+ New Style/i }).click();
+    await page.getByRole("button", { name: /Corporate Professional/i }).click();
+
+    const nameInput = page.locator('input[placeholder*="Tech Innovator" i]').first();
+    await nameInput.clear();
+    await nameInput.fill(`Edit Test ${Date.now()}`);
+
+    await page.getByRole("button", { name: /Create Brand Style/i }).click();
+    await page.waitForTimeout(1000);
+  });
+
+  test("8.1 - edit button is visible on profile cards", async ({ page }) => {
+    const editButton = page.getByRole("button", { name: /^Edit$/i }).first();
+    await expect(editButton).toBeVisible();
+  });
+
+  test("8.2 - clicking edit opens form with current values", async ({ page }) => {
+    const profileCard = page.locator("text=Edit Test").first();
+    const editButton = profileCard.locator("..").locator("..").getByRole("button", { name: /^Edit$/i });
+
+    // If we can't find it that way, just get the first Edit button
+    const firstEditButton = page.getByRole("button", { name: /^Edit$/i }).first();
+    await firstEditButton.click();
+
+    // Form should open with the profile name
+    const nameInput = page.locator('input[placeholder*="Tech Innovator" i]').first();
+    await expect(nameInput).toBeVisible();
+    // The value should contain "Edit Test" (part of our created profile name)
+    const value = await nameInput.inputValue();
+    expect(value).toContain("Edit Test");
+  });
+
+  test("8.3 - can modify and save profile", async ({ page }) => {
+    const firstEditButton = page.getByRole("button", { name: /^Edit$/i }).first();
+    await firstEditButton.click();
+
+    // Change the name
+    const nameInput = page.locator('input[placeholder*="Tech Innovator" i]').first();
+    await nameInput.clear();
+    await nameInput.fill("Updated Profile Name");
+
+    // Save - button should say "Update Brand Style" or "Save"
+    const saveButton = page.getByRole("button", { name: /Update Brand Style|Save/i }).first();
+    await saveButton.click();
+
+    // Updated name should appear in the list
+    await expect(page.getByText("Updated Profile Name")).toBeVisible({ timeout: 5000 });
+  });
+
+  test("8.4 - cancel edit returns to list without saving", async ({ page }) => {
+    const originalName = await page.getByText(/Edit Test/i).first().textContent();
+
+    const firstEditButton = page.getByRole("button", { name: /^Edit$/i }).first();
+    await firstEditButton.click();
+
+    // Change the name
+    const nameInput = page.locator('input[placeholder*="Tech Innovator" i]').first();
+    await nameInput.clear();
+    await nameInput.fill("Should Not Save");
+
+    // Cancel
+    await page.getByRole("button", { name: /Cancel/i }).click();
+
+    // Original name should still be there, new name should not
+    await expect(page.getByText(originalName!)).toBeVisible();
+    await expect(page.getByText("Should Not Save")).not.toBeVisible();
+  });
+});
+
+// ============================================================================
+// FLOW 9: PERSISTENCE
+// ============================================================================
+test.describe("Flow 9: Persistence", () => {
+  test("9.1 - active profile persists after page refresh", async ({ page }) => {
+    await page.goto("/settings");
+
+    // Create and activate a profile
+    await page.getByRole("button", { name: /\+ New Style/i }).click();
+    await page.getByRole("button", { name: /Tech Minimal/i }).click();
+
+    const nameInput = page.locator('input[placeholder*="Tech Innovator" i]').first();
+    await nameInput.clear();
+    const uniqueName = `Persist Test ${Date.now()}`;
+    await nameInput.fill(uniqueName);
+
+    await page.getByRole("button", { name: /Create Brand Style/i }).click();
+    await page.waitForTimeout(1000);
+
+    // Activate it
+    const activateButton = page.getByRole("button", { name: /^Activate$/i }).first();
+    if (await activateButton.isVisible()) {
+      await activateButton.click();
+      await expect(page.getByText(/^Active$/)).toBeVisible({ timeout: 3000 });
+    }
+
+    // Refresh the page
+    await page.reload();
+
+    // Wait for settings to load
+    await expect(page.getByRole("heading", { name: "Brand Style" })).toBeVisible();
+
+    // The profile should still be active (purple border visible)
+    await expect(page.locator(".border-purple-500").first()).toBeVisible({ timeout: 5000 });
+  });
+
+  test("9.2 - created profiles persist after page refresh", async ({ page }) => {
+    await page.goto("/settings");
+
+    // Create a profile
+    await page.getByRole("button", { name: /\+ New Style/i }).click();
+
+    const nameInput = page.locator('input[placeholder*="Tech Innovator" i]').first();
+    const uniqueName = `Refresh Test ${Date.now()}`;
+    await nameInput.fill(uniqueName);
+
+    await page.getByRole("button", { name: /Create Brand Style/i }).click();
+    await expect(page.getByText(uniqueName)).toBeVisible({ timeout: 5000 });
+
+    // Refresh
+    await page.reload();
+
+    // Wait for settings to load
+    await expect(page.getByRole("heading", { name: "Brand Style" })).toBeVisible();
+
+    // Profile should still exist
+    await expect(page.getByText(uniqueName)).toBeVisible({ timeout: 5000 });
+  });
+
+  test("9.3 - profile changes persist after navigation away and back", async ({ page }) => {
+    await page.goto("/settings");
+
+    // Create and activate a profile
+    await page.getByRole("button", { name: /\+ New Style/i }).click();
+    await page.getByRole("button", { name: /Warm Personal/i }).click();
+
+    const nameInput = page.locator('input[placeholder*="Tech Innovator" i]').first();
+    await nameInput.clear();
+    const uniqueName = `Nav Test ${Date.now()}`;
+    await nameInput.fill(uniqueName);
+
+    await page.getByRole("button", { name: /Create Brand Style/i }).click();
+    await page.waitForTimeout(1000);
+
+    // Activate
+    const activateButton = page.getByRole("button", { name: /^Activate$/i }).first();
+    if (await activateButton.isVisible()) {
+      await activateButton.click();
+      await page.waitForTimeout(500);
+    }
+
+    // Navigate away
+    await page.goto("/dashboard");
+    await page.waitForTimeout(500);
+
+    // Navigate back
+    await page.goto("/settings");
+
+    // Wait for settings to load
+    await expect(page.getByRole("heading", { name: "Brand Style" })).toBeVisible();
+
+    // Profile should still be there and active
+    await expect(page.getByText(uniqueName)).toBeVisible({ timeout: 5000 });
+    await expect(page.locator(".border-purple-500").first()).toBeVisible();
+  });
+});
+
+// ============================================================================
+// FLOW 10: IMAGE GENERATION INTEGRATION (SKIPPED - requires LLM)
+// ============================================================================
+test.describe.skip("Flow 10: Image Generation Integration (requires LLM)", () => {
+  test("10.1 - active brand style is applied to image generation", async ({ page }) => {
     // This test requires a completed run with image generation
     // When implemented:
     // 1. Create and activate a brand style
@@ -420,7 +611,7 @@ test.describe.skip("Flow 8: Image Generation Integration (requires LLM)", () => 
     // 5. Verify the brand style was applied (check API logs or generated prompt)
   });
 
-  test("8.2 - changing brand style affects new image generations", async ({ page }) => {
+  test("10.2 - changing brand style affects new image generations", async ({ page }) => {
     // This test verifies that switching brand styles changes generated images
     // When implemented:
     // 1. Create two different brand styles (e.g., one warm, one cool)
