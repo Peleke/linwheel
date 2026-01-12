@@ -158,7 +158,7 @@ export async function GET(request: NextRequest) {
         ? profileId
         : `urn:li:person:${profileId}`;
 
-      // Get image if exists
+      // Get image if exists AND includeInPost is true
       let imageUrl: string | undefined;
       let altText: string | undefined;
       const imageIntent = await db
@@ -167,7 +167,12 @@ export async function GET(request: NextRequest) {
         .where(eq(imageIntents.postId, post.id))
         .limit(1);
 
-      if (imageIntent.length > 0 && imageIntent[0].generatedImageUrl) {
+      // Only include image if it exists, has a URL, AND includeInPost is true (or null/undefined for backwards compat)
+      if (
+        imageIntent.length > 0 &&
+        imageIntent[0].generatedImageUrl &&
+        (imageIntent[0].includeInPost === true || imageIntent[0].includeInPost === null)
+      ) {
         imageUrl = imageIntent[0].generatedImageUrl;
         altText = imageIntent[0].headlineText || undefined;
       }

@@ -100,16 +100,23 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       ? profileId
       : `urn:li:person:${profileId}`;
 
-    // Get image if exists
+    // Get image if exists AND includeInPost is true
     let imageUrl: string | undefined;
+    let altText: string | undefined;
     const imageIntent = await db
       .select()
       .from(imageIntents)
       .where(eq(imageIntents.postId, postId))
       .limit(1);
 
-    if (imageIntent.length > 0 && imageIntent[0].generatedImageUrl) {
+    // Only include image if it exists, has a URL, AND includeInPost is true (or null for backwards compat)
+    if (
+      imageIntent.length > 0 &&
+      imageIntent[0].generatedImageUrl &&
+      (imageIntent[0].includeInPost === true || imageIntent[0].includeInPost === null)
+    ) {
       imageUrl = imageIntent[0].generatedImageUrl;
+      altText = imageIntent[0].headlineText || undefined;
     }
 
     // Create LinkedIn client and publish
@@ -119,7 +126,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       const result = await client.createPost({
         text: postData.fullText,
         imageUrl,
-        altText: imageIntent[0]?.headlineText || undefined,
+        altText,
       });
 
       // Update post with LinkedIn URN
