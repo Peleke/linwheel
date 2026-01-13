@@ -112,8 +112,8 @@ export async function publishArticleViaAgent(
         "X-Signature": signature,
       },
       body: payloadJson,
-      // Modal functions can take up to 2 minutes
-      signal: AbortSignal.timeout(150000), // 2.5 min timeout
+      // Modal browser automation can take 2-3 minutes
+      signal: AbortSignal.timeout(300000), // 5 min timeout
     });
 
     if (response.status === 401 || response.status === 403) {
