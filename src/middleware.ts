@@ -8,7 +8,7 @@ import { type NextRequest, NextResponse } from "next/server";
 import { updateSession } from "@/lib/supabase/middleware";
 
 // Routes that require authentication
-const PROTECTED_ROUTES = ["/generate", "/results", "/settings"];
+const PROTECTED_ROUTES = ["/dashboard", "/generate", "/results", "/settings"];
 
 // Routes that are only for non-authenticated users
 const AUTH_ROUTES = ["/login"];
@@ -37,7 +37,7 @@ export async function middleware(request: NextRequest) {
 
   // Redirect authenticated users away from auth routes
   if (isAuthRoute && user) {
-    return NextResponse.redirect(new URL("/generate", request.url));
+    return NextResponse.redirect(new URL("/dashboard", request.url));
   }
 
   return supabaseResponse;
