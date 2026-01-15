@@ -9,7 +9,7 @@ type AuthMode = "signin" | "signup";
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const redirectTo = searchParams.get("redirect") || "/generate";
+  const redirectTo = searchParams.get("redirect") || "/dashboard";
   const errorParam = searchParams.get("error");
 
   const [mode, setMode] = useState<AuthMode>("signin");
