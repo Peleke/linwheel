@@ -54,8 +54,8 @@ Turn Any Content Into a Month of LinkedIn Posts
 </div>
 
 <div class="abs-br m-6 flex gap-2">
-  <a href="https://linwheel.ai" target="_blank" class="text-white/80 hover:text-white">
-    linwheel.ai →
+  <a href="https://linwheel.io" target="_blank" class="text-white/80 hover:text-white">
+    linwheel.io →
   </a>
 </div>
 
@@ -701,9 +701,9 @@ background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%)
 </div>
 </div>
 
-<div class="mt-4 p-3 rounded-xl bg-gradient-to-r from-blue-500/20 to-indigo-500/20 border border-blue-500/30 text-center">
-<div class="text-xs text-white/60">Coming soon:</div>
-<div class="font-bold text-blue-400">Scheduled Publishing</div>
+<div class="mt-4 p-3 rounded-xl bg-gradient-to-r from-emerald-500/20 to-teal-500/20 border border-emerald-500/30 text-center">
+<div class="text-xs text-white/60">Also shipped:</div>
+<div class="font-bold text-emerald-400">Scheduled Auto-Publishing + Push Notifications</div>
 </div>
 
 </div>
@@ -1284,9 +1284,10 @@ background: linear-gradient(135deg, #1e1b4b 0%, #312e81 100%)
 <div class="space-y-1 text-xs">
 <div class="flex items-center gap-2"><span class="text-emerald-400">✓</span> Multi-angle generation</div>
 <div class="flex items-center gap-2"><span class="text-emerald-400">✓</span> AI cover images</div>
-<div class="flex items-center gap-2"><span class="text-emerald-400">✓</span> Long-form articles</div>
-<div class="flex items-center gap-2"><span class="text-emerald-400">✓</span> Voice profiles</div>
-<div class="flex items-center gap-2"><span class="text-emerald-400">✓</span> Stripe billing</div>
+<div class="flex items-center gap-2"><span class="text-emerald-400">✓</span> Direct LinkedIn posting</div>
+<div class="flex items-center gap-2"><span class="text-emerald-400">✓</span> Auto-publish + scheduling</div>
+<div class="flex items-center gap-2"><span class="text-emerald-400">✓</span> Push notifications</div>
+<div class="flex items-center gap-2"><span class="text-emerald-400">✓</span> Unicode text formatting</div>
 </div>
 
 <div class="mt-3 text-xs text-emerald-300">Ready for users</div>
@@ -1299,12 +1300,12 @@ background: linear-gradient(135deg, #1e1b4b 0%, #312e81 100%)
 
 <div class="space-y-1 text-xs">
 <div class="flex items-center gap-2"><span class="text-blue-400">○</span> 5-slide carousels</div>
-<div class="flex items-center gap-2"><span class="text-blue-400">○</span> Direct LinkedIn posting</div>
-<div class="flex items-center gap-2"><span class="text-blue-400">○</span> Scheduling calendar</div>
+<div class="flex items-center gap-2"><span class="text-blue-400">○</span> Brand style profiles</div>
 <div class="flex items-center gap-2"><span class="text-blue-400">○</span> Analytics dashboard</div>
+<div class="flex items-center gap-2"><span class="text-blue-400">○</span> Optimal timing AI</div>
 </div>
 
-<div class="mt-3 text-xs text-blue-300">Reduce friction to zero</div>
+<div class="mt-3 text-xs text-blue-300">Maximize engagement</div>
 
 </div>
 
@@ -1396,13 +1397,13 @@ A month of content.
 </div>
 
 <div class="mt-12">
-<a href="https://linwheel.ai" class="inline-block px-10 py-4 rounded-2xl bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white text-xl font-bold hover:scale-105 transition-transform shadow-2xl shadow-purple-500/30">
+<a href="https://linwheel.io" class="inline-block px-10 py-4 rounded-2xl bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white text-xl font-bold hover:scale-105 transition-transform shadow-2xl shadow-purple-500/30">
 Try LinWheel Free →
 </a>
 </div>
 
 <div class="mt-6 text-white/60">
-linwheel.ai
+linwheel.io
 </div>
 
 </div>
@@ -1431,8 +1432,8 @@ Built for creators who'd rather ship ideas than fight with formatting.
 
 <div class="mt-12 flex justify-center gap-6">
 
-<a href="https://linwheel.ai" class="px-8 py-4 rounded-xl bg-gradient-to-r from-indigo-500/20 to-purple-500/20 border border-indigo-500/50 hover:border-indigo-400 transition-all text-lg">
-🚀 linwheel.ai
+<a href="https://linwheel.io" class="px-8 py-4 rounded-xl bg-gradient-to-r from-indigo-500/20 to-purple-500/20 border border-indigo-500/50 hover:border-indigo-400 transition-all text-lg">
+🚀 linwheel.io
 </a>
 
 <a href="https://github.com/Peleke/linwheel" class="px-8 py-4 rounded-xl bg-white/10 border border-white/20 hover:bg-white/20 transition-all text-lg">
